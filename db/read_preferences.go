@@ -24,6 +24,8 @@ const (
 		"connection to mongos may produce inconsistent duplicates or miss some documents."
 )
 
+func PrimaryPreferred() mgo.Mode { return mgo.PrimaryPreferred }
+
 func ParseReadPreference(rp string) (mgo.Mode, bson.D, error) {
 	var mode string
 	var tags bson.D
