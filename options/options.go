@@ -40,9 +40,11 @@ var (
 	KnownURIOptionsReplicaSet     = []string{"replicaset"}
 )
 
+// XXX Force these true as the Go driver supports them always.  Once the
+// conditionals that depend on them are removed, these can be removed.
 var (
-	BuiltWithSSL    bool
-	BuiltWithGSSAPI bool
+	BuiltWithSSL    = true
+	BuiltWithGSSAPI = true
 )
 
 const IncompatibleArgsErrorFormat = "illegal argument combination: cannot specify %s and --uri"

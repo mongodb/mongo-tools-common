@@ -9,6 +9,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/mongodb/mongo-go-driver/core/readpref"
 	"github.com/mongodb/mongo-tools-common/json"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -24,7 +25,7 @@ const (
 		"connection to mongos may produce inconsistent duplicates or miss some documents."
 )
 
-func PrimaryPreferred() mgo.Mode { return mgo.PrimaryPreferred }
+func PrimaryPreferred() *readpref.ReadPref { return readpref.PrimaryPreferred() }
 
 func ParseReadPreference(rp string) (mgo.Mode, bson.D, error) {
 	var mode string

@@ -9,9 +9,16 @@
 package db
 
 import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/mongodb/mongo-go-driver/core/readpref"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/clientopt"
+	"github.com/mongodb/mongo-go-driver/mongo/dbopt"
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/password"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"fmt"
@@ -64,21 +71,16 @@ var (
 
 // Used to manage database sessions
 type SessionProvider struct {
+	sync.Mutex
 
-	// For connecting to the database
-	connector DBConnector
+	// the master client used for operations
+	client *mongo.Client
 
-	// used to avoid a race condition around creating the master session
-	masterSessionLock sync.Mutex
+	// whether Connect has been called on the mongoClient
+	connectCalled bool
 
-	// the master session to use for connection pooling
-	masterSession *mgo.Session
-
-	// flags for generating the master session
-	bypassDocumentValidation bool
-	flags                    sessionFlag
-	readPreference           mgo.Mode
-	tags                     bson.D
+	// default read preference for new database objects
+	readPref *readpref.ReadPref
 }
 
 // ApplyOpsResponse represents the response from an 'applyOps' command.
@@ -99,134 +101,154 @@ type Oplog struct {
 	UI        *bson.Binary        `bson:"ui,omitempty"`
 }
 
-// Returns a session connected to the database server for which the
+// Returns a mongo.Client connected to the database server for which the
 // session provider is configured.
-func (self *SessionProvider) GetSession() (*mgo.Session, error) {
-	self.masterSessionLock.Lock()
-	defer self.masterSessionLock.Unlock()
+func (self *SessionProvider) GetSession() (*mongo.Client, error) {
+	self.Lock()
+	defer self.Unlock()
 
-	// The master session is initialized
-	if self.masterSession != nil {
-		return self.masterSession.Copy(), nil
+	if self.client == nil {
+		return nil, errors.New("SessionProvider already closed")
 	}
 
-	// initialize the provider's master session
-	var err error
-	self.masterSession, err = self.connector.GetNewSession()
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to db server: %v", err)
+	if !self.connectCalled {
+		self.client.Connect(context.Background())
+		self.connectCalled = true
 	}
 
-	// update masterSession based on flags
-	self.refresh()
-
-	// copy the provider's master session, for connection pooling
-	return self.masterSession.Copy(), nil
+	return self.client, nil
 }
 
 // Close closes the master session in the connection pool
 func (self *SessionProvider) Close() {
-	self.masterSessionLock.Lock()
-	defer self.masterSessionLock.Unlock()
-	if self.masterSession != nil {
-		self.masterSession.Close()
+	self.Lock()
+	defer self.Unlock()
+	if self.client != nil {
+		self.client.Disconnect(context.Background())
+		self.client = nil
 	}
 }
 
-// refresh is a helper for modifying the session based on the
-// session provider flags passed in with SetFlags.
-// This helper assumes a lock is already taken.
-func (self *SessionProvider) refresh() {
-	// handle bypassDocumentValidation
-	self.masterSession.SetBypassValidation(self.bypassDocumentValidation)
-
-	// handle readPreference
-	self.masterSession.SetMode(self.readPreference, true)
-
-	// disable timeouts
-	if (self.flags & DisableSocketTimeout) > 0 {
-		self.masterSession.SetSocketTimeout(0)
-	}
-	if self.tags != nil {
-		self.masterSession.SelectServers(self.tags)
-	}
+// DB provides a database with the default read preference
+func (self *SessionProvider) DB(name string) *mongo.Database {
+	self.Lock()
+	defer self.Unlock()
+	return self.client.Database(name, dbopt.ReadPreference(self.readPref))
 }
 
 // SetFlags allows certain modifications to the masterSession after initial creation.
 func (self *SessionProvider) SetFlags(flagBits sessionFlag) {
-	self.masterSessionLock.Lock()
-	defer self.masterSessionLock.Unlock()
-
-	self.flags = flagBits
-
-	// make sure we update the master session if one already exists
-	if self.masterSession != nil {
-		self.refresh()
-	}
+	panic("unsupported")
 }
 
 // SetReadPreference sets the read preference mode in the SessionProvider
 // and eventually in the masterSession
-func (self *SessionProvider) SetReadPreference(pref mgo.Mode) {
-	self.masterSessionLock.Lock()
-	defer self.masterSessionLock.Unlock()
-
-	self.readPreference = pref
-
-	if self.masterSession != nil {
-		self.refresh()
-	}
+func (self *SessionProvider) SetReadPreference(pref *readpref.ReadPref) {
+	self.Lock()
+	defer self.Unlock()
+	self.readPref = pref
 }
 
 // SetBypassDocumentValidation sets whether to bypass document validation in the SessionProvider
 // and eventually in the masterSession
 func (self *SessionProvider) SetBypassDocumentValidation(bypassDocumentValidation bool) {
-	self.masterSessionLock.Lock()
-	defer self.masterSessionLock.Unlock()
-
-	self.bypassDocumentValidation = bypassDocumentValidation
-
-	if self.masterSession != nil {
-		self.refresh()
-	}
+	panic("unsupported")
 }
 
 // SetTags sets the server selection tags in the SessionProvider
 // and eventually in the masterSession
 func (self *SessionProvider) SetTags(tags bson.D) {
-	self.masterSessionLock.Lock()
-	defer self.masterSessionLock.Unlock()
-
-	self.tags = tags
-
-	if self.masterSession != nil {
-		self.refresh()
-	}
+	panic("unsupported")
 }
 
 // NewSessionProvider constructs a session provider but does not attempt to
 // create the initial session.
 func NewSessionProvider(opts options.ToolOptions) (*SessionProvider, error) {
-	// create the provider
-	provider := &SessionProvider{
-		readPreference:           mgo.Primary,
-		bypassDocumentValidation: false,
-	}
-
 	// finalize auth options, filling in missing passwords
 	if opts.Auth.ShouldAskForPassword() {
 		opts.Auth.Password = password.Prompt()
 	}
 
-	// create the connector for dialing the database
-	provider.connector = getConnector(opts)
-
-	// configure the connector
-	err := provider.connector.Configure(opts)
+	client, err := configureClient(opts)
 	if err != nil {
 		return nil, fmt.Errorf("error configuring the connector: %v", err)
 	}
-	return provider, nil
+
+	// create the provider
+	return &SessionProvider{client: client}, nil
+}
+
+func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
+	clientOpts := make([]clientopt.Option, 0)
+	timeout := time.Duration(opts.Timeout) * time.Second
+
+	clientOpts = append(
+		clientOpts,
+		clientopt.ConnectTimeout(timeout),
+		clientopt.ReplicaSet(opts.ReplicaSetName),
+		clientopt.Single(opts.Direct),
+	)
+
+	if opts.Auth != nil {
+		auth := clientopt.Credential{
+			Username:      opts.Auth.Username,
+			Password:      opts.Auth.Password,
+			AuthSource:    opts.GetAuthenticationDatabase(),
+			AuthMechanism: opts.Auth.Mechanism,
+		}
+		if opts.Kerberos != nil && auth.AuthMechanism == "GSSAPI" {
+			props := make(map[string]string)
+			if opts.Kerberos.Service != "" {
+				props["SERVICE_NAME"] = opts.Kerberos.Service
+			}
+			// XXX How do we use opts.Kerberos.ServiceHost if at all?
+			auth.AuthMechanismProperties = props
+		}
+		clientOpts = append(clientOpts, clientopt.Auth(auth))
+	}
+
+	if opts.SSL != nil {
+		// Error on unsupported features
+		if opts.SSLFipsMode {
+			return nil, fmt.Errorf("FIPS mode not supported")
+		}
+		if opts.SSLCRLFile != "" {
+			return nil, fmt.Errorf("CRL files are not supported on this platform")
+		}
+
+		ssl := &clientopt.SSLOpt{Enabled: opts.UseSSL}
+		if opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost {
+			ssl.Insecure = true
+		}
+		if opts.SSLPEMKeyFile != "" {
+			ssl.ClientCertificateKeyFile = opts.SSLPEMKeyFile
+			if opts.SSLPEMKeyPassword != "" {
+				ssl.ClientCertificateKeyPassword = func() string { return opts.SSLPEMKeyPassword }
+			}
+		}
+		if opts.SSLCAFile != "" {
+			ssl.CaFile = opts.SSLCAFile
+		}
+		clientOpts = append(clientOpts, clientopt.SSL(ssl))
+	}
+
+	var uri string
+	if opts.URI != nil && opts.URI.ConnectionString != "" {
+		uri = opts.URI.ConnectionString
+	} else {
+		host := opts.Host
+		if host == "" {
+			host = "localhost"
+		}
+		port := opts.Port
+		if port == "" {
+			port = "27017"
+		}
+
+		uri = fmt.Sprintf("mongodb://%s:%s/", host, port)
+	}
+
+	return mongo.NewClientWithOptions(uri, clientOpts...)
 }
 
 // IsConnectionError returns a boolean indicating if a given error is due to
@@ -249,14 +271,4 @@ func IsConnectionError(err error) bool {
 		return true
 	}
 	return false
-}
-
-// Get the right type of connector, based on the options
-func getConnector(opts options.ToolOptions) DBConnector {
-	for _, getConnectorFunc := range GetConnectorFuncs {
-		if connector := getConnectorFunc(opts); connector != nil {
-			return connector
-		}
-	}
-	return &VanillaDBConnector{}
 }
