@@ -29,8 +29,6 @@ import (
 
 type (
 	sessionFlag uint32
-	// Used to get appropriate the DBConnector(s) based on opts
-	GetConnectorFunc func(opts options.ToolOptions) DBConnector
 )
 
 // Session flags.
@@ -63,10 +61,6 @@ const (
 	ErrUnableToTargetPrefix         = "unable to target"
 	ErrNotMaster                    = "not master"
 	ErrConnectionRefusedSuffix      = "Connection refused"
-)
-
-var (
-	GetConnectorFuncs = []GetConnectorFunc{}
 )
 
 // Used to manage database sessions
