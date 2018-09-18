@@ -244,12 +244,9 @@ func New(appName, usageStr string, enabled EnabledOptions) *ToolOptions {
 		if _, err := opts.parser.AddGroup("connection options", "", opts.Connection); err != nil {
 			panic(fmt.Errorf("couldn't register connection options: %v", err))
 		}
-
-		// Register options that were enabled at compile time with build tags (ssl, sasl)
-		for _, optionRegistrationFunction := range ConnectionOptFunctions {
-			if err := optionRegistrationFunction(opts); err != nil {
-				panic(fmt.Errorf("couldn't register command-line options: %v", err))
-			}
+		opts.URI.AddKnownURIParameters(KnownURIOptionsSSL)
+		if _, err := opts.parser.AddGroup("ssl options", "", opts.SSL); err != nil {
+			panic(fmt.Errorf("couldn't register SSL options: %v", err))
 		}
 	}
 
@@ -257,6 +254,10 @@ func New(appName, usageStr string, enabled EnabledOptions) *ToolOptions {
 		opts.URI.AddKnownURIParameters(KnownURIOptionsAuth)
 		if _, err := opts.parser.AddGroup("authentication options", "", opts.Auth); err != nil {
 			panic(fmt.Errorf("couldn't register auth options"))
+		}
+		opts.URI.AddKnownURIParameters(KnownURIOptionsKerberos)
+		if _, err := opts.parser.AddGroup("kerberos options", "", opts.Kerberos); err != nil {
+			panic(fmt.Errorf("couldn't register Kerberos options"))
 		}
 	}
 	if enabled.Namespace {
