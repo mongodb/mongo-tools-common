@@ -7,8 +7,11 @@
 package db
 
 import (
+	"context"
 	"fmt"
-	"gopkg.in/mgo.v2"
+
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/insertopt"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -17,8 +20,8 @@ import (
 // message size) is reached. Must be flushed at the end to ensure that all
 // documents are written.
 type BufferedBulkInserter struct {
-	bulk            *mgo.Bulk
-	collection      *mgo.Collection
+	collection      *mongo.Collection
+	documents       []interface{}
 	continueOnError bool
 	docLimit        int
 	byteCount       int
@@ -28,7 +31,7 @@ type BufferedBulkInserter struct {
 
 // NewBufferedBulkInserter returns an initialized BufferedBulkInserter
 // for writing.
-func NewBufferedBulkInserter(collection *mgo.Collection, docLimit int,
+func NewBufferedBulkInserter(collection *mongo.Collection, docLimit int,
 	continueOnError bool) *BufferedBulkInserter {
 	bb := &BufferedBulkInserter{
 		collection:      collection,
@@ -41,15 +44,11 @@ func NewBufferedBulkInserter(collection *mgo.Collection, docLimit int,
 
 func (bb *BufferedBulkInserter) Unordered() {
 	bb.unordered = true
-	bb.bulk.Unordered()
 }
 
 // throw away the old bulk and init a new one
 func (bb *BufferedBulkInserter) resetBulk() {
-	bb.bulk = bb.collection.Bulk()
-	if bb.continueOnError || bb.unordered {
-		bb.bulk.Unordered()
-	}
+	bb.documents = make([]interface{}, 0, bb.docLimit)
 	bb.byteCount = 0
 	bb.docCount = 0
 }
@@ -62,13 +61,16 @@ func (bb *BufferedBulkInserter) Insert(doc interface{}) error {
 		return fmt.Errorf("bson encoding error: %v", err)
 	}
 	// flush if we are full
+	//
+	// XXX With OP_MSG the limit is larger; MaxBSONSize shouldn't be hard
+	// coded, it should be based on the server's ismaster response.
 	if bb.docCount >= bb.docLimit || bb.byteCount+len(rawBytes) > MaxBSONSize {
 		err = bb.Flush()
 	}
 	// buffer the document
 	bb.docCount++
 	bb.byteCount += len(rawBytes)
-	bb.bulk.Insert(bson.Raw{Data: rawBytes})
+	bb.documents = append(bb.documents, bson.Raw{Data: rawBytes})
 	return err
 }
 
@@ -78,8 +80,6 @@ func (bb *BufferedBulkInserter) Flush() error {
 		return nil
 	}
 	defer bb.resetBulk()
-	if _, err := bb.bulk.Run(); err != nil {
-		return err
-	}
-	return nil
+	_, err := bb.collection.InsertMany(context.Background(), bb.documents, insertopt.Ordered(!bb.unordered))
+	return err
 }

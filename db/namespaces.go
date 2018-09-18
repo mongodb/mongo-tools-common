@@ -7,10 +7,12 @@
 package db
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"strings"
 
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-tools-common/log"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -83,34 +85,10 @@ func buildBsonArray(iter *mgo.Iter) ([]bson.D, error) {
 // using the listIndexes command if available, or by falling back to querying
 // against system.indexes (pre-3.0 systems). nil is returned if the collection
 // does not exist.
-func GetIndexes(coll *mgo.Collection) (*mgo.Iter, error) {
-	var cmdResult struct {
-		Cursor struct {
-			FirstBatch []bson.Raw `bson:"firstBatch"`
-			NS         string
-			Id         int64
-		}
-	}
-
-	err := coll.Database.Run(bson.D{{"listIndexes", coll.Name}, {"cursor", bson.M{}}}, &cmdResult)
-	switch {
-	case err == nil:
-		ns := strings.SplitN(cmdResult.Cursor.NS, ".", 2)
-		if len(ns) < 2 {
-			return nil, fmt.Errorf("server returned invalid cursor.ns `%v` on listIndexes for `%v`: %v",
-				cmdResult.Cursor.NS, coll.FullName, err)
-		}
-
-		ses := coll.Database.Session
-		return ses.DB(ns[0]).C(ns[1]).NewIter(ses, cmdResult.Cursor.FirstBatch, cmdResult.Cursor.Id, nil), nil
-	case IsNoCmd(err):
-		log.Logvf(log.DebugLow, "No support for listIndexes command, falling back to querying system.indexes")
-		return getIndexesPre28(coll)
-	case IsNoNamespace(err):
-		return nil, nil
-	default:
-		return nil, fmt.Errorf("error running `listIndexes`. Collection: `%v` Err: %v", coll.FullName, err)
-	}
+//
+// XXX Requires GODRIVER-279 for legacy server support
+func GetIndexes(coll *mongo.Collection) (mongo.Cursor, error) {
+	return coll.Indexes().List(context.Background())
 }
 
 func getIndexesPre28(coll *mgo.Collection) (*mgo.Iter, error) {

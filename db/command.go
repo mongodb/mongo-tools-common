@@ -30,6 +30,7 @@ const (
 )
 
 // CommandRunner exposes functions that can be run against a server
+// XXX Does anything rely on this?
 type CommandRunner interface {
 	Run(command interface{}, out interface{}, database string) error
 	RunString(commandName string, out interface{}, database string) error
@@ -66,6 +67,17 @@ func (sp *SessionProvider) Run(command interface{}, out interface{}, name string
 func (sp *SessionProvider) RunString(commandName string, out interface{}, name string) error {
 	command := &bson.M{commandName: 1}
 	return sp.Run(command, out, name)
+}
+
+func (sp *SessionProvider) DropDatabase(dbName string) error {
+	return sp.DB(dbName).Drop(context.Background())
+}
+
+func (sp *SessionProvider) CreateCollection(dbName, collName string) error {
+	command := &bson.M{"create": collName}
+	out := &bson.RawD{}
+	err := sp.Run(command, out, dbName)
+	return err
 }
 
 //

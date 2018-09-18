@@ -7,6 +7,7 @@
 package db
 
 import (
+	"context"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/options"
@@ -36,7 +37,7 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("using a test collection and a doc limit of 3", func() {
-			testCol := session.DB("tools-test").C("bulk1")
+			testCol := session.Database("tools-test").Collection("bulk1")
 			bufBulk = NewBufferedBulkInserter(testCol, 3, false)
 			So(bufBulk, ShouldNotBeNil)
 
@@ -58,7 +59,7 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 		})
 
 		Convey("using a test collection and a doc limit of 1", func() {
-			testCol := session.DB("tools-test").C("bulk2")
+			testCol := session.Database("tools-test").Collection("bulk2")
 			bufBulk = NewBufferedBulkInserter(testCol, 1, false)
 			So(bufBulk, ShouldNotBeNil)
 
@@ -76,12 +77,11 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 		})
 
 		Convey("using a test collection and a doc limit of 1000", func() {
-			testCol := session.DB("tools-test").C("bulk3")
+			testCol := session.Database("tools-test").Collection("bulk3")
 			bufBulk = NewBufferedBulkInserter(testCol, 100, false)
 			So(bufBulk, ShouldNotBeNil)
 
 			Convey("inserting 1,000,000 documents into the BufferedBulkInserter and flushing", func() {
-				session.SetSocketTimeout(0)
 
 				for i := 0; i < 1000000; i++ {
 					bufBulk.Insert(bson.M{"_id": i})
@@ -89,19 +89,22 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 				So(bufBulk.Flush(), ShouldBeNil)
 
 				Convey("should have inserted all of the documents", func() {
-					count, err := testCol.Count()
+					count, err := testCol.CountDocuments(context.Background(), nil)
 					So(err, ShouldBeNil)
 					So(count, ShouldEqual, 1000000)
 
 					// test values
 					testDoc := bson.M{}
-					err = testCol.Find(bson.M{"_id": 477232}).One(&testDoc)
+					result := testCol.FindOne(nil, bson.M{"_id": 477232})
+					err = result.Decode(&testDoc)
 					So(err, ShouldBeNil)
 					So(testDoc["_id"], ShouldEqual, 477232)
-					err = testCol.Find(bson.M{"_id": 999999}).One(&testDoc)
+					result = testCol.FindOne(nil, bson.M{"_id": 999999})
+					err = result.Decode(&testDoc)
 					So(err, ShouldBeNil)
 					So(testDoc["_id"], ShouldEqual, 999999)
-					err = testCol.Find(bson.M{"_id": 1}).One(&testDoc)
+					result = testCol.FindOne(nil, bson.M{"_id": 1})
+					err = result.Decode(&testDoc)
 					So(err, ShouldBeNil)
 					So(testDoc["_id"], ShouldEqual, 1)
 
@@ -110,8 +113,7 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 		})
 
 		Reset(func() {
-			session.DB("tools-test").DropDatabase()
-			session.Close()
+			provider.DropDatabase("tools-test")
 			provider.Close()
 		})
 	})

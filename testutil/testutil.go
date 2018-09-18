@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-tools-common/db"
 	"github.com/mongodb/mongo-tools-common/options"
 	"gopkg.in/mgo.v2"
@@ -20,7 +21,7 @@ import (
 
 // GetBareSession returns an mgo.Session from the environment or
 // from a default host and port.
-func GetBareSession() (*mgo.Session, error) {
+func GetBareSession() (*mongo.Client, error) {
 	sessionProvider, _, err := GetBareSessionProvider()
 	if err != nil {
 		return nil, err

@@ -7,7 +7,7 @@
 package db
 
 import (
-	"reflect"
+	"context"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/options"
@@ -33,8 +33,6 @@ func TestNewSessionProvider(t *testing.T) {
 			}
 			provider, err := NewSessionProvider(opts)
 			So(err, ShouldBeNil)
-			So(reflect.TypeOf(provider.connector), ShouldEqual,
-				reflect.TypeOf(&VanillaDBConnector{}))
 
 			Convey("and should be closeable", func() {
 				provider.Close()
@@ -53,18 +51,10 @@ func TestNewSessionProvider(t *testing.T) {
 			}
 			provider, err := NewSessionProvider(opts)
 			So(err, ShouldBeNil)
-			So(provider.masterSession, ShouldBeNil)
-			session, err := provider.GetSession()
-			So(err, ShouldBeNil)
-			So(session, ShouldNotBeNil)
-			session.Close()
-			So(provider.masterSession, ShouldNotBeNil)
-			err = provider.masterSession.Ping()
-			So(err, ShouldBeNil)
-			provider.Close()
+			So(provider.client, ShouldBeNil)
 			So(func() {
-				provider.masterSession.Ping()
-			}, ShouldPanic)
+				provider.client.Ping(context.Background(), nil)
+			}, ShouldBeNil)
 
 		})
 
@@ -89,15 +79,15 @@ func TestGetIndexes(t *testing.T) {
 		session, err := provider.GetSession()
 		So(err, ShouldBeNil)
 
-		existing := session.DB("exists").C("collection")
-		missing := session.DB("exists").C("missing")
-		missingDB := session.DB("missingDB").C("missingCollection")
+		existing := session.Database("exists").Collection("collection")
+		missing := session.Database("exists").Collection("missing")
+		missingDB := session.Database("missingDB").Collection("missingCollection")
 
-		err = existing.Database.DropDatabase()
+		err = provider.DropDatabase("exists")
 		So(err, ShouldBeNil)
-		err = existing.Create(&mgo.CollectionInfo{})
+		err = provider.CreateCollection("exists", "collection")
 		So(err, ShouldBeNil)
-		err = missingDB.Database.DropDatabase()
+		err = provider.DropDatabase("missingDB")
 		So(err, ShouldBeNil)
 
 		Convey("When GetIndexes is called on", func() {
@@ -106,9 +96,15 @@ func TestGetIndexes(t *testing.T) {
 				So(err, ShouldBeNil)
 				Convey("and indexes should be returned", func() {
 					So(indexesIter, ShouldNotBeNil)
-					var indexes []mgo.Index
-					err := indexesIter.All(&indexes)
-					So(err, ShouldBeNil)
+					indexes := make([]mgo.Index, 0)
+					ctx := context.Background()
+					for indexesIter.Next(ctx) {
+						idx := mgo.Index{}
+						if err := indexesIter.Decode(&idx); err != nil {
+							So(err, ShouldBeNil)
+						}
+						indexes = append(indexes, idx)
+					}
 					So(len(indexes), ShouldBeGreaterThan, 0)
 				})
 			})
@@ -131,8 +127,7 @@ func TestGetIndexes(t *testing.T) {
 		})
 
 		Reset(func() {
-			existing.Database.DropDatabase()
-			session.Close()
+			provider.DropDatabase("exists")
 			provider.Close()
 		})
 	})
