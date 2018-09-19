@@ -7,10 +7,11 @@
 package bsonutil
 
 import (
-	"github.com/mongodb/mongo-tools/common/json"
+	"testing"
+
+	"github.com/mongodb/mongo-tools-common/json"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
-	"testing"
 )
 
 func TestMinKeyValue(t *testing.T) {

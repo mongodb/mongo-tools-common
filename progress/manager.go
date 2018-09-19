@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mongodb/mongo-tools/common/text"
+	"github.com/mongodb/mongo-tools-common/text"
 )
 
 // Manager is an interface which tools can use to registers progressors which

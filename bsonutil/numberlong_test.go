@@ -7,9 +7,10 @@
 package bsonutil
 
 import (
-	"github.com/mongodb/mongo-tools/common/json"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	"github.com/mongodb/mongo-tools-common/json"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestNumberLongValue(t *testing.T) {
