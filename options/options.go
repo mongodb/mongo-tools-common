@@ -100,6 +100,7 @@ type General struct {
 
 	MaxProcs   int    `long:"numThreads" hidden:"true"`
 	Failpoints string `long:"failpoints" hidden:"true"`
+	Trace      bool   `long:"trace" hidden:"true"`
 }
 
 // Struct holding verbosity-related options

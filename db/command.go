@@ -8,8 +8,12 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	gbson "github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/core/readpref"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"github.com/mongodb/mongo-go-driver/mongo/runcmdopt"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -80,18 +84,22 @@ func (sp *SessionProvider) CreateCollection(dbName, collName string) error {
 	return err
 }
 
-//
-// // DatabaseNames returns a slice containing the names of all the databases on the
-// // connected server.
-// func (sp *SessionProvider) DatabaseNames() ([]string, error) {
-// 	session, err := sp.GetSession()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return session.DatabaseNames()
-// }
-//
-// // CollectionNames returns the names of all the collections in the dbName database.
+func (sp *SessionProvider) ServerVersion() (string, error) {
+	out := struct{ Version string }{}
+	err := sp.RunString("buildInfo", &out, "admin")
+	if err != nil {
+		return "", err
+	}
+	return out.Version, nil
+}
+
+// DatabaseNames returns a slice containing the names of all the databases on the
+// connected server.
+func (sp *SessionProvider) DatabaseNames() ([]string, error) {
+	return sp.client.ListDatabaseNames(nil, nil)
+}
+
+// CollectionNames returns the names of all the collections in the dbName database.
 // func (sp *SessionProvider) CollectionNames(dbName string) ([]string, error) {
 // 	session, err := sp.GetSession()
 // 	if err != nil {
@@ -99,7 +107,7 @@ func (sp *SessionProvider) CreateCollection(dbName, collName string) error {
 // 	}
 // 	return session.DB(dbName).CollectionNames()
 // }
-//
+
 // GetNodeType checks if the connected SessionProvider is a mongos, standalone, or replset,
 // by looking at the result of calling isMaster.
 func (sp *SessionProvider) GetNodeType() (NodeType, error) {
@@ -112,14 +120,16 @@ func (sp *SessionProvider) GetNodeType() (NodeType, error) {
 		Hosts   interface{} `bson:"hosts"`
 		Msg     string      `bson:"msg"`
 	}{}
-	result, err := session.Database("admin").RunCommand(context.Background(), &bson.M{"ismaster": 1})
+	result, err := session.Database("admin").RunCommand(
+		context.Background(),
+		&bson.M{"ismaster": 1},
+		runcmdopt.ReadPreference(readpref.Nearest()),
+	)
 	if err != nil {
 		return Unknown, err
 	}
 	bytes, _ := gbson.Marshal(result)
 	gbson.Unmarshal(bytes, &masterDoc)
-
-	//
 	if masterDoc.SetName != nil || masterDoc.Hosts != nil {
 		return ReplSet, nil
 	} else if masterDoc.Msg == "isdbgrid" {
@@ -171,38 +181,44 @@ func (sp *SessionProvider) IsMongos() (bool, error) {
 //
 // 	return false, nil
 // }
-//
-// // SupportsRepairCursor takes in an example db and collection name and
-// // returns true if the connected server supports the repairCursor command.
-// // It returns false and the error that occurred if it is not supported.
-// func (sp *SessionProvider) SupportsRepairCursor(db, collection string) (bool, error) {
-// 	session, err := sp.GetSession()
-// 	if err != nil {
-// 		return false, err
-// 	}
-//
-// 	// This check is slightly hacky, but necessary to allow users to run repair without
-// 	// permissions to all collections. There are multiple reasons a repair command could fail,
-// 	// but we are only interested in the ones that imply that the repair command is not
-// 	// usable by the connected server. If we do not get one of these specific error messages,
-// 	// we will let the error happen again later.
-// 	repairIter := session.Database(db).Collection(collection).Repair()
-// 	repairIter.Next(bson.D{})
-// 	err = repairIter.Err()
-// 	if err == nil {
-// 		return true, nil
-// 	}
-// 	if strings.Index(err.Error(), "no such cmd: repairCursor") > -1 {
-// 		// return a helpful error message for early server versions
-// 		return false, fmt.Errorf("--repair flag cannot be used on mongodb versions before 2.7.8")
-// 	}
-// 	if strings.Index(err.Error(), "repair iterator not supported") > -1 {
-// 		// helpful error message if the storage engine does not support repair (WiredTiger)
-// 		return false, fmt.Errorf("--repair is not supported by the connected storage engine")
-// 	}
-//
-// 	return true, nil
-// }
+
+// SupportsRepairCursor takes in an example db and collection name and
+// returns true if the connected server supports the repairCursor command.
+// It returns false and the error that occurred if it is not supported.
+func (sp *SessionProvider) SupportsRepairCursor(db, collection string) (bool, error) {
+	// XXX disable for now -- xdg, 2018-09-19
+	return false, fmt.Errorf("--repair flag cannot be used until supported by the Go driver")
+	// 	session, err := sp.GetSession()
+	// 	if err != nil {
+	// 		return false, err
+	// 	}
+	//
+	// 	// This check is slightly hacky, but necessary to allow users to run repair without
+	// 	// permissions to all collections. There are multiple reasons a repair command could fail,
+	// 	// but we are only interested in the ones that imply that the repair command is not
+	// 	// usable by the connected server. If we do not get one of these specific error messages,
+	// 	// we will let the error happen again later.
+	// 	//
+	// 	// XXX Repair not available, maybe have to just run command and see
+	// 	// what raw result we get -- xdg, 2018-09-19
+	// 	repairIter := session.Database(db).Collection(collection).Repair()
+	// 	repairIter.Next(bson.D{})
+	// 	err = repairIter.Err()
+	// 	if err == nil {
+	// 		return true, nil
+	// 	}
+	// 	if strings.Index(err.Error(), "no such cmd: repairCursor") > -1 {
+	// 		// return a helpful error message for early server versions
+	// 		return false, fmt.Errorf("--repair flag cannot be used on mongodb versions before 2.7.8")
+	// 	}
+	// 	if strings.Index(err.Error(), "repair iterator not supported") > -1 {
+	// 		// helpful error message if the storage engine does not support repair (WiredTiger)
+	// 		return false, fmt.Errorf("--repair is not supported by the connected storage engine")
+	// 	}
+	//
+	// 	return true, nil
+}
+
 //
 // // SupportsWriteCommands returns true if the connected server supports write
 // // commands, returns false otherwise.
@@ -223,30 +239,30 @@ func (sp *SessionProvider) IsMongos() (bool, error) {
 // 	// the maxWriteVersion field is present
 // 	return (masterDoc.Ok == 1 && masterDoc.MaxWire >= 2), nil
 // }
-//
-// // FindOne retuns the first document in the collection and database that matches
-// // the query after skip, sort and query flags are applied.
-// func (sp *SessionProvider) FindOne(db, collection string, skip int, query interface{}, sort []string, into interface{}, flags int) error {
-// 	session, err := sp.GetSession()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	q := session.Database(db).Collection(collection).Find(query).Sort(sort...).Skip(skip)
-// 	q = ApplyFlags(q, session, flags)
-// 	return q.One(into)
-// }
-//
-// // ApplyFlags applies flags to the given query session.
-// func ApplyFlags(q *mgo.Query, session *mgo.Session, flags int) *mgo.Query {
-// 	if flags&Snapshot > 0 {
-// 		q = q.Hint("_id")
-// 	}
-// 	if flags&LogReplay > 0 {
-// 		q = q.LogReplay()
-// 	}
-// 	if flags&Prefetch > 0 {
-// 		session.SetPrefetch(1.0)
-// 	}
-// 	return q
-// }
+
+// FindOne retuns the first document in the collection and database that matches
+// the query after skip, sort and query flags are applied.
+func (sp *SessionProvider) FindOne(db, collection string, skip int, query interface{}, sort interface{}, into interface{}, flags int) error {
+	session, err := sp.GetSession()
+	if err != nil {
+		return err
+	}
+
+	opts := []findopt.One{findopt.Sort(sort), findopt.Skip(int64(skip))}
+	opts = ApplyFlags(opts, flags)
+
+	res := session.Database(db).Collection(collection).FindOne(nil, query, opts...)
+	err = res.Decode(into)
+	return err
+}
+
+// ApplyFlags applies flags to the given query session.
+func ApplyFlags(opts []findopt.One, flags int) []findopt.One {
+	if flags&Snapshot > 0 {
+		opts = append(opts, findopt.Hint("_id"))
+	}
+	if flags&LogReplay > 0 {
+		opts = append(opts, findopt.OplogReplay(true))
+	}
+	return opts
+}

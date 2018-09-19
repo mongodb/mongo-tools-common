@@ -59,7 +59,7 @@ type Intent struct {
 	MetadataLocation string
 
 	// Collection options
-	Options *bson.D
+	Options bson.M
 
 	// UUID (for MongoDB 3.6+) as a big-endian hex string
 	UUID string
@@ -126,7 +126,7 @@ func (it *Intent) IsView() bool {
 	if it.Options == nil {
 		return false
 	}
-	_, isView := it.Options.Map()["viewOn"]
+	_, isView := it.Options["viewOn"]
 	return isView
 }
 

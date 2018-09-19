@@ -10,14 +10,13 @@ import (
 	"fmt"
 
 	"github.com/mongodb/mongo-go-driver/core/readpref"
+	"github.com/mongodb/mongo-go-driver/core/tag"
 	"github.com/mongodb/mongo-tools-common/json"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type readPrefDoc struct {
 	Mode string
-	Tags bson.D
+	Tags map[string]string
 }
 
 const (
@@ -25,13 +24,15 @@ const (
 		"connection to mongos may produce inconsistent duplicates or miss some documents."
 )
 
+func Primary() *readpref.ReadPref          { return readpref.Primary() }
 func PrimaryPreferred() *readpref.ReadPref { return readpref.PrimaryPreferred() }
+func Nearest() *readpref.ReadPref          { return readpref.Nearest() }
 
-func ParseReadPreference(rp string) (mgo.Mode, bson.D, error) {
+func ParseReadPreference(rp string) (*readpref.ReadPref, error) {
 	var mode string
-	var tags bson.D
+	var tagSet tag.Set
 	if rp == "" {
-		return mgo.Nearest, nil, nil
+		return readpref.Nearest(), nil
 	}
 	if rp[0] != '{' {
 		mode = rp
@@ -39,22 +40,22 @@ func ParseReadPreference(rp string) (mgo.Mode, bson.D, error) {
 		var doc readPrefDoc
 		err := json.Unmarshal([]byte(rp), &doc)
 		if err != nil {
-			return 0, nil, fmt.Errorf("invalid --ReadPreferences json object: %v", err)
+			return nil, fmt.Errorf("invalid --ReadPreferences json object: %v", err)
 		}
-		tags = doc.Tags
+		tagSet = tag.NewTagSetFromMap(doc.Tags)
 		mode = doc.Mode
 	}
 	switch mode {
 	case "primary":
-		return mgo.Primary, tags, nil
+		return readpref.Primary(), nil
 	case "primaryPreferred":
-		return mgo.PrimaryPreferred, tags, nil
+		return readpref.PrimaryPreferred(readpref.WithTagSets(tagSet)), nil
 	case "secondary":
-		return mgo.Secondary, tags, nil
+		return readpref.Secondary(readpref.WithTagSets(tagSet)), nil
 	case "secondaryPreferred":
-		return mgo.SecondaryPreferred, tags, nil
+		return readpref.SecondaryPreferred(readpref.WithTagSets(tagSet)), nil
 	case "nearest":
-		return mgo.Nearest, tags, nil
+		return readpref.Nearest(readpref.WithTagSets(tagSet)), nil
 	}
-	return 0, nil, fmt.Errorf("invalid readPreference mode '%v'", mode)
+	return nil, fmt.Errorf("invalid readPreference mode '%v'", mode)
 }

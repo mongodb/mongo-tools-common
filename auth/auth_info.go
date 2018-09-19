@@ -11,15 +11,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mongodb/mongo-tools/common/db"
+	"github.com/mongodb/mongo-tools-common/db"
 	"gopkg.in/mgo.v2/bson"
 )
 
 // GetAuthVersion gets the authentication schema version of the connected server
 // and returns that value as an integer along with any error that occurred.
-func GetAuthVersion(commander db.CommandRunner) (int, error) {
+func GetAuthVersion(sessionProvider *db.SessionProvider) (int, error) {
 	results := bson.M{}
-	err := commander.Run(
+	err := sessionProvider.Run(
 		bson.D{
 			{"getParameter", 1},
 			{"authSchemaVersion", 1},
@@ -59,11 +59,10 @@ func VerifySystemAuthVersion(sessionProvider *db.SessionProvider) error {
 	if err != nil {
 		return fmt.Errorf("error getting session from server: %v", err)
 	}
-	defer session.Close()
 
 	authSchemaQuery := bson.M{"_id": "authSchema"}
-	versionEntries := session.DB("admin").C("system.version").Find(authSchemaQuery)
-	if count, err := versionEntries.Count(); err != nil {
+	count, err := session.Database("admin").Collection("system.version").CountDocuments(nil, authSchemaQuery)
+	if err != nil {
 		return fmt.Errorf("error checking pressence of auth version: %v", err)
 	} else if count == 0 {
 		return fmt.Errorf("found no auth version")

@@ -48,6 +48,9 @@ const (
 	DefaultTestPort = "33333"
 )
 
+// Hard coded socket timeout in seconds
+const SocketTimeout = 600
+
 const (
 	ErrLostConnection     = "lost connection to server"
 	ErrNoReachableServers = "no reachable servers"
@@ -179,6 +182,7 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 	clientOpts = append(
 		clientOpts,
 		clientopt.ConnectTimeout(timeout),
+		clientopt.SocketTimeout(SocketTimeout*time.Second),
 		clientopt.ReplicaSet(opts.ReplicaSetName),
 		clientopt.Single(opts.Direct),
 	)

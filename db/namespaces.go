@@ -12,17 +12,17 @@ import (
 	"fmt"
 	"strings"
 
+	gbson "github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-tools-common/log"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 type CollectionInfo struct {
-	Name    string  `bson:"name"`
-	Type    string  `bson:"type"`
-	Options *bson.D `bson:"options"`
-	Info    *bson.D `bson:"info"`
+	Name    string `bson:"name"`
+	Type    string `bson:"type"`
+	Options bson.M `bson:"options"`
+	Info    bson.M `bson:"info"`
 }
 
 func (ci *CollectionInfo) IsView() bool {
@@ -37,13 +37,11 @@ func (ci *CollectionInfo) GetUUID() string {
 	if ci.Info == nil {
 		return ""
 	}
-	for _, v := range *ci.Info {
-		if v.Name == "uuid" {
-			switch x := v.Value.(type) {
-			case bson.Binary:
-				if x.Kind == 4 {
-					return hex.EncodeToString(x.Data)
-				}
+	if v, ok := ci.Info["uuid"]; ok {
+		switch x := v.(type) {
+		case bson.Binary:
+			if x.Kind == 4 {
+				return hex.EncodeToString(x.Data)
 			}
 		}
 	}
@@ -97,38 +95,21 @@ func getIndexesPre28(coll *mgo.Collection) (*mgo.Iter, error) {
 	return iter, nil
 }
 
-func GetCollections(database *mgo.Database, name string) (*mgo.Iter, bool, error) {
-	var cmdResult struct {
-		Cursor struct {
-			FirstBatch []bson.Raw `bson:"firstBatch"`
-			NS         string
-			Id         int64
-		}
-	}
-
-	command := bson.D{{"listCollections", 1}, {"cursor", bson.M{}}}
+// XXX Requires GODRIVER-492 for legacy server support
+// Assumes that mongo.Database will normalize legacy names to omit database
+// name as required by the Enumerate Collections spec
+func GetCollections(database *mongo.Database, name string) (mongo.Cursor, error) {
+	filter := gbson.NewDocument()
 	if len(name) > 0 {
-		command = bson.D{{"listCollections", 1}, {"filter", bson.M{"name": name}}, {"cursor", bson.M{}}}
+		filter.Append(gbson.EC.String("name", name))
 	}
 
-	err := database.Run(command, &cmdResult)
-	switch {
-	case err == nil:
-		ns := strings.SplitN(cmdResult.Cursor.NS, ".", 2)
-		if len(ns) < 2 {
-			return nil, false, fmt.Errorf("server returned invalid cursor.ns `%v` on listCollections for `%v`: %v",
-				cmdResult.Cursor.NS, database.Name, err)
-		}
-
-		return database.Session.DB(ns[0]).C(ns[1]).NewIter(database.Session, cmdResult.Cursor.FirstBatch, cmdResult.Cursor.Id, nil), false, nil
-	case IsNoCmd(err):
-		log.Logvf(log.DebugLow, "No support for listCollections command, falling back to querying system.namespaces")
-		iter, err := getCollectionsPre28(database, name)
-		return iter, true, err
-	default:
-		return nil, false, fmt.Errorf("error running `listCollections`. Database: `%v` Err: %v",
-			database.Name, err)
+	cursor, err := database.ListCollections(nil, filter)
+	if err != nil {
+		return nil, err
 	}
+
+	return cursor, nil
 }
 
 func getCollectionsPre28(database *mgo.Database, name string) (*mgo.Iter, error) {
@@ -141,27 +122,21 @@ func getCollectionsPre28(database *mgo.Database, name string) (*mgo.Iter, error)
 	return iter, nil
 }
 
-func GetCollectionInfo(coll *mgo.Collection) (*CollectionInfo, error) {
-	iter, useFullName, err := GetCollections(coll.Database, coll.Name)
+func GetCollectionInfo(coll *mongo.Collection) (*CollectionInfo, error) {
+	iter, err := GetCollections(coll.Database(), coll.Name())
 	if err != nil {
 		return nil, err
 	}
-	defer iter.Close()
-	comparisonName := coll.Name
-	if useFullName {
-		comparisonName = coll.FullName
-	}
+	defer iter.Close(nil)
+	comparisonName := coll.Name()
 
 	collInfo := &CollectionInfo{}
-	for iter.Next(collInfo) {
+	for iter.Next(nil) {
+		err = iter.Decode(collInfo)
+		if err != nil {
+			return nil, err
+		}
 		if collInfo.Name == comparisonName {
-			if useFullName {
-				collName, err := StripDBFromNamespace(collInfo.Name, coll.Database.Name)
-				if err != nil {
-					return nil, err
-				}
-				collInfo.Name = collName
-			}
 			break
 		}
 	}
