@@ -16,7 +16,7 @@ import (
 	"github.com/mongodb/mongo-tools-common/intents"
 	"github.com/mongodb/mongo-tools-common/log"
 	"github.com/mongodb/mongo-tools-common/options"
-	"github.com/mongodb/mongo-tools/common"
+	"github.com/mongodb/mongo-tools-common/util"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -360,7 +360,7 @@ type MetadataPreludeFile struct {
 
 // Open is part of the intents.file interface, it finds the metadata in the prelude and creates a bytes.Buffer from it.
 func (mpf *MetadataPreludeFile) Open() error {
-	db, c := common.SplitNamespace(mpf.Origin)
+	db, c := util.SplitNamespace(mpf.Origin)
 	dbMetadatas, ok := mpf.Prelude.NamespaceMetadatasByDB[db]
 	if !ok {
 		return fmt.Errorf("no metadata found for '%s'", db)

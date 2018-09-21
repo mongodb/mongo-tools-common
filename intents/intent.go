@@ -13,7 +13,6 @@ import (
 
 	"github.com/mongodb/mongo-tools-common/log"
 	"github.com/mongodb/mongo-tools-common/util"
-	"github.com/mongodb/mongo-tools/common"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -310,7 +309,7 @@ func (manager *Manager) PutWithNamespace(ns string, intent *Intent) {
 	if intent == nil {
 		panic("cannot insert nil *Intent into IntentManager")
 	}
-	db, _ := common.SplitNamespace(ns)
+	db, _ := util.SplitNamespace(ns)
 
 	// bucket special-case collections
 	if intent.IsOplog() {
