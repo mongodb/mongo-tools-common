@@ -39,8 +39,8 @@ func (ci *CollectionInfo) GetUUID() string {
 	}
 	if v, ok := ci.Info["uuid"]; ok {
 		switch x := v.(type) {
-		case bson.Binary:
-			if x.Kind == 4 {
+		case gbson.Binary:
+			if x.Subtype == 4 {
 				return hex.EncodeToString(x.Data)
 			}
 		}
@@ -127,7 +127,7 @@ func GetCollectionInfo(coll *mongo.Collection) (*CollectionInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer iter.Close(nil)
+	defer iter.Close(context.Background())
 	comparisonName := coll.Name()
 
 	collInfo := &CollectionInfo{}

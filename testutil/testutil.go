@@ -15,7 +15,6 @@ import (
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-tools-common/db"
 	"github.com/mongodb/mongo-tools-common/options"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -71,12 +70,13 @@ func GetBareSessionProvider() (*db.SessionProvider, *options.ToolOptions, error)
 
 // GetFCV returns the featureCompatibilityVersion string for an mgo Session
 // or the empty string if it can't be found.
-func GetFCV(s *mgo.Session) string {
-	coll := s.DB("admin").C("system.version")
+func GetFCV(s *mongo.Client) string {
+	coll := s.Database("admin").Collection("system.version")
 	var result struct {
 		Version string
 	}
-	_ = coll.Find(bson.M{"_id": "featureCompatibilityVersion"}).One(&result)
+	res := coll.FindOne(nil, bson.M{"_id": "featureCompatibilityVersion"})
+	res.Decode(&result)
 	return result.Version
 }
 
@@ -126,13 +126,4 @@ func dottedStringToSlice(s string) ([]int, error) {
 		parts = append(parts, i)
 	}
 	return parts, nil
-}
-
-func IsReplicaSet(s *mgo.Session) bool {
-	db := s.DB("admin")
-	var result bson.M
-	cmd := bson.M{"isMaster": 1}
-	db.Run(cmd, &result)
-	_, ok := result["setName"]
-	return ok
 }

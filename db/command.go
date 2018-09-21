@@ -140,16 +140,15 @@ func (sp *SessionProvider) GetNodeType() (NodeType, error) {
 	return Standalone, nil
 }
 
-//
-// // IsReplicaSet returns a boolean which is true if the connected server is part
-// // of a replica set.
-// func (sp *SessionProvider) IsReplicaSet() (bool, error) {
-// 	nodeType, err := sp.GetNodeType()
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	return nodeType == ReplSet, nil
-// }
+// IsReplicaSet returns a boolean which is true if the connected server is part
+// of a replica set.
+func (sp *SessionProvider) IsReplicaSet() (bool, error) {
+	nodeType, err := sp.GetNodeType()
+	if err != nil {
+		return false, err
+	}
+	return nodeType == ReplSet, nil
+}
 
 // IsMongos returns true if the connected server is a mongos.
 func (sp *SessionProvider) IsMongos() (bool, error) {
@@ -259,7 +258,7 @@ func (sp *SessionProvider) FindOne(db, collection string, skip int, query interf
 // ApplyFlags applies flags to the given query session.
 func ApplyFlags(opts []findopt.One, flags int) []findopt.One {
 	if flags&Snapshot > 0 {
-		opts = append(opts, findopt.Hint("_id"))
+		opts = append(opts, findopt.Hint("_id_"))
 	}
 	if flags&LogReplay > 0 {
 		opts = append(opts, findopt.OplogReplay(true))
