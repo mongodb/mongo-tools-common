@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	gbson "github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -39,7 +40,7 @@ func (ci *CollectionInfo) GetUUID() string {
 	}
 	if v, ok := ci.Info["uuid"]; ok {
 		switch x := v.(type) {
-		case gbson.Binary:
+		case primitive.Binary:
 			if x.Subtype == 4 {
 				return hex.EncodeToString(x.Data)
 			}
@@ -99,9 +100,9 @@ func getIndexesPre28(coll *mgo.Collection) (*mgo.Iter, error) {
 // Assumes that mongo.Database will normalize legacy names to omit database
 // name as required by the Enumerate Collections spec
 func GetCollections(database *mongo.Database, name string) (mongo.Cursor, error) {
-	filter := gbson.NewDocument()
+	filter := gbson.D{}
 	if len(name) > 0 {
-		filter.Append(gbson.EC.String("name", name))
+		filter = append(filter, primitive.E{"name", name})
 	}
 
 	cursor, err := database.ListCollections(nil, filter)

@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/insertopt"
+	mopt "github.com/mongodb/mongo-go-driver/mongo/options"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -80,6 +80,6 @@ func (bb *BufferedBulkInserter) Flush() error {
 		return nil
 	}
 	defer bb.resetBulk()
-	_, err := bb.collection.InsertMany(context.Background(), bb.documents, insertopt.Ordered(!bb.unordered))
+	_, err := bb.collection.InsertMany(context.Background(), bb.documents, mopt.InsertMany().SetOrdered(!bb.unordered))
 	return err
 }

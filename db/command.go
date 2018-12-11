@@ -10,10 +10,8 @@ import (
 	"context"
 	"fmt"
 
-	gbson "github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/core/readpref"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
-	"github.com/mongodb/mongo-go-driver/mongo/runcmdopt"
+	mopt "github.com/mongodb/mongo-go-driver/mongo/options"
+	"github.com/mongodb/mongo-go-driver/mongo/readpref"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -59,12 +57,14 @@ type CommandRunner interface {
 
 func (sp *SessionProvider) Run(command interface{}, out interface{}, name string) error {
 	db := sp.DB(name)
-	result, err := db.RunCommand(context.Background(), command)
+	result := db.RunCommand(context.Background(), command)
+	if result.Err() != nil {
+		return result.Err()
+	}
+	err := result.Decode(out)
 	if err != nil {
 		return err
 	}
-	bytes, _ := gbson.Marshal(result)
-	gbson.Unmarshal(bytes, out)
 	return nil
 }
 
@@ -120,16 +120,18 @@ func (sp *SessionProvider) GetNodeType() (NodeType, error) {
 		Hosts   interface{} `bson:"hosts"`
 		Msg     string      `bson:"msg"`
 	}{}
-	result, err := session.Database("admin").RunCommand(
+	result := session.Database("admin").RunCommand(
 		context.Background(),
 		&bson.M{"ismaster": 1},
-		runcmdopt.ReadPreference(readpref.Nearest()),
+		mopt.RunCmd().SetReadPreference(readpref.Nearest()),
 	)
+	if result.Err() != nil {
+		return Unknown, err
+	}
+	err = result.Decode(&masterDoc)
 	if err != nil {
 		return Unknown, err
 	}
-	bytes, _ := gbson.Marshal(result)
-	gbson.Unmarshal(bytes, &masterDoc)
 	if masterDoc.SetName != nil || masterDoc.Hosts != nil {
 		return ReplSet, nil
 	} else if masterDoc.Msg == "isdbgrid" {
@@ -247,21 +249,20 @@ func (sp *SessionProvider) FindOne(db, collection string, skip int, query interf
 		return err
 	}
 
-	opts := []findopt.One{findopt.Sort(sort), findopt.Skip(int64(skip))}
-	opts = ApplyFlags(opts, flags)
+	opts := mopt.FindOne().SetSort(sort).SetSkip(int64(skip))
+	ApplyFlags(opts, flags)
 
-	res := session.Database(db).Collection(collection).FindOne(nil, query, opts...)
+	res := session.Database(db).Collection(collection).FindOne(nil, query, opts)
 	err = res.Decode(into)
 	return err
 }
 
 // ApplyFlags applies flags to the given query session.
-func ApplyFlags(opts []findopt.One, flags int) []findopt.One {
+func ApplyFlags(opts *mopt.FindOneOptions, flags int) {
 	if flags&Snapshot > 0 {
-		opts = append(opts, findopt.Hint("_id_"))
+		opts.SetHint("_id_")
 	}
 	if flags&LogReplay > 0 {
-		opts = append(opts, findopt.OplogReplay(true))
+		opts.SetOplogReplay(true)
 	}
-	return opts
 }

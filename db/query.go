@@ -2,8 +2,7 @@ package db
 
 import (
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/countopt"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	mopt "github.com/mongodb/mongo-go-driver/mongo/options"
 )
 
 // DeferredQuery represents a deferred query
@@ -15,23 +14,23 @@ type DeferredQuery struct {
 }
 
 func (q *DeferredQuery) Count() (int, error) {
-	var opt countopt.Count
+	opt := mopt.Count()
 	if q.Hint != nil {
-		opt = countopt.Hint(q.Hint)
+		opt.SetHint(q.Hint)
 	}
 	c, err := q.Coll.CountDocuments(nil, q.Filter, opt)
 	return int(c), err
 }
 
 func (q *DeferredQuery) Iter() (mongo.Cursor, error) {
-	opts := make([]findopt.Find, 0)
+	opts := mopt.Find()
 	if q.Hint != nil {
-		opts = append(opts, findopt.Hint(q.Hint))
+		opts.SetHint(q.Hint)
 	}
 	if q.LogReplay {
-		opts = append(opts, findopt.OplogReplay(true))
+		opts.SetOplogReplay(true)
 	}
-	return q.Coll.Find(nil, q.Filter, opts...)
+	return q.Coll.Find(nil, q.Filter, opts)
 }
 
 // XXX temporary fix; fake a Repair via regular cursor

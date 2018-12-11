@@ -13,10 +13,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/mongodb/mongo-go-driver/core/readpref"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/clientopt"
-	"github.com/mongodb/mongo-go-driver/mongo/dbopt"
+	mopt "github.com/mongodb/mongo-go-driver/mongo/options"
+	"github.com/mongodb/mongo-go-driver/mongo/readpref"
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/password"
 	"gopkg.in/mgo.v2/bson"
@@ -130,7 +129,7 @@ func (self *SessionProvider) Close() {
 func (self *SessionProvider) DB(name string) *mongo.Database {
 	self.Lock()
 	defer self.Unlock()
-	return self.client.Database(name, dbopt.ReadPreference(self.readPref))
+	return self.client.Database(name, mopt.Database().SetReadPreference(self.readPref))
 }
 
 // SetFlags allows certain modifications to the masterSession after initial creation.
@@ -176,33 +175,30 @@ func NewSessionProvider(opts options.ToolOptions) (*SessionProvider, error) {
 }
 
 func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
-	clientOpts := make([]clientopt.Option, 0)
+	clientopt := mopt.Client()
 	timeout := time.Duration(opts.Timeout) * time.Second
 
-	clientOpts = append(
-		clientOpts,
-		clientopt.ConnectTimeout(timeout),
-		clientopt.SocketTimeout(SocketTimeout*time.Second),
-		clientopt.ReplicaSet(opts.ReplicaSetName),
-		clientopt.Single(opts.Direct),
-	)
+	clientopt.SetConnectTimeout(timeout)
+	clientopt.SetSocketTimeout(SocketTimeout * time.Second)
+	clientopt.SetReplicaSet(opts.ReplicaSetName)
+	clientopt.SetSingle(opts.Direct)
 
 	if opts.Auth != nil {
-		auth := clientopt.Credential{
+		cred := mopt.Credential{
 			Username:      opts.Auth.Username,
 			Password:      opts.Auth.Password,
 			AuthSource:    opts.GetAuthenticationDatabase(),
 			AuthMechanism: opts.Auth.Mechanism,
 		}
-		if opts.Kerberos != nil && auth.AuthMechanism == "GSSAPI" {
+		if opts.Kerberos != nil && cred.AuthMechanism == "GSSAPI" {
 			props := make(map[string]string)
 			if opts.Kerberos.Service != "" {
 				props["SERVICE_NAME"] = opts.Kerberos.Service
 			}
 			// XXX How do we use opts.Kerberos.ServiceHost if at all?
-			auth.AuthMechanismProperties = props
+			cred.AuthMechanismProperties = props
 		}
-		clientOpts = append(clientOpts, clientopt.Auth(auth))
+		clientopt.SetAuth(cred)
 	}
 
 	if opts.SSL != nil {
@@ -214,7 +210,7 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 			return nil, fmt.Errorf("CRL files are not supported on this platform")
 		}
 
-		ssl := &clientopt.SSLOpt{Enabled: opts.UseSSL}
+		ssl := &mopt.SSLOpt{Enabled: opts.UseSSL}
 		if opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost {
 			ssl.Insecure = true
 		}
@@ -227,7 +223,7 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 		if opts.SSLCAFile != "" {
 			ssl.CaFile = opts.SSLCAFile
 		}
-		clientOpts = append(clientOpts, clientopt.SSL(ssl))
+		clientopt.SetSSL(ssl)
 	}
 
 	var uri string
@@ -246,7 +242,7 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 		uri = fmt.Sprintf("mongodb://%s:%s/", host, port)
 	}
 
-	return mongo.NewClientWithOptions(uri, clientOpts...)
+	return mongo.NewClientWithOptions(uri, clientopt)
 }
 
 // IsConnectionError returns a boolean indicating if a given error is due to
