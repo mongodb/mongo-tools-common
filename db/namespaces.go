@@ -15,6 +15,7 @@ import (
 	gbson "github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-tools-common/log"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -44,6 +45,12 @@ func (ci *CollectionInfo) GetUUID() string {
 			if x.Subtype == 4 {
 				return hex.EncodeToString(x.Data)
 			}
+		case bson.Binary:
+			if x.Kind == 4 {
+				return hex.EncodeToString(x.Data)
+			}
+		default:
+			log.Logvf(log.DebugHigh, "unknown UUID BSON type '%T'", v)
 		}
 	}
 	return ""
