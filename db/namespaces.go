@@ -138,20 +138,22 @@ func GetCollectionInfo(coll *mongo.Collection) (*CollectionInfo, error) {
 	defer iter.Close(context.Background())
 	comparisonName := coll.Name()
 
-	collInfo := &CollectionInfo{}
+	var foundCollInfo *CollectionInfo
 	for iter.Next(nil) {
+		collInfo := &CollectionInfo{}
 		err = iter.Decode(collInfo)
 		if err != nil {
 			return nil, err
 		}
 		if collInfo.Name == comparisonName {
+			foundCollInfo = collInfo
 			break
 		}
 	}
 	if err := iter.Err(); err != nil {
 		return nil, err
 	}
-	return collInfo, nil
+	return foundCollInfo, nil
 }
 
 func StripDBFromNamespace(namespace string, dbName string) (string, error) {
