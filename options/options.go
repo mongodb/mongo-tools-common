@@ -436,22 +436,19 @@ func (o *ToolOptions) ParseArgs(args []string) ([]string, error) {
 
 	failpoint.ParseFailpoints(o.Failpoints)
 
-	// Generate URI from Host and Port if not provided
-	if o.URI == nil || o.URI.ConnectionString == "" {
+	if o.URI != nil && o.URI.ConnectionString != "" {
+		cs, err := connstring.ParseURIConnectionString(o.URI.ConnectionString)
+		if err != nil {
+			return []string{}, err
+		}
+		err = o.setOptionsFromURI(cs)
+		if err != nil {
+			return []string{}, err
+		}
+	} else {
+		// If URI not provided, get replica set name and generate connection string
+		_, o.ReplicaSetName = util.SplitHostArg(o.Host)
 		o.URI = &URI{ConnectionString: util.BuildURI(o.Host, o.Port)}
-		o.URI.AddKnownURIParameters(KnownURIOptionsReplicaSet)
-		// Clear Host/Port so they aren't reported in conflict with O.URI
-		o.Host = ""
-		o.Port = ""
-	}
-
-	cs, err := connstring.ParseURIConnectionString(o.URI.ConnectionString)
-	if err != nil {
-		return []string{}, err
-	}
-	err = o.setOptionsFromURI(cs)
-	if err != nil {
-		return []string{}, err
 	}
 
 	// connect directly, unless a replica set name is explicitly specified
