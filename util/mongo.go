@@ -61,6 +61,35 @@ func CreateConnectionAddrs(host, port string) []string {
 	return addrs
 }
 
+// BuildURI assembles a URI from host and port arguments, including a possible
+// replica set name on the host part
+func BuildURI(host, port string) string {
+	seedlist, setname := SplitHostArg(host)
+
+	// if any seedlist entry is empty, make it localhost
+	for i := range seedlist {
+		if seedlist[i] == "" {
+			seedlist[i] = "localhost"
+		}
+	}
+
+	// if a port is provided, append it to any host without a port; if any
+	// host part is empty string, make it localhost
+	if port != "" {
+		for i := range seedlist {
+			if strings.Index(seedlist[i], ":") == -1 {
+				seedlist[i] = seedlist[i] + ":" + port
+			}
+		}
+	}
+
+	hostpairs := strings.Join(seedlist, ",")
+	if setname != "" {
+		return fmt.Sprintf("mongodb://%s/?replicaSet=%s", hostpairs, setname)
+	}
+	return fmt.Sprintf("mongodb://%s/", hostpairs)
+}
+
 // SplitNamespace splits a namespace path into a database and collection,
 // returned in that order.
 func SplitNamespace(namespace string) (string, string) {

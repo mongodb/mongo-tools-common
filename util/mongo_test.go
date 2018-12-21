@@ -7,6 +7,7 @@
 package util
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/testtype"
@@ -18,26 +19,47 @@ func TestSplitHostArg(t *testing.T) {
 	testtype.VerifyTestType(t, testtype.UnitTestType)
 
 	Convey("When extracting the replica set and hosts from a connection"+
-		" url", t, func() {
+		" host arg", t, func() {
 
-		Convey("an empty url should lead to an empty replica set name"+
+		Convey("an empty host arg should lead to an empty replica set name"+
 			" and hosts slice", func() {
 			hosts, setName := SplitHostArg("")
 			So(hosts, ShouldResemble, []string{""})
 			So(setName, ShouldEqual, "")
 		})
 
-		Convey("a url not specifying a replica set name should lead to"+
+		Convey("a trailing slsah should lead to a replica set name"+
+			" and empty hosts", func() {
+			hosts, setName := SplitHostArg("foo/")
+			So(hosts, ShouldResemble, []string{""})
+			So(setName, ShouldEqual, "foo")
+		})
+
+		Convey("a host arg not specifying a replica set name should lead to"+
 			" an empty replica set name", func() {
 			hosts, setName := SplitHostArg("host1,host2")
 			So(hosts, ShouldResemble, []string{"host1", "host2"})
 			So(setName, ShouldEqual, "")
 		})
 
-		Convey("a url specifying a replica set name should lead to that name"+
+		Convey("a host arg specifying a replica set name should lead to that name"+
 			" being returned", func() {
 			hosts, setName := SplitHostArg("foo/host1,host2")
 			So(hosts, ShouldResemble, []string{"host1", "host2"})
+			So(setName, ShouldEqual, "foo")
+		})
+
+		Convey("a host arg shouldn't have host order altered"+
+			" being returned", func() {
+			hosts, setName := SplitHostArg("foo/host2,host1")
+			So(hosts, ShouldResemble, []string{"host2", "host1"})
+			So(setName, ShouldEqual, "foo")
+		})
+
+		Convey("a host arg with host/port pairs should preserve the pairs"+
+			" in the return", func() {
+			hosts, setName := SplitHostArg("foo/host1:27017,host2:27017")
+			So(hosts, ShouldResemble, []string{"host1:27017", "host2:27017"})
 			So(setName, ShouldEqual, "foo")
 		})
 
@@ -69,6 +91,33 @@ func TestCreateConnectionAddrs(t *testing.T) {
 
 	})
 
+}
+
+func TestBuildURI(t *testing.T) {
+
+	testtype.VerifyTestType(t, testtype.UnitTestType)
+
+	Convey("Generating URIs from host and port arguments", t, func() {
+		cases := []struct{ h, p, u string }{
+			{h: "", p: "", u: "mongodb://localhost/"},
+			{h: "host1", p: "", u: "mongodb://host1/"},
+			{h: "", p: "33333", u: "mongodb://localhost:33333/"},
+			{h: "host1", p: "33333", u: "mongodb://host1:33333/"},
+			{h: "host1,host2", p: "33333", u: "mongodb://host1:33333,host2:33333/"},
+			{h: "host1,host2:27017", p: "33333", u: "mongodb://host1:33333,host2:27017/"},
+			{h: "foo/", p: "", u: "mongodb://localhost/?replicaSet=foo"},
+			{h: "foo/", p: "33333", u: "mongodb://localhost:33333/?replicaSet=foo"},
+			{h: "foo/host1,host2:27017", p: "33333", u: "mongodb://host1:33333,host2:27017/?replicaSet=foo"},
+		}
+
+		for _, c := range cases {
+			label := fmt.Sprintf("'%s', '%s' should give '%s'", c.h, c.p, c.u)
+			Convey(label, func() {
+				got := BuildURI(c.h, c.p)
+				So(got, ShouldEqual, c.u)
+			})
+		}
+	})
 }
 
 func TestInvalidNames(t *testing.T) {

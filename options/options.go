@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jessevdk/go-flags"
+	flags "github.com/jessevdk/go-flags"
 	"github.com/mongodb/mongo-tools-common/connstring"
 	"github.com/mongodb/mongo-tools-common/failpoint"
 	"github.com/mongodb/mongo-tools-common/log"
@@ -430,24 +430,28 @@ func (o *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, err
 	}
 
-	// connect directly, unless a replica set name is explicitly specified
-	if o.Host != "" {
-		_, o.ReplicaSetName = util.SplitHostArg(o.Host)
-		o.Direct = (o.ReplicaSetName == "")
-	}
-
 	failpoint.ParseFailpoints(o.Failpoints)
 
-	if o.URI != nil && o.URI.ConnectionString != "" {
-		cs, err := connstring.ParseURIConnectionString(o.URI.ConnectionString)
-		if err != nil {
-			return []string{}, err
-		}
-		err = o.setOptionsFromURI(cs)
-		if err != nil {
-			return []string{}, err
-		}
+	// Generate URI from Host and Port if not provided
+	if o.URI == nil || o.URI.ConnectionString == "" {
+		o.URI = &URI{ConnectionString: util.BuildURI(o.Host, o.Port)}
+		o.URI.AddKnownURIParameters(KnownURIOptionsReplicaSet)
+		// Clear Host/Port so they aren't reported in conflict with O.URI
+		o.Host = ""
+		o.Port = ""
 	}
+
+	cs, err := connstring.ParseURIConnectionString(o.URI.ConnectionString)
+	if err != nil {
+		return []string{}, err
+	}
+	err = o.setOptionsFromURI(cs)
+	if err != nil {
+		return []string{}, err
+	}
+
+	// connect directly, unless a replica set name is explicitly specified
+	o.Direct = (o.ReplicaSetName == "")
 
 	return args, err
 }

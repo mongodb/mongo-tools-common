@@ -11,7 +11,6 @@ package db
 import (
 	"context"
 	"errors"
-	"regexp"
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/mongo"
@@ -231,23 +230,9 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 	if opts.URI != nil && opts.URI.ConnectionString != "" {
 		uri = opts.URI.ConnectionString
 	} else {
-		host := opts.Host
-		if host == "" {
-			host = "localhost"
-		}
-		hasPort, _ := regexp.MatchString(":[0-9]+$", host)
-		if hasPort && opts.Port != "" {
-			return nil, fmt.Errorf("can't specify --host with port and --port")
-		}
-		if hasPort {
-			uri = fmt.Sprintf("mongodb://%s/", host)
-		} else {
-			port := opts.Port
-			if port == "" {
-				port = "27017"
-			}
-			uri = fmt.Sprintf("mongodb://%s:%s/", host, port)
-		}
+		// Shouldn't ever reach here because URI should be set in options parsing, but
+		// just in case, we'll set a fallback.
+		uri = "mongodb://localhost/"
 	}
 
 	return mongo.NewClientWithOptions(uri, clientopt)
