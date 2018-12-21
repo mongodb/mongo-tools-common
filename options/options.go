@@ -432,7 +432,7 @@ func (o *ToolOptions) ParseArgs(args []string) ([]string, error) {
 
 	// connect directly, unless a replica set name is explicitly specified
 	if o.Host != "" {
-		_, o.ReplicaSetName = util.ParseConnectionString(o.Host)
+		_, o.ReplicaSetName = util.SplitHostArg(o.Host)
 		o.Direct = (o.ReplicaSetName == "")
 	}
 

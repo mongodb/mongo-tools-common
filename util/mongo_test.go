@@ -13,7 +13,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestParseConnectionString(t *testing.T) {
+func TestSplitHostArg(t *testing.T) {
 
 	testtype.VerifyTestType(t, testtype.UnitTestType)
 
@@ -22,21 +22,21 @@ func TestParseConnectionString(t *testing.T) {
 
 		Convey("an empty url should lead to an empty replica set name"+
 			" and hosts slice", func() {
-			hosts, setName := ParseConnectionString("")
+			hosts, setName := SplitHostArg("")
 			So(hosts, ShouldResemble, []string{""})
 			So(setName, ShouldEqual, "")
 		})
 
 		Convey("a url not specifying a replica set name should lead to"+
 			" an empty replica set name", func() {
-			hosts, setName := ParseConnectionString("host1,host2")
+			hosts, setName := SplitHostArg("host1,host2")
 			So(hosts, ShouldResemble, []string{"host1", "host2"})
 			So(setName, ShouldEqual, "")
 		})
 
 		Convey("a url specifying a replica set name should lead to that name"+
 			" being returned", func() {
-			hosts, setName := ParseConnectionString("foo/host1,host2")
+			hosts, setName := SplitHostArg("foo/host1,host2")
 			So(hosts, ShouldResemble, []string{"host1", "host2"})
 			So(setName, ShouldEqual, "foo")
 		})

@@ -19,7 +19,7 @@ const (
 )
 
 // Extract the replica set name and the list of hosts from the connection string
-func ParseConnectionString(connString string) ([]string, string) {
+func SplitHostArg(connString string) ([]string, string) {
 
 	// strip off the replica set name from the beginning
 	slashIndex := strings.Index(connString, "/")
@@ -49,7 +49,7 @@ func CreateConnectionAddrs(host, port string) []string {
 	}
 
 	// parse the host string into the individual hosts
-	addrs, _ := ParseConnectionString(host)
+	addrs, _ := SplitHostArg(host)
 
 	// if a port is specified, append it to all the hosts
 	if port != "" {
