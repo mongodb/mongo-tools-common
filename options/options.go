@@ -18,6 +18,7 @@ import (
 	"time"
 
 	flags "github.com/jessevdk/go-flags"
+	"github.com/mongodb/mongo-go-driver/mongo/readpref"
 	"github.com/mongodb/mongo-tools-common/connstring"
 	"github.com/mongodb/mongo-tools-common/failpoint"
 	"github.com/mongodb/mongo-tools-common/log"
@@ -79,6 +80,9 @@ type ToolOptions struct {
 	// with the given name. The default is to communicate with any server
 	// specified or discovered via the servers contacted.
 	ReplicaSetName string
+
+	// ReadPreference, if specified, sets the client default
+	ReadPreference *readpref.ReadPref
 
 	// for caching the parser
 	parser *flags.Parser
