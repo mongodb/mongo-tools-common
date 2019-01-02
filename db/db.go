@@ -178,6 +178,9 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 	if opts.ReadPreference != nil {
 		clientopt.SetReadPreference(opts.ReadPreference)
 	}
+	if opts.WriteConcern != nil {
+		clientopt.SetWriteConcern(opts.WriteConcern)
+	}
 
 	if opts.Auth != nil {
 		cred := mopt.Credential{

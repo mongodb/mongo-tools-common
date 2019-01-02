@@ -19,6 +19,7 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 	"github.com/mongodb/mongo-go-driver/mongo/readpref"
+	"github.com/mongodb/mongo-go-driver/mongo/writeconcern"
 	"github.com/mongodb/mongo-tools-common/connstring"
 	"github.com/mongodb/mongo-tools-common/failpoint"
 	"github.com/mongodb/mongo-tools-common/log"
@@ -83,6 +84,9 @@ type ToolOptions struct {
 
 	// ReadPreference, if specified, sets the client default
 	ReadPreference *readpref.ReadPref
+
+	// WriteConcern, if specified, sets the client default
+	WriteConcern *writeconcern.WriteConcern
 
 	// for caching the parser
 	parser *flags.Parser
