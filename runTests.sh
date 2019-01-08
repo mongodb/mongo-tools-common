@@ -20,13 +20,11 @@ rm -rf vendor/pkg
 ec=0
 
 # Run all tests depending on what flags are set in the environment
-# TODO: mongotop needs a test
-# Note: Does not test mongoreplay
 for i in $(find . -iname *.go | grep -v '^\./vendor/' | sed -e 's/\(.*\)\/.*\.go/\1/' | sort -u); do 
-        echo "Testing ${i}..."
+        echo "Testing ${i}/..."
         COMMON_SUBPKG=$(basename $i)
         COVERAGE_ARGS="";
-        if [ "$RUN_COVERAGE" == "true" ]; then
+        if [ "$RUN_COVERAGE" = "true" ]; then
           export COVERAGE_ARGS="-coverprofile=coverage_$COMMON_SUBPKG.out"
         fi
         if [ "$ON_EVERGREEN" = "true" ]; then
