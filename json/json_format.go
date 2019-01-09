@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const JSON_DATE_FORMAT = "2006-01-02T15:04:05.000Z"
+const JSONDateFormat = "2006-01-02T15:04:05.000Z"
 
 func (b BinData) MarshalJSON() ([]byte, error) {
 	data := fmt.Sprintf(`{ "$binary": "%v", "$type": "%0x" }`,
@@ -51,7 +51,7 @@ func (d Date) MarshalJSON() ([]byte, error) {
 	n := int64(d)
 	if d.isFormatable() {
 		t := time.Unix(n/1e3, n%1e3*1e6)
-		data = fmt.Sprintf(`{ "$date": "%v" }`, t.UTC().Format(JSON_DATE_FORMAT))
+		data = fmt.Sprintf(`{ "$date": "%v" }`, t.UTC().Format(JSONDateFormat))
 	} else {
 		data = fmt.Sprintf(`{ "$date": { "$numberLong" : "%v" }}`, n)
 	}
@@ -97,12 +97,12 @@ func (d DBPointer) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (_ MinKey) MarshalJSON() ([]byte, error) {
+func (MinKey) MarshalJSON() ([]byte, error) {
 	data := `{ "$minKey": 1 }`
 	return []byte(data), nil
 }
 
-func (_ MaxKey) MarshalJSON() ([]byte, error) {
+func (MaxKey) MarshalJSON() ([]byte, error) {
 	data := `{ "$maxKey": 1 }`
 	return []byte(data), nil
 }
@@ -163,7 +163,7 @@ func (t Timestamp) MarshalJSON() ([]byte, error) {
 	return []byte(data), nil
 }
 
-func (_ Undefined) MarshalJSON() ([]byte, error) {
+func (Undefined) MarshalJSON() ([]byte, error) {
 	data := `{ "$undefined": true }`
 	return []byte(data), nil
 }

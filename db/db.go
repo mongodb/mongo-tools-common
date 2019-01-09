@@ -96,57 +96,57 @@ type Oplog struct {
 
 // Returns a mongo.Client connected to the database server for which the
 // session provider is configured.
-func (self *SessionProvider) GetSession() (*mongo.Client, error) {
-	self.Lock()
-	defer self.Unlock()
+func (sp *SessionProvider) GetSession() (*mongo.Client, error) {
+	sp.Lock()
+	defer sp.Unlock()
 
-	if self.client == nil {
+	if sp.client == nil {
 		return nil, errors.New("SessionProvider already closed")
 	}
 
-	if !self.connectCalled {
-		self.client.Connect(context.Background())
-		self.connectCalled = true
+	if !sp.connectCalled {
+		sp.client.Connect(context.Background())
+		sp.connectCalled = true
 	}
 
-	return self.client, nil
+	return sp.client, nil
 }
 
 // Close closes the master session in the connection pool
-func (self *SessionProvider) Close() {
-	self.Lock()
-	defer self.Unlock()
-	if self.client != nil {
-		self.client.Disconnect(context.Background())
-		self.client = nil
+func (sp *SessionProvider) Close() {
+	sp.Lock()
+	defer sp.Unlock()
+	if sp.client != nil {
+		sp.client.Disconnect(context.Background())
+		sp.client = nil
 	}
 }
 
 // DB provides a database with the default read preference
-func (self *SessionProvider) DB(name string) *mongo.Database {
-	return self.client.Database(name)
+func (sp *SessionProvider) DB(name string) *mongo.Database {
+	return sp.client.Database(name)
 }
 
 // SetFlags allows certain modifications to the masterSession after initial creation.
-func (self *SessionProvider) SetFlags(flagBits sessionFlag) {
+func (sp *SessionProvider) SetFlags(flagBits sessionFlag) {
 	panic("unsupported")
 }
 
 // SetReadPreference sets the read preference mode in the SessionProvider
 // and eventually in the masterSession
-func (self *SessionProvider) SetReadPreference(pref *readpref.ReadPref) {
+func (sp *SessionProvider) SetReadPreference(pref *readpref.ReadPref) {
 	panic("unsupported")
 }
 
 // SetBypassDocumentValidation sets whether to bypass document validation in the SessionProvider
 // and eventually in the masterSession
-func (self *SessionProvider) SetBypassDocumentValidation(bypassDocumentValidation bool) {
+func (sp *SessionProvider) SetBypassDocumentValidation(bypassDocumentValidation bool) {
 	panic("unsupported")
 }
 
 // SetTags sets the server selection tags in the SessionProvider
 // and eventually in the masterSession
-func (self *SessionProvider) SetTags(tags bson.D) {
+func (sp *SessionProvider) SetTags(tags bson.D) {
 	panic("unsupported")
 }
 

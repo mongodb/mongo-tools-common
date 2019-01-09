@@ -49,6 +49,6 @@ func (c *countProgressor) Set(amount int64) {
 	atomic.StoreInt64(&c.current, amount)
 }
 
-func NewCounter(max int64) *countProgressor {
+func newCounter(max int64) *countProgressor {
 	return &countProgressor{max, 0}
 }

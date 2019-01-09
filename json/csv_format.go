@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-const CSV_DATE_FORMAT = "2006-01-02T15:04:05.000Z"
-
 func (b BinData) String() string {
 	data, err := base64.StdEncoding.DecodeString(b.Base64)
 	if err != nil {
@@ -33,7 +31,7 @@ func (d Date) String() string {
 	if d.isFormatable() {
 		n := int64(d)
 		t := time.Unix(n/1e3, n%1e3*1e6)
-		return t.UTC().Format(JSON_DATE_FORMAT)
+		return t.UTC().Format(JSONDateFormat)
 	}
 	// date.MarshalJSON always returns a nil err.
 	data, _ := d.MarshalJSON()
@@ -54,11 +52,11 @@ func (f Float) String() string {
 	return fmt.Sprintf("%v", float64(f))
 }
 
-func (_ MinKey) String() string {
+func (MinKey) String() string {
 	return "$MinKey"
 }
 
-func (_ MaxKey) String() string {
+func (MaxKey) String() string {
 	return "$MaxKey"
 }
 
@@ -85,6 +83,6 @@ func (t Timestamp) String() string {
 		t.Seconds, t.Increment)
 }
 
-func (_ Undefined) String() string {
+func (Undefined) String() string {
 	return `{ "$undefined": true }`
 }

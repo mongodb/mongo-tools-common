@@ -22,7 +22,7 @@ func TestBasicProgressBar(t *testing.T) {
 	writeBuffer := &bytes.Buffer{}
 
 	Convey("With a simple ProgressBar", t, func() {
-		watching := NewCounter(10)
+		watching := newCounter(10)
 		pbar := &Bar{
 			Name:      "\nTEST",
 			Watching:  watching,
@@ -69,7 +69,7 @@ func TestProgressBarWithNoMax(t *testing.T) {
 	writeBuffer := &bytes.Buffer{}
 
 	Convey("With a simple ProgressBar with no max value", t, func() {
-		watching := NewCounter(0)
+		watching := newCounter(0)
 		watching.Inc(5)
 		pbar := &Bar{
 			Name:     "test",
@@ -90,7 +90,7 @@ func TestBarConcurrency(t *testing.T) {
 	writeBuffer := &bytes.Buffer{}
 
 	Convey("With a simple ProgressBar", t, func() {
-		watching := NewCounter(1000)
+		watching := newCounter(1000)
 		watching.Inc(777)
 		pbar := &Bar{
 			Name:     "\nTEST",
@@ -173,7 +173,7 @@ func TestBarUnits(t *testing.T) {
 	writeBuffer := &bytes.Buffer{}
 
 	Convey("With a simple ProgressBar with IsBytes==true", t, func() {
-		watching := NewCounter(1024 * 1024)
+		watching := newCounter(1024 * 1024)
 		watching.Inc(777)
 		pbar := &Bar{
 			Name:     "\nTEST",

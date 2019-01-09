@@ -40,7 +40,7 @@ type legacyPrioritizer struct {
 	queue []*Intent
 }
 
-func NewLegacyPrioritizer(intentList []*Intent) *legacyPrioritizer {
+func newLegacyPrioritizer(intentList []*Intent) *legacyPrioritizer {
 	return &legacyPrioritizer{queue: intentList}
 }
 
@@ -72,8 +72,8 @@ type longestTaskFirstPrioritizer struct {
 	queue []*Intent
 }
 
-// NewLongestTaskFirstPrioritizer returns an initialized LTP prioritizer
-func NewLongestTaskFirstPrioritizer(intents []*Intent) *longestTaskFirstPrioritizer {
+// newLongestTaskFirstPrioritizer returns an initialized LTP prioritizer
+func newLongestTaskFirstPrioritizer(intents []*Intent) *longestTaskFirstPrioritizer {
 	sort.Sort(BySizeAndView(intents))
 	return &longestTaskFirstPrioritizer{
 		queue: intents,
@@ -150,9 +150,9 @@ type multiDatabaseLTFPrioritizer struct {
 	counterMap map[string]*dbCounter
 }
 
-// NewMultiDatabaseLTFPrioritizer takes in a list of intents and returns an
+// newMultiDatabaseLTFPrioritizer takes in a list of intents and returns an
 // initialized prioritizer.
-func NewMultiDatabaseLTFPrioritizer(intents []*Intent) *multiDatabaseLTFPrioritizer {
+func newMultiDatabaseLTFPrioritizer(intents []*Intent) *multiDatabaseLTFPrioritizer {
 	prioritizer := &multiDatabaseLTFPrioritizer{
 		counterMap: map[string]*dbCounter{},
 		dbHeap:     &DBHeap{},

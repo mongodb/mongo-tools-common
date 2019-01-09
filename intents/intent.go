@@ -117,8 +117,8 @@ func (it *Intent) IsSystemProfile() bool {
 	return it.C == "system.profile"
 }
 
-func (intent *Intent) IsSpecialCollection() bool {
-	return intent.IsSystemIndexes() || intent.IsUsers() || intent.IsRoles() || intent.IsAuthVersion() || intent.IsSystemProfile() || intent.IsOplog()
+func (it *Intent) IsSpecialCollection() bool {
+	return it.IsSystemIndexes() || it.IsUsers() || it.IsRoles() || it.IsAuthVersion() || it.IsSystemProfile() || it.IsOplog()
 }
 
 func (it *Intent) IsView() bool {
@@ -129,22 +129,22 @@ func (it *Intent) IsView() bool {
 	return isView
 }
 
-func (existing *Intent) MergeIntent(intent *Intent) {
+func (it *Intent) MergeIntent(newIt *Intent) {
 	// merge new intent into old intent
-	if existing.BSONFile == nil {
-		existing.BSONFile = intent.BSONFile
+	if it.BSONFile == nil {
+		it.BSONFile = newIt.BSONFile
 	}
-	if existing.Size == 0 {
-		existing.Size = intent.Size
+	if it.Size == 0 {
+		it.Size = newIt.Size
 	}
-	if existing.Location == "" {
-		existing.Location = intent.Location
+	if it.Location == "" {
+		it.Location = newIt.Location
 	}
-	if existing.MetadataFile == nil {
-		existing.MetadataFile = intent.MetadataFile
+	if it.MetadataFile == nil {
+		it.MetadataFile = newIt.MetadataFile
 	}
-	if existing.MetadataLocation == "" {
-		existing.MetadataLocation = intent.MetadataLocation
+	if it.MetadataLocation == "" {
+		it.MetadataLocation = newIt.MetadataLocation
 	}
 
 }
@@ -215,97 +215,97 @@ func (mgr *Manager) HasConfigDBIntent() bool {
 // PutOplogIntent takes an intent for an oplog and stores it in the intent manager with the
 // provided key. If the manager has smartPickOplog enabled, then it uses a priority system
 // to determine which oplog intent to maintain as the actual oplog.
-func (manager *Manager) PutOplogIntent(intent *Intent, managerKey string) {
-	if manager.smartPickOplog {
-		if existing := manager.specialIntents[managerKey]; existing != nil {
+func (mgr *Manager) PutOplogIntent(intent *Intent, managerKey string) {
+	if mgr.smartPickOplog {
+		if existing := mgr.specialIntents[managerKey]; existing != nil {
 			existing.MergeIntent(intent)
 			return
 		}
-		if manager.oplogIntent == nil {
+		if mgr.oplogIntent == nil {
 			// If there is no oplog intent, make this one the oplog.
-			manager.oplogIntent = intent
-			manager.specialIntents[managerKey] = intent
+			mgr.oplogIntent = intent
+			mgr.specialIntents[managerKey] = intent
 		} else if intent.DB == "" {
 			// We already have an oplog and this is a top priority oplog.
-			if manager.oplogIntent.DB == "" {
+			if mgr.oplogIntent.DB == "" {
 				// If the manager's current oplog is also top priority, we have a
 				// conflict and ignore this oplog.
-				manager.oplogConflict = true
+				mgr.oplogConflict = true
 			} else {
 				// If the manager's current oplog is lower priority, replace it and
 				// move that one to be a normal intent.
-				manager.putNormalIntent(manager.oplogIntent)
-				delete(manager.specialIntents, manager.oplogIntent.Namespace())
-				manager.oplogIntent = intent
-				manager.specialIntents[managerKey] = intent
+				mgr.putNormalIntent(mgr.oplogIntent)
+				delete(mgr.specialIntents, mgr.oplogIntent.Namespace())
+				mgr.oplogIntent = intent
+				mgr.specialIntents[managerKey] = intent
 			}
 		} else {
 			// We already have an oplog and this is a low priority oplog.
-			if manager.oplogIntent.DB != "" {
+			if mgr.oplogIntent.DB != "" {
 				// If the manager's current oplog is also low priority, set a conflict.
-				manager.oplogConflict = true
+				mgr.oplogConflict = true
 			}
 			// No matter what, set this lower priority oplog to be a normal intent.
-			manager.putNormalIntent(intent)
+			mgr.putNormalIntent(intent)
 		}
 	} else {
 		if intent.DB == "" && intent.C == "oplog" {
 			// If this is a normal oplog, then add it as an oplog intent.
-			if existing := manager.specialIntents[managerKey]; existing != nil {
+			if existing := mgr.specialIntents[managerKey]; existing != nil {
 				existing.MergeIntent(intent)
 				return
 			}
-			manager.oplogIntent = intent
-			manager.specialIntents[managerKey] = intent
+			mgr.oplogIntent = intent
+			mgr.specialIntents[managerKey] = intent
 		} else {
-			manager.putNormalIntent(intent)
+			mgr.putNormalIntent(intent)
 		}
 	}
 }
 
-func (manager *Manager) putNormalIntent(intent *Intent) {
-	manager.putNormalIntentWithNamespace(intent.Namespace(), intent)
+func (mgr *Manager) putNormalIntent(intent *Intent) {
+	mgr.putNormalIntentWithNamespace(intent.Namespace(), intent)
 }
 
-func (manager *Manager) putNormalIntentWithNamespace(ns string, intent *Intent) {
+func (mgr *Manager) putNormalIntentWithNamespace(ns string, intent *Intent) {
 	// BSON and metadata files for the same collection are merged
 	// into the same intent. This is done to allow for simple
 	// pairing of BSON + metadata without keeping track of the
 	// state of the filepath walker
-	if existing := manager.intents[ns]; existing != nil {
+	if existing := mgr.intents[ns]; existing != nil {
 		if existing.Namespace() != intent.Namespace() {
 			// remove old destination, add new one
 			dst := existing.Namespace()
-			dsts := manager.destinations[dst]
+			dsts := mgr.destinations[dst]
 			i := util.StringSliceIndex(dsts, ns)
-			manager.destinations[dst] = append(dsts[:i], dsts[i+1:]...)
+			mgr.destinations[dst] = append(dsts[:i], dsts[i+1:]...)
 
-			dsts = manager.destinations[intent.Namespace()]
-			manager.destinations[intent.Namespace()] = append(dsts, ns)
+			dsts = mgr.destinations[intent.Namespace()]
+			mgr.destinations[intent.Namespace()] = append(dsts, ns)
 		}
 		existing.MergeIntent(intent)
 		return
 	}
 
 	// if key doesn't already exist, add it to the manager
-	manager.intents[ns] = intent
-	manager.intentsByDiscoveryOrder = append(manager.intentsByDiscoveryOrder, intent)
+	mgr.intents[ns] = intent
+	mgr.intentsByDiscoveryOrder = append(mgr.intentsByDiscoveryOrder, intent)
 
-	manager.destinations[intent.Namespace()] = append(manager.destinations[intent.Namespace()], ns)
+	mgr.destinations[intent.Namespace()] = append(mgr.destinations[intent.Namespace()], ns)
 }
 
 // Put inserts an intent into the manager with the same source namespace as
 // its destinations.
-func (manager *Manager) Put(intent *Intent) {
+func (mgr *Manager) Put(intent *Intent) {
 	log.Logvf(log.DebugLow, "enqueued collection '%v'", intent.Namespace())
-	manager.PutWithNamespace(intent.Namespace(), intent)
+	mgr.PutWithNamespace(intent.Namespace(), intent)
 }
 
 // PutWithNamespace inserts an intent into the manager with the source set
 // to the provided namespace. Intents for the same collection are merged
 // together, so that BSON and metadata files for the same collection are
 // returned in the same intent.
-func (manager *Manager) PutWithNamespace(ns string, intent *Intent) {
+func (mgr *Manager) PutWithNamespace(ns string, intent *Intent) {
 	if intent == nil {
 		panic("cannot insert nil *Intent into IntentManager")
 	}
@@ -313,47 +313,47 @@ func (manager *Manager) PutWithNamespace(ns string, intent *Intent) {
 
 	// bucket special-case collections
 	if intent.IsOplog() {
-		manager.PutOplogIntent(intent, intent.Namespace())
+		mgr.PutOplogIntent(intent, intent.Namespace())
 		return
 	}
 	if intent.IsSystemIndexes() {
 		if intent.BSONFile != nil {
-			manager.indexIntents[db] = intent
-			manager.specialIntents[ns] = intent
+			mgr.indexIntents[db] = intent
+			mgr.specialIntents[ns] = intent
 		}
 		return
 	}
 	if intent.IsUsers() {
 		if intent.BSONFile != nil {
-			manager.usersIntent = intent
-			manager.specialIntents[ns] = intent
+			mgr.usersIntent = intent
+			mgr.specialIntents[ns] = intent
 		}
 		return
 	}
 	if intent.IsRoles() {
 		if intent.BSONFile != nil {
-			manager.rolesIntent = intent
-			manager.specialIntents[ns] = intent
+			mgr.rolesIntent = intent
+			mgr.specialIntents[ns] = intent
 		}
 		return
 	}
 	if intent.IsAuthVersion() {
 		if intent.BSONFile != nil {
-			manager.versionIntent = intent
-			manager.specialIntents[ns] = intent
+			mgr.versionIntent = intent
+			mgr.specialIntents[ns] = intent
 		}
 		return
 	}
 
-	manager.putNormalIntentWithNamespace(ns, intent)
+	mgr.putNormalIntentWithNamespace(ns, intent)
 }
 
-func (manager *Manager) GetOplogConflict() bool {
-	return manager.oplogConflict
+func (mgr *Manager) GetOplogConflict() bool {
+	return mgr.oplogConflict
 }
 
-func (manager *Manager) GetDestinationConflicts() (errs []DestinationConflictError) {
-	for dst, srcs := range manager.destinations {
+func (mgr *Manager) GetDestinationConflicts() (errs []DestinationConflictError) {
+	for dst, srcs := range mgr.destinations {
 		if len(srcs) <= 1 {
 			continue
 		}
@@ -366,42 +366,42 @@ func (manager *Manager) GetDestinationConflicts() (errs []DestinationConflictErr
 
 // Intents returns a slice containing all of the intents in the manager.
 // Intents is not thread safe
-func (manager *Manager) Intents() []*Intent {
+func (mgr *Manager) Intents() []*Intent {
 	allIntents := []*Intent{}
-	for _, intent := range manager.intents {
+	for _, intent := range mgr.intents {
 		allIntents = append(allIntents, intent)
 	}
-	for _, intent := range manager.indexIntents {
+	for _, intent := range mgr.indexIntents {
 		allIntents = append(allIntents, intent)
 	}
-	if manager.oplogIntent != nil {
-		allIntents = append(allIntents, manager.oplogIntent)
+	if mgr.oplogIntent != nil {
+		allIntents = append(allIntents, mgr.oplogIntent)
 	}
-	if manager.usersIntent != nil {
-		allIntents = append(allIntents, manager.usersIntent)
+	if mgr.usersIntent != nil {
+		allIntents = append(allIntents, mgr.usersIntent)
 	}
-	if manager.rolesIntent != nil {
-		allIntents = append(allIntents, manager.rolesIntent)
+	if mgr.rolesIntent != nil {
+		allIntents = append(allIntents, mgr.rolesIntent)
 	}
-	if manager.versionIntent != nil {
-		allIntents = append(allIntents, manager.versionIntent)
+	if mgr.versionIntent != nil {
+		allIntents = append(allIntents, mgr.versionIntent)
 	}
 	return allIntents
 }
 
-func (manager *Manager) IntentForNamespace(ns string) *Intent {
-	intent := manager.intents[ns]
+func (mgr *Manager) IntentForNamespace(ns string) *Intent {
+	intent := mgr.intents[ns]
 	if intent != nil {
 		return intent
 	}
-	intent = manager.specialIntents[ns]
+	intent = mgr.specialIntents[ns]
 	return intent
 }
 
 // Pop returns the next available intent from the manager. If the manager is
 // empty, it returns nil. Pop is thread safe.
-func (manager *Manager) Pop() *Intent {
-	return manager.prioritizer.Get()
+func (mgr *Manager) Pop() *Intent {
+	return mgr.prioritizer.Get()
 }
 
 // Peek returns a copy of a stored intent from the manager without removing
@@ -410,78 +410,78 @@ func (manager *Manager) Pop() *Intent {
 //
 // NOTE: There are no guarantees that peek will return a usable
 // intent after Finalize() is called.
-func (manager *Manager) Peek() *Intent {
-	if len(manager.intentsByDiscoveryOrder) == 0 {
+func (mgr *Manager) Peek() *Intent {
+	if len(mgr.intentsByDiscoveryOrder) == 0 {
 		return nil
 	}
-	intentCopy := *manager.intentsByDiscoveryOrder[0]
+	intentCopy := *mgr.intentsByDiscoveryOrder[0]
 	return &intentCopy
 }
 
 // Finish tells the prioritizer that mongorestore is done restoring
 // the given collection intent.
-func (manager *Manager) Finish(intent *Intent) {
-	manager.prioritizer.Finish(intent)
+func (mgr *Manager) Finish(intent *Intent) {
+	mgr.prioritizer.Finish(intent)
 }
 
 // Oplog returns the intent representing the oplog, which isn't
 // stored with the other intents, because it is dumped and restored in
 // a very different way from other collections.
-func (manager *Manager) Oplog() *Intent {
-	return manager.oplogIntent
+func (mgr *Manager) Oplog() *Intent {
+	return mgr.oplogIntent
 }
 
 // SystemIndexes returns the system.indexes bson for a database
-func (manager *Manager) SystemIndexes(dbName string) *Intent {
-	return manager.indexIntents[dbName]
+func (mgr *Manager) SystemIndexes(dbName string) *Intent {
+	return mgr.indexIntents[dbName]
 }
 
 // SystemIndexes returns the databases for which there are system.indexes
-func (manager *Manager) SystemIndexDBs() []string {
+func (mgr *Manager) SystemIndexDBs() []string {
 	databases := []string{}
-	for dbname := range manager.indexIntents {
+	for dbname := range mgr.indexIntents {
 		databases = append(databases, dbname)
 	}
 	return databases
 }
 
 // Users returns the intent of the users collection to restore, a special case
-func (manager *Manager) Users() *Intent {
-	return manager.usersIntent
+func (mgr *Manager) Users() *Intent {
+	return mgr.usersIntent
 }
 
 // Roles returns the intent of the user roles collection to restore, a special case
-func (manager *Manager) Roles() *Intent {
-	return manager.rolesIntent
+func (mgr *Manager) Roles() *Intent {
+	return mgr.rolesIntent
 }
 
 // AuthVersion returns the intent of the version collection to restore, a special case
-func (manager *Manager) AuthVersion() *Intent {
-	return manager.versionIntent
+func (mgr *Manager) AuthVersion() *Intent {
+	return mgr.versionIntent
 }
 
 // Finalize processes the intents for prioritization. Currently only two
 // kinds of prioritizers are supported. No more "Put" operations may be done
 // after finalize is called.
-func (manager *Manager) Finalize(pType PriorityType) {
+func (mgr *Manager) Finalize(pType PriorityType) {
 	switch pType {
 	case Legacy:
 		log.Logv(log.DebugHigh, "finalizing intent manager with legacy prioritizer")
-		manager.prioritizer = NewLegacyPrioritizer(manager.intentsByDiscoveryOrder)
+		mgr.prioritizer = newLegacyPrioritizer(mgr.intentsByDiscoveryOrder)
 	case LongestTaskFirst:
 		log.Logv(log.DebugHigh, "finalizing intent manager with longest task first prioritizer")
-		manager.prioritizer = NewLongestTaskFirstPrioritizer(manager.intentsByDiscoveryOrder)
+		mgr.prioritizer = newLongestTaskFirstPrioritizer(mgr.intentsByDiscoveryOrder)
 	case MultiDatabaseLTF:
 		log.Logv(log.DebugHigh, "finalizing intent manager with multi-database longest task first prioritizer")
-		manager.prioritizer = NewMultiDatabaseLTFPrioritizer(manager.intentsByDiscoveryOrder)
+		mgr.prioritizer = newMultiDatabaseLTFPrioritizer(mgr.intentsByDiscoveryOrder)
 	default:
 		panic("cannot initialize IntentPrioritizer with unknown type")
 	}
 	// release these for the garbage collector and to ensure code correctness
-	manager.intents = nil
-	manager.intentsByDiscoveryOrder = nil
+	mgr.intents = nil
+	mgr.intentsByDiscoveryOrder = nil
 }
 
-func (manager *Manager) UsePrioritizer(prioritizer IntentPrioritizer) {
-	manager.prioritizer = prioritizer
+func (mgr *Manager) UsePrioritizer(prioritizer IntentPrioritizer) {
+	mgr.prioritizer = prioritizer
 }

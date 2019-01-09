@@ -48,7 +48,7 @@ func TestManagerAttachAndDetach(t *testing.T) {
 		So(manager, ShouldNotBeNil)
 
 		Convey("adding 3 bars", func() {
-			progressor := NewCounter(10)
+			progressor := newCounter(10)
 			progressor.Inc(5)
 			manager.Attach("TEST1", progressor)
 			manager.Attach("TEST2", progressor)
@@ -117,7 +117,7 @@ func TestManagerStartAndStop(t *testing.T) {
 	Convey("With a progress.BarWriter with a waitTime of 10 ms and one bar", t, func() {
 		manager = NewBarWriter(writeBuffer, time.Millisecond*10, 10, false)
 		So(manager, ShouldNotBeNil)
-		watching := NewCounter(10)
+		watching := newCounter(10)
 		watching.Inc(5)
 		manager.Attach("TEST", watching)
 
@@ -150,7 +150,7 @@ func TestNumberOfWrites(t *testing.T) {
 		manager = NewBarWriter(cw, time.Millisecond*10, 10, false)
 		So(manager, ShouldNotBeNil)
 
-		manager.Attach("1", NewCounter(10))
+		manager.Attach("1", newCounter(10))
 
 		Convey("with one attached bar", func() {
 			So(len(manager.bars), ShouldEqual, 1)
@@ -162,7 +162,7 @@ func TestNumberOfWrites(t *testing.T) {
 		})
 
 		Convey("with two bars attached", func() {
-			manager.Attach("2", NewCounter(10))
+			manager.Attach("2", newCounter(10))
 			So(len(manager.bars), ShouldEqual, 2)
 
 			Convey("three writes should be made per render, since an empty write is added", func() {
@@ -173,7 +173,7 @@ func TestNumberOfWrites(t *testing.T) {
 
 		Convey("with 57 bars attached", func() {
 			for i := 2; i <= 57; i++ {
-				manager.Attach(strconv.Itoa(i), NewCounter(10))
+				manager.Attach(strconv.Itoa(i), newCounter(10))
 			}
 			So(len(manager.bars), ShouldEqual, 57)
 

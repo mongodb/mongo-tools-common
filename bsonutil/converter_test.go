@@ -75,9 +75,9 @@ func TestArraysBSONToJSON(t *testing.T) {
 				},
 			}
 
-			__jObj, err := ConvertBSONValueToJSON(bsonObj)
+			_JObj, err := ConvertBSONValueToJSON(bsonObj)
 			So(err, ShouldBeNil)
-			_jObj, ok := __jObj.([]interface{})
+			_jObj, ok := _JObj.([]interface{})
 			So(ok, ShouldBeTrue)
 			jObj, ok := _jObj[1].(bson.M)
 			So(ok, ShouldBeTrue)

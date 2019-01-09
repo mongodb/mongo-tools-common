@@ -175,7 +175,7 @@ type WriteConcern struct {
 	journal  bool
 }
 
-type OptionRegistrationFunction func(o *ToolOptions) error
+type OptionRegistrationFunction func(*ToolOptions) error
 
 var ConnectionOptFunctions []OptionRegistrationFunction
 
@@ -285,25 +285,25 @@ func New(appName, usageStr string, enabled EnabledOptions) *ToolOptions {
 
 // UseReadOnlyHostDescription changes the help description of the --host arg to
 // not mention the shard/host:port format used in the data-mutating tools
-func (o *ToolOptions) UseReadOnlyHostDescription() {
-	hostOpt := o.parser.FindOptionByLongName("host")
+func (opts *ToolOptions) UseReadOnlyHostDescription() {
+	hostOpt := opts.parser.FindOptionByLongName("host")
 	hostOpt.Description = "mongodb host(s) to connect to (use commas to delimit hosts)"
 }
 
 // FindOptionByLongName finds an option in any of the added option groups by
 // matching its long name; useful for modifying the attributes (e.g. description
 // or name) of an option
-func (o *ToolOptions) FindOptionByLongName(name string) *flags.Option {
-	return o.parser.FindOptionByLongName(name)
+func (opts *ToolOptions) FindOptionByLongName(name string) *flags.Option {
+	return opts.parser.FindOptionByLongName(name)
 }
 
 // Print the usage message for the tool to stdout.  Returns whether or not the
 // help flag is specified.
-func (o *ToolOptions) PrintHelp(force bool) bool {
-	if o.Help || force {
-		o.parser.WriteHelp(os.Stdout)
+func (opts *ToolOptions) PrintHelp(force bool) bool {
+	if opts.Help || force {
+		opts.parser.WriteHelp(os.Stdout)
 	}
-	return o.Help
+	return opts.Help
 }
 
 type versionInfo struct {
@@ -314,9 +314,9 @@ var versionInfos []versionInfo
 
 // Print the tool version to stdout.  Returns whether or not the version flag
 // is specified.
-func (o *ToolOptions) PrintVersion() bool {
-	if o.Version {
-		fmt.Printf("%v version: %v\n", o.AppName, o.VersionStr)
+func (opts *ToolOptions) PrintVersion() bool {
+	if opts.Version {
+		fmt.Printf("%v version: %v\n", opts.AppName, opts.VersionStr)
 		fmt.Printf("git version: %v\n", Gitspec)
 		fmt.Printf("Go version: %v\n", runtime.Version())
 		fmt.Printf("   os: %v\n", runtime.GOOS)
@@ -326,7 +326,7 @@ func (o *ToolOptions) PrintVersion() bool {
 			fmt.Printf("%s: %s\n", info.key, info.value)
 		}
 	}
-	return o.Version
+	return opts.Version
 }
 
 // Interface for extra options that need to be used by specific tools
@@ -402,57 +402,57 @@ func (uri *URI) LogUnsupportedOptions() {
 // Get the authentication database to use. Should be the value of
 // --authenticationDatabase if it's provided, otherwise, the database that's
 // specified in the tool's --db arg.
-func (o *ToolOptions) GetAuthenticationDatabase() string {
-	if o.Auth.Source != "" {
-		return o.Auth.Source
-	} else if o.Auth.RequiresExternalDB() {
+func (opts *ToolOptions) GetAuthenticationDatabase() string {
+	if opts.Auth.Source != "" {
+		return opts.Auth.Source
+	} else if opts.Auth.RequiresExternalDB() {
 		return "$external"
-	} else if o.Namespace != nil && o.Namespace.DB != "" {
-		return o.Namespace.DB
+	} else if opts.Namespace != nil && opts.Namespace.DB != "" {
+		return opts.Namespace.DB
 	}
 	return ""
 }
 
 // AddOptions registers an additional options group to this instance
-func (o *ToolOptions) AddOptions(opts ExtraOptions) {
-	_, err := o.parser.AddGroup(opts.Name()+" options", "", opts)
+func (opts *ToolOptions) AddOptions(extraOpts ExtraOptions) {
+	_, err := opts.parser.AddGroup(extraOpts.Name()+" options", "", extraOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error setting command line options for  %v: %v",
-			opts.Name(), err))
+			extraOpts.Name(), err))
 	}
 
-	if o.enabledOptions.URI {
-		o.URI.extraOptionsRegistry = append(o.URI.extraOptionsRegistry, opts)
+	if opts.enabledOptions.URI {
+		opts.URI.extraOptionsRegistry = append(opts.URI.extraOptionsRegistry, extraOpts)
 	}
 }
 
 // Parse the command line args.  Returns any extra args not accounted for by
 // parsing, as well as an error if the parsing returns an error.
-func (o *ToolOptions) ParseArgs(args []string) ([]string, error) {
-	args, err := o.parser.ParseArgs(args)
+func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
+	args, err := opts.parser.ParseArgs(args)
 	if err != nil {
 		return []string{}, err
 	}
 
-	failpoint.ParseFailpoints(o.Failpoints)
+	failpoint.ParseFailpoints(opts.Failpoints)
 
-	if o.URI != nil && o.URI.ConnectionString != "" {
-		cs, err := connstring.ParseURIConnectionString(o.URI.ConnectionString)
+	if opts.URI != nil && opts.URI.ConnectionString != "" {
+		cs, err := connstring.ParseURIConnectionString(opts.URI.ConnectionString)
 		if err != nil {
 			return []string{}, err
 		}
-		err = o.setOptionsFromURI(cs)
+		err = opts.setOptionsFromURI(cs)
 		if err != nil {
 			return []string{}, err
 		}
 	} else {
 		// If URI not provided, get replica set name and generate connection string
-		_, o.ReplicaSetName = util.SplitHostArg(o.Host)
-		o.URI = &URI{ConnectionString: util.BuildURI(o.Host, o.Port)}
+		_, opts.ReplicaSetName = util.SplitHostArg(opts.Host)
+		opts.URI = &URI{ConnectionString: util.BuildURI(opts.Host, opts.Port)}
 	}
 
 	// connect directly, unless a replica set name is explicitly specified
-	o.Direct = (o.ReplicaSetName == "")
+	opts.Direct = (opts.ReplicaSetName == "")
 
 	return args, err
 }

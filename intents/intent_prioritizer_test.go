@@ -25,7 +25,7 @@ func TestLegacyPrioritizer(t *testing.T) {
 			&Intent{DB: "2"},
 			&Intent{DB: "3"},
 		}
-		legacy := NewLegacyPrioritizer(testList)
+		legacy := newLegacyPrioritizer(testList)
 		So(legacy, ShouldNotBeNil)
 
 		Convey("the priority should be defined by 'first-in-first-out'", func() {
@@ -134,7 +134,7 @@ func TestBySizeAndView(t *testing.T) {
 				Options: bson.M{"viewOn": true},
 			},
 		}
-		prioritizer = NewLongestTaskFirstPrioritizer(intents)
+		prioritizer = newLongestTaskFirstPrioritizer(intents)
 		Convey("getting the sorted intents should produce views first, followed by largest to smallest", func() {
 
 			So(prioritizer.Get().C, ShouldEqual, "view")
@@ -160,7 +160,7 @@ func TestSimulatedMultiDBJob(t *testing.T) {
 			&Intent{C: "giant", DB: "db1", Size: 1024},
 			&Intent{C: "tiny", DB: "db1", Size: 2},
 		}
-		prioritizer = NewMultiDatabaseLTFPrioritizer(intents)
+		prioritizer = newMultiDatabaseLTFPrioritizer(intents)
 		So(prioritizer, ShouldNotBeNil)
 
 		Convey("and a running simulation of two jobs threads:", func() {

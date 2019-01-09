@@ -138,6 +138,6 @@ type listDatabasesCommand struct {
 	Ok        bool                     `json:"ok"`
 }
 
-func (self *listDatabasesCommand) AsRunnable() interface{} {
+func (*listDatabasesCommand) AsRunnable() interface{} {
 	return "listDatabases"
 }
