@@ -10,11 +10,13 @@ import (
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/json"
+	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/mgo.v2/bson"
 )
 
 func TestUndefinedValue(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("When converting JSON with undefined values", t, func() {
 

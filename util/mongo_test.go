@@ -15,8 +15,7 @@ import (
 )
 
 func TestSplitHostArg(t *testing.T) {
-
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("When extracting the replica set and hosts from a connection"+
 		" host arg", t, func() {
@@ -68,8 +67,7 @@ func TestSplitHostArg(t *testing.T) {
 }
 
 func TestCreateConnectionAddrs(t *testing.T) {
-
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("When creating the slice of connection addresses", t, func() {
 
@@ -94,8 +92,7 @@ func TestCreateConnectionAddrs(t *testing.T) {
 }
 
 func TestBuildURI(t *testing.T) {
-
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("Generating URIs from host and port arguments", t, func() {
 		cases := []struct{ h, p, u string }{
@@ -121,6 +118,7 @@ func TestBuildURI(t *testing.T) {
 }
 
 func TestInvalidNames(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("Checking some invalid collection names, ", t, func() {
 		Convey("test.col$ is invalid", func() {

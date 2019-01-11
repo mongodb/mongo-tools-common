@@ -17,9 +17,9 @@ import (
 )
 
 func TestBufferedBulkInserterInserts(t *testing.T) {
-	var bufBulk *BufferedBulkInserter
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
-	testtype.VerifyTestType(t, "db")
+	var bufBulk *BufferedBulkInserter
 
 	Convey("With a valid session", t, func() {
 		opts := options.ToolOptions{

@@ -8,6 +8,7 @@ package options
 
 import (
 	"github.com/mongodb/mongo-tools-common/connstring"
+	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"runtime"
@@ -16,6 +17,8 @@ import (
 )
 
 func TestVerbosityFlag(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("With a new ToolOptions", t, func() {
 		enabled := EnabledOptions{false, false, false, false}
 		optPtr := New("", "", enabled)
@@ -96,6 +99,8 @@ type uriTester struct {
 }
 
 func TestParseAndSetOptions(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("With a matrix of URIs and expected results", t, func() {
 		enabledURIOnly := EnabledOptions{false, false, false, true}
 		testCases := []uriTester{
@@ -410,6 +415,8 @@ func TestParseAndSetOptions(t *testing.T) {
 
 // Regression test for TOOLS-1694 to prevent issue from TOOLS-1115
 func TestHiddenOptionsDefaults(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("With a ToolOptions parsed", t, func() {
 		enabled := EnabledOptions{Connection: true}
 		opts := New("", "", enabled)

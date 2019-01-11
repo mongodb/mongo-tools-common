@@ -16,8 +16,7 @@ import (
 )
 
 func TestLegacyPrioritizer(t *testing.T) {
-
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("With a legacyPrioritizer initialized with an ordered intent list", t, func() {
 		testList := []*Intent{
@@ -41,9 +40,9 @@ func TestLegacyPrioritizer(t *testing.T) {
 }
 
 func TestBasicDBHeapBehavior(t *testing.T) {
-	var dbheap heap.Interface
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	var dbheap heap.Interface
 
 	Convey("With an empty dbHeap", t, func() {
 		dbheap = &DBHeap{}
@@ -92,8 +91,7 @@ func TestBasicDBHeapBehavior(t *testing.T) {
 }
 
 func TestDBCounterCollectionSorting(t *testing.T) {
-
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("With a dbCounter and an unordered collection of intents", t, func() {
 		dbc := &dbCounter{
@@ -118,9 +116,9 @@ func TestDBCounterCollectionSorting(t *testing.T) {
 }
 
 func TestBySizeAndView(t *testing.T) {
-	var prioritizer IntentPrioritizer
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	var prioritizer IntentPrioritizer
 
 	Convey("With a prioritizer initialized with on a set of intents", t, func() {
 		intents := []*Intent{
@@ -149,9 +147,9 @@ func TestBySizeAndView(t *testing.T) {
 }
 
 func TestSimulatedMultiDBJob(t *testing.T) {
-	var prioritizer IntentPrioritizer
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
-	testtype.VerifyTestType(t, testtype.UnitTestType)
+	var prioritizer IntentPrioritizer
 
 	Convey("With a prioritizer initialized with a set of intents", t, func() {
 		intents := []*Intent{

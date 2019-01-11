@@ -13,12 +13,11 @@ import (
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 )
 
 func TestNewSessionProvider(t *testing.T) {
-
-	testtype.VerifyTestType(t, "db")
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
 	Convey("When initializing a session provider", t, func() {
 
@@ -63,8 +62,7 @@ func TestNewSessionProvider(t *testing.T) {
 }
 
 func TestGetIndexes(t *testing.T) {
-
-	testtype.VerifyTestType(t, "db")
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
 	Convey("With a valid session", t, func() {
 		opts := options.ToolOptions{

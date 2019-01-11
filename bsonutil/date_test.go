@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/mongodb/mongo-tools-common/json"
+	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDateValue(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("When converting JSON with Date values", t, func() {
 

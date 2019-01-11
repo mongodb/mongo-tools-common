@@ -18,6 +18,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/mongodb/mongo-tools-common/testtype"
 )
 
 type T struct {
@@ -422,6 +424,8 @@ var unmarshalTests = []unmarshalTest{
 }
 
 func TestMarshal(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	b, err := Marshal(allValue)
 	if err != nil {
 		t.Fatalf("Marshal allValue: %v", err)
@@ -455,6 +459,8 @@ var badUTF8 = []struct {
 }
 
 func TestMarshalBadUTF8(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	for _, tt := range badUTF8 {
 		b, err := Marshal(tt.in)
 		if string(b) != tt.out || err != nil {
@@ -464,6 +470,8 @@ func TestMarshalBadUTF8(t *testing.T) {
 }
 
 func TestMarshalNumberZeroVal(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	var n Number
 	out, err := Marshal(n)
 	if err != nil {
@@ -476,6 +484,8 @@ func TestMarshalNumberZeroVal(t *testing.T) {
 }
 
 func TestMarshalEmbeds(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	top := &Top{
 		Level0: 1,
 		Embed0: Embed0{
@@ -515,6 +525,8 @@ func TestMarshalEmbeds(t *testing.T) {
 }
 
 func TestUnmarshal(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	for i, tt := range unmarshalTests {
 		var scan scanner
 		in := []byte(tt.in)
@@ -573,6 +585,8 @@ func TestUnmarshal(t *testing.T) {
 }
 
 func TestUnmarshalMarshal(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	initBig()
 	var v interface{}
 	if err := Unmarshal(jsonBig, &v); err != nil {
@@ -603,6 +617,8 @@ var numberTests = []struct {
 
 // Independent of Decode, basic coverage of the accessors in Number
 func TestNumberAccessors(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	for _, tt := range numberTests {
 		n := Number(tt.in)
 		if s := n.String(); s != tt.in {
@@ -622,6 +638,8 @@ func TestNumberAccessors(t *testing.T) {
 }
 
 func TestLargeByteSlice(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	s0 := make([]byte, 2000)
 	for i := range s0 {
 		s0[i] = byte(i)
@@ -645,6 +663,8 @@ type Xint struct {
 }
 
 func TestUnmarshalInterface(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	var xint Xint
 	var i interface{} = &xint
 	if err := Unmarshal([]byte(`{"X":1}`), &i); err != nil {
@@ -656,6 +676,8 @@ func TestUnmarshalInterface(t *testing.T) {
 }
 
 func TestUnmarshalPtrPtr(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	var xint Xint
 	pxint := &xint
 	if err := Unmarshal([]byte(`{"X":1}`), &pxint); err != nil {
@@ -667,6 +689,8 @@ func TestUnmarshalPtrPtr(t *testing.T) {
 }
 
 func TestEscape(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	const input = `"foobar"<html>` + " [\u2028 \u2029]"
 	const expected = `"\"foobar\"\u003chtml\u003e [\u2028 \u2029]"`
 	b, err := Marshal(input)
@@ -696,6 +720,8 @@ var wrongStringTests = []wrongStringTest{
 // If people misuse the ,string modifier, the error message should be
 // helpful, telling the user that they're doing it wrong.
 func TestErrorMessageFromMisusedString(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	for n, tt := range wrongStringTests {
 		r := strings.NewReader(tt.in)
 		var s WrongString
@@ -1029,6 +1055,8 @@ var pallValueIndent = `{
 var pallValueCompact = strings.Map(noSpace, pallValueIndent)
 
 func TestRefUnmarshal(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	type S struct {
 		// Ref is defined in encode_test.go.
 		R0 Ref
@@ -1057,6 +1085,8 @@ func TestRefUnmarshal(t *testing.T) {
 // Test that the empty string doesn't panic decoding when ,string is specified
 // Issue 3450
 func TestEmptyString(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	type T2 struct {
 		Number1 int `json:",string"`
 		Number2 int `json:",string"`
@@ -1076,6 +1106,8 @@ func TestEmptyString(t *testing.T) {
 // Test that the returned error is non-nil when trying to unmarshal null string into int, for successive ,string option
 // Issue 7046
 func TestNullString(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	type T struct {
 		A int `json:",string"`
 		B int `json:",string"`
@@ -1121,6 +1153,8 @@ var interfaceSetTests = []struct {
 }
 
 func TestInterfaceSet(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	for _, tt := range interfaceSetTests {
 		b := struct{ X interface{} }{tt.pre}
 		blob := `{"X":` + tt.json + `}`
@@ -1137,6 +1171,8 @@ func TestInterfaceSet(t *testing.T) {
 // JSON null values should be ignored for primitives and string values instead of resulting in an error.
 // Issue 2540
 func TestUnmarshalNulls(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	jsonData := []byte(`{
 		"Bool"    : null,
 		"Int"     : null,
@@ -1182,6 +1218,8 @@ func TestUnmarshalNulls(t *testing.T) {
 }
 
 func TestStringKind(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	type stringKind string
 
 	var m1, m2 map[stringKind]int
@@ -1218,6 +1256,8 @@ var decodeTypeErrorTests = []struct {
 }
 
 func TestUnmarshalTypeError(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	for _, item := range decodeTypeErrorTests {
 		err := Unmarshal([]byte(item.src), item.dest)
 		if _, ok := err.(*UnmarshalTypeError); !ok {
@@ -1239,6 +1279,8 @@ var unmarshalSyntaxTests = []string{
 }
 
 func TestUnmarshalSyntax(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	var x interface{}
 	for _, src := range unmarshalSyntaxTests {
 		err := Unmarshal([]byte(src), &x)
@@ -1257,6 +1299,8 @@ type unexportedFields struct {
 }
 
 func TestUnmarshalUnexported(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	input := `{"Name": "Bob", "m": {"x": 123}, "m2": {"y": 456}, "abcd": {"z": 789}}`
 	want := &unexportedFields{Name: "Bob"}
 
@@ -1287,6 +1331,8 @@ func (t *Time3339) UnmarshalJSON(b []byte) error {
 }
 
 func TestUnmarshalJSONLiteralError(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	var t3 Time3339
 	err := Unmarshal([]byte(`"0000-00-00T00:00:00Z"`), &t3)
 	if err == nil {
@@ -1301,6 +1347,8 @@ func TestUnmarshalJSONLiteralError(t *testing.T) {
 // "data changing underfoot" error.
 // Issue 3717
 func TestSkipArrayObjects(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	json := `[{}]`
 	var dest [0]interface{}
 
@@ -1313,6 +1361,8 @@ func TestSkipArrayObjects(t *testing.T) {
 // Test semantics of pre-filled struct fields and pre-filled map fields.
 // Issue 4900.
 func TestPrefilled(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	ptrToMap := func(m map[string]interface{}) *map[string]interface{} { return &m }
 
 	// Values here change, cannot reuse table across runs.
@@ -1355,6 +1405,8 @@ var invalidUnmarshalTests = []struct {
 }
 
 func TestInvalidUnmarshal(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	buf := []byte(`{"a":"1"}`)
 	for _, tt := range invalidUnmarshalTests {
 		err := Unmarshal(buf, tt.v)

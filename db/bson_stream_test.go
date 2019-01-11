@@ -8,13 +8,17 @@ package db
 
 import (
 	"bytes"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"testing"
+
+	"github.com/mongodb/mongo-tools-common/testtype"
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func TestBufferlessBSONSource(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	var testValues = []bson.M{
 		{"_": bson.Binary{Kind: 0x80, Data: []byte("apples")}},
 		{"_": bson.Binary{Kind: 0x80, Data: []byte("bananas")}},

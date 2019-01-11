@@ -8,6 +8,7 @@ package db
 
 import (
 	"github.com/mongodb/mongo-tools-common/connstring"
+	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"fmt"
@@ -16,6 +17,8 @@ import (
 )
 
 func TestBuildWriteConcern(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("When building write concern object", t, func() {
 		Convey("and given a write concern string value, and a boolean indicating if the "+
 			"write concern is to be used on a replica set, on calling BuildWriteConcern...", func() {
@@ -100,6 +103,8 @@ func TestBuildWriteConcern(t *testing.T) {
 }
 
 func TestConstructWCObject(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("Given a write concern string value, on calling constructWCObject...", t, func() {
 
 		Convey("non-JSON string values should be assigned to the 'WMode' "+
@@ -213,6 +218,8 @@ func TestConstructWCObject(t *testing.T) {
 }
 
 func TestConstructSafetyFromConnString(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("Given a parsed &connstring, on calling constructSafetyFromConnString...", t, func() {
 
 		Convey("non string values should be assigned to the 'WMode' "+
@@ -267,6 +274,8 @@ func TestConstructSafetyFromConnString(t *testing.T) {
 }
 
 func TestBuildMongoWriteConcernOpts(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("When building write concern object", t, func() {
 		Convey("and given a write concern string value, and a boolean indicating if the "+
 			"write concern is to be used on a replica set, on calling BuildMongoWriteConcernOpts...", func() {
@@ -354,6 +363,8 @@ func TestBuildMongoWriteConcernOpts(t *testing.T) {
 }
 
 func TestMongoConstructMongoWriteConcernOptions(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("Given a write concern string value, on calling constructWCObject...", t, func() {
 
 		Convey("non-JSON string values should be assigned to the 'WMode' "+
@@ -439,6 +450,8 @@ func TestMongoConstructMongoWriteConcernOptions(t *testing.T) {
 }
 
 func TestConstructWCOptionsFromConnString(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
 	Convey("Given a parsed &connstring, on calling constructWCOptionsFromConnString...", t, func() {
 
 		Convey("non integer values should set the correct boolean "+
