@@ -50,11 +50,7 @@ func TestNewSessionProvider(t *testing.T) {
 			}
 			provider, err := NewSessionProvider(opts)
 			So(err, ShouldBeNil)
-			So(provider.client, ShouldBeNil)
-			So(func() {
-				provider.client.Ping(context.Background(), nil)
-			}, ShouldBeNil)
-
+			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
 		})
 
 	})
