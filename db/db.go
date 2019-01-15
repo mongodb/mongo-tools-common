@@ -228,7 +228,7 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 		clientopt.SetSSL(ssl)
 	}
 
-	if opts.URI == nil {
+	if opts.URI == nil || opts.URI.ConnectionString == "" {
 		// XXX Normal operations shouldn't ever reach here because a URI should
 		// be created in options parsing, but tests still manually construct
 		// options and generally don't construct a URI, so we invoke the URI
