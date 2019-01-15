@@ -13,7 +13,6 @@ import (
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	mgo "gopkg.in/mgo.v2"
 )
 
 func TestNewSessionProvider(t *testing.T) {
@@ -90,16 +89,12 @@ func TestGetIndexes(t *testing.T) {
 				So(err, ShouldBeNil)
 				Convey("and indexes should be returned", func() {
 					So(indexesIter, ShouldNotBeNil)
-					indexes := make([]mgo.Index, 0)
 					ctx := context.Background()
+					counter := 0
 					for indexesIter.Next(ctx) {
-						idx := mgo.Index{}
-						if err := indexesIter.Decode(&idx); err != nil {
-							So(err, ShouldBeNil)
-						}
-						indexes = append(indexes, idx)
+						counter++
 					}
-					So(len(indexes), ShouldBeGreaterThan, 0)
+					So(counter, ShouldBeGreaterThan, 0)
 				})
 			})
 
@@ -107,7 +102,7 @@ func TestGetIndexes(t *testing.T) {
 				indexesIter, err := GetIndexes(missing)
 				So(err, ShouldBeNil)
 				Convey("and there should be no indexes", func() {
-					So(indexesIter, ShouldBeNil)
+					So(indexesIter.Next(nil), ShouldBeFalse)
 				})
 			})
 
@@ -115,7 +110,7 @@ func TestGetIndexes(t *testing.T) {
 				indexesIter, err := GetIndexes(missingDB)
 				So(err, ShouldBeNil)
 				Convey("and there should be no indexes", func() {
-					So(indexesIter, ShouldBeNil)
+					So(indexesIter.Next(nil), ShouldBeFalse)
 				})
 			})
 		})

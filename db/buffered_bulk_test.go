@@ -18,8 +18,6 @@ import (
 
 func TestBufferedBulkInserterInserts(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
-	// TODO: Debug this failure. TOOLS-2194 filed
-	t.SkipNow()
 
 	var bufBulk *BufferedBulkInserter
 
@@ -91,7 +89,7 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 				So(bufBulk.Flush(), ShouldBeNil)
 
 				Convey("should have inserted all of the documents", func() {
-					count, err := testCol.CountDocuments(context.Background(), nil)
+					count, err := testCol.CountDocuments(context.Background(), bson.M{})
 					So(err, ShouldBeNil)
 					So(count, ShouldEqual, 1000000)
 
