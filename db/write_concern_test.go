@@ -332,17 +332,6 @@ func TestBuildMongoWriteConcernOpts(t *testing.T) {
 				_, err = BuildMongoWriteConcernOpts(``, &connstring.ConnString{W: "-2"})
 				So(err, ShouldNotBeNil)
 			})
-			Convey("on only a write concern of 1 or 0 should be returned", func() {
-				writeConcern, err := BuildMongoWriteConcernOpts(``, &connstring.ConnString{W: "34"})
-				So(err, ShouldBeNil)
-				So(writeConcern.W, ShouldEqual, 1)
-				writeConcern, err = BuildMongoWriteConcernOpts(``, &connstring.ConnString{W: "majority"})
-				So(err, ShouldBeNil)
-				So(writeConcern.W, ShouldEqual, 1)
-				writeConcern, err = BuildMongoWriteConcernOpts(``, &connstring.ConnString{W: "tagset"})
-				So(err, ShouldBeNil)
-				So(writeConcern.W, ShouldEqual, 1)
-			})
 		})
 		Convey("and given both, should error", func() {
 			_, err := BuildMongoWriteConcernOpts(`ab`, &connstring.ConnString{W: "-1"})
