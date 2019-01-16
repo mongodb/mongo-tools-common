@@ -8,6 +8,7 @@ package db
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/options"
@@ -15,9 +16,44 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+// var block and functions copied from testutil to avoid import cycle
+var (
+	UserAdmin              = "uAdmin"
+	UserAdminPassword      = "password"
+	CreatedUserNameEnv     = "TOOLS_TESTING_AUTH_USERNAME"
+	CreatedUserPasswordEnv = "TOOLS_TESTING_AUTH_PASSWORD"
+)
+
+func DBGetAuthOptions() options.Auth {
+	if testtype.HasTestType(testtype.AuthTestType) {
+		return options.Auth{
+			Username: os.Getenv(CreatedUserNameEnv),
+			Password: os.Getenv(CreatedUserPasswordEnv),
+			Source:   "admin",
+		}
+	}
+
+	return options.Auth{}
+}
+func DBGetSSLOptions() options.SSL {
+	if testtype.HasTestType(testtype.SSLTestType) {
+		return options.SSL{
+			UseSSL:        true,
+			SSLCAFile:     "../db/testdata/ca.pem",
+			SSLPEMKeyFile: "../db/testdata/server.pem",
+		}
+	}
+
+	return options.SSL{
+		UseSSL: false,
+	}
+}
+
 func TestNewSessionProvider(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
+	auth := DBGetAuthOptions()
+	ssl := DBGetSSLOptions()
 	Convey("When initializing a session provider", t, func() {
 
 		Convey("with the standard options, a provider with a standard"+
@@ -26,8 +62,8 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
-				SSL:  &options.SSL{},
-				Auth: &options.Auth{},
+				SSL:  &ssl,
+				Auth: &auth,
 			}
 			provider, err := NewSessionProvider(opts)
 			So(err, ShouldBeNil)
@@ -44,8 +80,8 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
-				SSL:  &options.SSL{},
-				Auth: &options.Auth{},
+				SSL:  &ssl,
+				Auth: &auth,
 			}
 			provider, err := NewSessionProvider(opts)
 			So(err, ShouldBeNil)
@@ -59,13 +95,15 @@ func TestNewSessionProvider(t *testing.T) {
 func TestGetIndexes(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
+	auth := DBGetAuthOptions()
+	ssl := DBGetSSLOptions()
 	Convey("With a valid session", t, func() {
 		opts := options.ToolOptions{
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
-			SSL:  &options.SSL{},
-			Auth: &options.Auth{},
+			SSL:  &ssl,
+			Auth: &auth,
 		}
 		provider, err := NewSessionProvider(opts)
 		So(err, ShouldBeNil)

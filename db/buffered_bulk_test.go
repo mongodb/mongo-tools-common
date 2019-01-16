@@ -21,13 +21,15 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 
 	var bufBulk *BufferedBulkInserter
 
+	auth := DBGetAuthOptions()
+	ssl := DBGetSSLOptions()
 	Convey("With a valid session", t, func() {
 		opts := options.ToolOptions{
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
-			SSL:  &options.SSL{},
-			Auth: &options.Auth{},
+			SSL:  &ssl,
+			Auth: &auth,
 		}
 		provider, err := NewSessionProvider(opts)
 		So(provider, ShouldNotBeNil)
