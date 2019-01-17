@@ -28,6 +28,12 @@ mongo_tools_variables:
 
 functions:
 
+  "attach-test-results":
+    - command: gotest.parse_files
+      type: system
+      params:
+        files:
+          - "src/github.com/mongodb/mongo-tools-common/testing_output/*.suite"
   "fetch source" :
     - command: shell.exec
       params:
@@ -206,6 +212,7 @@ tasks:
       vars:
           UNIT_TEST: "true"
           run_coverage: "true"
+    - func: "attach-test-results"
 
 - name: integration-4.0
   commands:
@@ -219,6 +226,7 @@ tasks:
     - func: "run tool integration tests"
       vars:
           INT_TEST: "true" 
+    - func: "attach-test-results"
 
 - name: integration-4.0-auth
   commands:
@@ -244,7 +252,7 @@ tasks:
       vars:
           INT_TEST: "true"
           AUTH_TEST: "true"
-
+    - func: "attach-test-results"
 - name: kerberos
   commands:
     - func: "fetch source"
@@ -258,7 +266,7 @@ tasks:
     - func: "run tool integration tests"
       vars:
           KERBEROS_TEST: "true"
-          INT_TEST: "true"
+    - func: "attach-test-results"
 
 - name: lint
   commands:
