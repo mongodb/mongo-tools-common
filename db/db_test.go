@@ -14,6 +14,7 @@ import (
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // var block and functions copied from testutil to avoid import cycle
@@ -125,6 +126,37 @@ func TestDatabaseNames(t *testing.T) {
 
 			So(m["exists"], ShouldBeTrue)
 			So(m["misssingDB"], ShouldBeFalse)
+		})
+	})
+}
+
+func TestFindOne(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+
+	Convey("With a valid session provider", t, func() {
+		opts := options.ToolOptions{
+			Connection: &options.Connection{
+				Port: DefaultTestPort,
+			},
+			SSL:  &options.SSL{},
+			Auth: &options.Auth{},
+		}
+		provider, err := NewSessionProvider(opts)
+		So(err, ShouldBeNil)
+
+		err = provider.DropDatabase("exists")
+		So(err, ShouldBeNil)
+		err = provider.CreateCollection("exists", "collection")
+		So(err, ShouldBeNil)
+		client, err := provider.GetSession()
+		So(err, ShouldBeNil)
+		coll := client.Database("exists").Collection("collection")
+		coll.InsertOne(context.Background(), bson.D{})
+
+		Convey("When FindOneis called", func() {
+			res := bson.D{}
+			err := provider.FindOne("exists", "collection", 0, nil, nil, &res, 0)
+			So(err, ShouldBeNil)
 		})
 	})
 }

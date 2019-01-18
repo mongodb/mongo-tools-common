@@ -249,6 +249,10 @@ func (sp *SessionProvider) FindOne(db, collection string, skip int, query interf
 		return err
 	}
 
+	if query == nil {
+		query = bson.D{}
+	}
+
 	opts := mopt.FindOne().SetSort(sort).SetSkip(int64(skip))
 	ApplyFlags(opts, flags)
 
