@@ -92,6 +92,43 @@ func TestNewSessionProvider(t *testing.T) {
 
 }
 
+func TestDatabaseNames(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+
+	Convey("With a valid session provider", t, func() {
+		opts := options.ToolOptions{
+			Connection: &options.Connection{
+				Port: DefaultTestPort,
+			},
+			SSL:  &options.SSL{},
+			Auth: &options.Auth{},
+		}
+		provider, err := NewSessionProvider(opts)
+		So(err, ShouldBeNil)
+
+		err = provider.DropDatabase("exists")
+		So(err, ShouldBeNil)
+		err = provider.CreateCollection("exists", "collection")
+		So(err, ShouldBeNil)
+		err = provider.DropDatabase("missingDB")
+		So(err, ShouldBeNil)
+
+		Convey("When DatabaseNames is called", func() {
+			names, err := provider.DatabaseNames()
+			So(err, ShouldBeNil)
+			So(len(names), ShouldBeGreaterThan, 0)
+
+			m := make(map[string]bool)
+			for _, v := range names {
+				m[v] = true
+			}
+
+			So(m["exists"], ShouldBeTrue)
+			So(m["misssingDB"], ShouldBeFalse)
+		})
+	})
+}
+
 func TestGetIndexes(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 

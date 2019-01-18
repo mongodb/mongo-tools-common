@@ -96,7 +96,7 @@ func (sp *SessionProvider) ServerVersion() (string, error) {
 // DatabaseNames returns a slice containing the names of all the databases on the
 // connected server.
 func (sp *SessionProvider) DatabaseNames() ([]string, error) {
-	return sp.client.ListDatabaseNames(nil, nil)
+	return sp.client.ListDatabaseNames(nil, bson.D{})
 }
 
 // CollectionNames returns the names of all the collections in the dbName database.
