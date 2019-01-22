@@ -96,13 +96,16 @@ func TestNewSessionProvider(t *testing.T) {
 func TestDatabaseNames(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
+	auth := DBGetAuthOptions()
+	ssl := DBGetSSLOptions()
+
 	Convey("With a valid session provider", t, func() {
 		opts := options.ToolOptions{
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
-			SSL:  &options.SSL{},
-			Auth: &options.Auth{},
+			SSL:  &ssl,
+			Auth: &auth,
 		}
 		provider, err := NewSessionProvider(opts)
 		So(err, ShouldBeNil)
@@ -133,13 +136,16 @@ func TestDatabaseNames(t *testing.T) {
 func TestFindOne(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
+	auth := DBGetAuthOptions()
+	ssl := DBGetSSLOptions()
+
 	Convey("With a valid session provider", t, func() {
 		opts := options.ToolOptions{
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
-			SSL:  &options.SSL{},
-			Auth: &options.Auth{},
+			SSL:  &ssl,
+			Auth: &auth,
 		}
 		provider, err := NewSessionProvider(opts)
 		So(err, ShouldBeNil)
