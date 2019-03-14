@@ -26,7 +26,7 @@ func (q *DeferredQuery) Count() (int, error) {
 	return int(c), err
 }
 
-func (q *DeferredQuery) Iter() (mongo.Cursor, error) {
+func (q *DeferredQuery) Iter() (*mongo.Cursor, error) {
 	opts := mopt.Find()
 	if q.Hint != nil {
 		opts.SetHint(q.Hint)
