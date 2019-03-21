@@ -7,9 +7,9 @@
 package options
 
 import (
-	"github.com/mongodb/mongo-tools-common/connstring"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.mongodb.org/mongo-driver/x/network/connstring"
 
 	"runtime"
 	"testing"
@@ -107,8 +107,8 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "not built with ssl",
 				CS: connstring.ConnString{
-					UseSSL:     true,
-					UseSSLSeen: true,
+					SSL:    true,
+					SSLSet: true,
 				},
 				WithSSL:      false,
 				OptsIn:       New("", "", enabledURIOnly),
@@ -118,9 +118,9 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "not built with ssl using SRV",
 				CS: connstring.ConnString{
-					UseSSL:     true,
-					UseSSLSeen: true,
-					UsingSRV:   true,
+					SSL:      true,
+					SSLSet:   true,
+					Original: "mongodb+srv://example.com/",
 				},
 				WithSSL:      false,
 				OptsIn:       New("", "", enabledURIOnly),
@@ -130,8 +130,8 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "built with ssl",
 				CS: connstring.ConnString{
-					UseSSL:     true,
-					UseSSLSeen: true,
+					SSL:    true,
+					SSLSet: true,
 				},
 				WithSSL: true,
 				OptsIn:  New("", "", enabledURIOnly),
@@ -153,9 +153,9 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "built with ssl using SRV",
 				CS: connstring.ConnString{
-					UseSSL:     true,
-					UseSSLSeen: true,
-					UsingSRV:   true,
+					SSL:      true,
+					SSLSet:   true,
+					Original: "mongodb+srv://example.com/",
 				},
 				WithSSL: true,
 				OptsIn:  New("", "", enabledURIOnly),
@@ -177,7 +177,7 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "not built with gssapi",
 				CS: connstring.ConnString{
-					KerberosService: "service",
+					AuthMechanism: "GSSAPI",
 				},
 				WithGSSAPI:   false,
 				OptsIn:       New("", "", enabledURIOnly),
@@ -187,8 +187,11 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "built with gssapi",
 				CS: connstring.ConnString{
-					KerberosService:     "service",
-					KerberosServiceHost: "servicehost",
+					AuthMechanism: "GSSAPI",
+					AuthMechanismProperties: map[string]string{
+						"SERVICE_NAME": "service",
+						"SERVICE_HOST": "servicehost",
+					},
 				},
 				WithGSSAPI: true,
 				OptsIn:     New("", "", enabledURIOnly),
