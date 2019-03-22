@@ -86,9 +86,11 @@ func TestNewMongoWriteConcernOpts(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 		})
-		Convey("and given both, should error", func() {
-			_, err := NewMongoWriteConcernOpts(`ab`, &connstring.ConnString{WNumber: -1, WNumberSet: true})
-			So(err, ShouldNotBeNil)
+		Convey("and given both, should prefer commandline", func() {
+			writeConcern, err := NewMongoWriteConcernOpts(`{w: 4}`, &connstring.ConnString{WNumber: 0, WNumberSet: true})
+			So(err, ShouldBeNil)
+			So(writeConcern.WNumberSet, ShouldBeTrue)
+			So(writeConcern.WNumber, ShouldEqual, 4)
 		})
 	})
 }
