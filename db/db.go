@@ -267,7 +267,7 @@ func IsConnectionError(err error) bool {
 	}
 
 	errMsg := err.Error()
-	if cmdErr, ok := err.(mongo.CommandError); !ok {
+	if cmdErr, ok := err.(mongo.CommandError); ok {
 		errMsg = cmdErr.Message
 	}
 
