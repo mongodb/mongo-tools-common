@@ -266,13 +266,12 @@ func IsConnectionError(err error) bool {
 		return false
 	}
 
-	var cmdErr mongo.CommandError
-	var ok bool
-	if cmdErr, ok = err.(mongo.CommandError); !ok {
-		return false
+	errMsg := err.Error()
+	if cmdErr, ok := err.(mongo.CommandError); !ok {
+		errMsg = cmdErr.Message
 	}
 
-	lowerCaseError := strings.ToLower(cmdErr.Message)
+	lowerCaseError := strings.ToLower(errMsg)
 	if lowerCaseError == ErrNoReachableServers ||
 		err == io.EOF ||
 		strings.Contains(lowerCaseError, ErrReplTimeoutPrefix) ||
