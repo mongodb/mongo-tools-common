@@ -16,12 +16,12 @@ import (
 
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/password"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	mopt "go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"fmt"
 	"io"
@@ -267,8 +267,8 @@ func IsConnectionError(err error) bool {
 		return false
 	}
 
-	// The new driver stringifies command errors as "(Name) Message" rather than just "message". Cast to the
-	// CommandError type if possible to extract the correct error message.
+	// The new driver adds extra information to error strings. Cast to different
+	// error types if possible to extract the correct error message.
 	var errMsg string
 	switch e := err.(type) {
 	case mongo.CommandError:
