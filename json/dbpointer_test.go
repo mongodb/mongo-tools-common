@@ -12,11 +12,14 @@ import (
 
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestDBPointerValue(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	oid, _ := primitive.ObjectIDFromHex("552ffe9f5739878e73d116a9")
+	oid2, _ := primitive.ObjectIDFromHex("552ffed95739878e73d116aa")
+	oid3, _ := primitive.ObjectIDFromHex("552fff215739878e73d116ab")
 
 	Convey("Unmarshalling JSON with DBPointer values", t, func() {
 		key := "key"
@@ -32,7 +35,8 @@ func TestDBPointerValue(t *testing.T) {
 
 			jsonValue, ok := jsonMap[key].(DBPointer)
 			So(ok, ShouldBeTrue)
-			So(jsonValue, ShouldResemble, DBPointer{"ref", bson.ObjectIdHex("552ffe9f5739878e73d116a9")})
+
+			So(jsonValue, ShouldResemble, DBPointer{"ref", oid})
 		})
 
 		Convey("works for multiple keys", func() {
@@ -50,15 +54,15 @@ func TestDBPointerValue(t *testing.T) {
 			jsonValue1, ok := jsonMap[key1].(DBPointer)
 			So(ok, ShouldBeTrue)
 
-			So(jsonValue1, ShouldResemble, DBPointer{"ref", bson.ObjectIdHex("552ffe9f5739878e73d116a9")})
+			So(jsonValue1, ShouldResemble, DBPointer{"ref", oid})
 
 			jsonValue2, ok := jsonMap[key2].(DBPointer)
 			So(ok, ShouldBeTrue)
-			So(jsonValue2, ShouldResemble, DBPointer{"ref2", bson.ObjectIdHex("552ffed95739878e73d116aa")})
+			So(jsonValue2, ShouldResemble, DBPointer{"ref2", oid2})
 
 			jsonValue3, ok := jsonMap[key3].(DBPointer)
 			So(ok, ShouldBeTrue)
-			So(jsonValue3, ShouldResemble, DBPointer{"ref3", bson.ObjectIdHex("552fff215739878e73d116ab")})
+			So(jsonValue3, ShouldResemble, DBPointer{"ref3", oid3})
 		})
 
 		Convey("works in an array", func() {
@@ -75,7 +79,7 @@ func TestDBPointerValue(t *testing.T) {
 			for _, _jsonValue := range jsonArray {
 				jsonValue, ok := _jsonValue.(DBPointer)
 				So(ok, ShouldBeTrue)
-				So(jsonValue, ShouldResemble, DBPointer{"ref", bson.ObjectIdHex("552ffe9f5739878e73d116a9")})
+				So(jsonValue, ShouldResemble, DBPointer{"ref", oid})
 			}
 		})
 

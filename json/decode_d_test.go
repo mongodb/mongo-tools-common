@@ -12,7 +12,7 @@ import (
 
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestDecodeBsonD(t *testing.T) {
@@ -25,12 +25,12 @@ func TestDecodeBsonD(t *testing.T) {
 			err := Unmarshal([]byte(data), &out)
 			So(err, ShouldBeNil)
 			So(len(out), ShouldEqual, 6)
-			So(out[0].Name, ShouldEqual, "a")
-			So(out[1].Name, ShouldEqual, "b")
-			So(out[2].Name, ShouldEqual, "c")
-			So(out[3].Name, ShouldEqual, "d")
-			So(out[4].Name, ShouldEqual, "e")
-			So(out[5].Name, ShouldEqual, "f")
+			So(out[0].Key, ShouldEqual, "a")
+			So(out[1].Key, ShouldEqual, "b")
+			So(out[2].Key, ShouldEqual, "c")
+			So(out[3].Key, ShouldEqual, "d")
+			So(out[4].Key, ShouldEqual, "e")
+			So(out[5].Key, ShouldEqual, "f")
 
 		})
 
@@ -46,9 +46,9 @@ func TestDecodeBsonD(t *testing.T) {
 			So(out.A, ShouldEqual, 17)
 			So(out.C, ShouldEqual, "wow")
 			So(len(out.B), ShouldEqual, 2)
-			So(out.B[0].Name, ShouldEqual, "foo")
+			So(out.B[0].Key, ShouldEqual, "foo")
 			So(out.B[0].Value, ShouldEqual, "bar")
-			So(out.B[1].Name, ShouldEqual, "baz")
+			So(out.B[1].Key, ShouldEqual, "baz")
 			So(out.B[1].Value, ShouldEqual, "boo")
 		})
 
@@ -58,8 +58,8 @@ func TestDecodeBsonD(t *testing.T) {
 			err := Unmarshal([]byte(data), &out)
 			So(err, ShouldBeNil)
 			So(len(out), ShouldEqual, 2)
-			So(out[0].Name, ShouldEqual, "a")
-			So(out[1].Name, ShouldEqual, "b")
+			So(out[0].Key, ShouldEqual, "a")
+			So(out[1].Key, ShouldEqual, "b")
 			So(out[0].Value, ShouldResemble, []interface{}{"x", "y", "z"})
 			So(out[1].Value, ShouldResemble, bson.D{{"foo", "bar"}, {"baz", "boo"}})
 		})
@@ -80,9 +80,9 @@ func TestDecodeBsonD(t *testing.T) {
 			So(aMapSubSub["c"], ShouldEqual, 9)
 			So(len(out.B), ShouldEqual, 1)
 			// using string comparison for simplicity
-			c := bson.D{{Name: "c", Value: 9}}
-			b := bson.D{{Name: "b", Value: c}}
-			a := bson.D{{Name: "a", Value: b}}
+			c := bson.D{{Key: "c", Value: 9}}
+			b := bson.D{{Key: "b", Value: c}}
+			a := bson.D{{Key: "a", Value: b}}
 			So(fmt.Sprintf("%v", out.B), ShouldEqual, fmt.Sprintf("%v", a))
 		})
 
@@ -100,7 +100,7 @@ func TestDecodeBsonD(t *testing.T) {
 			So(innerArray[2], ShouldHaveSameTypeAs, bson.D{})
 			innerD := innerArray[2].(bson.D)
 			So(len(innerD), ShouldEqual, 1)
-			So(innerD[0].Name, ShouldEqual, "b")
+			So(innerD[0].Key, ShouldEqual, "b")
 			So(innerD[0].Value, ShouldEqual, "inner")
 		})
 
@@ -110,11 +110,11 @@ func TestDecodeBsonD(t *testing.T) {
 			err := Unmarshal([]byte(data), &out)
 			So(err, ShouldBeNil)
 			So(len(out), ShouldEqual, 3)
-			So(out[0].Name, ShouldEqual, "a")
+			So(out[0].Key, ShouldEqual, "a")
 			So(out[0].Value, ShouldEqual, true)
-			So(out[1].Name, ShouldEqual, "b")
+			So(out[1].Key, ShouldEqual, "b")
 			So(out[1].Value, ShouldBeNil)
-			So(out[2].Name, ShouldEqual, "c")
+			So(out[2].Key, ShouldEqual, "c")
 			So(out[2].Value, ShouldEqual, 5)
 		})
 

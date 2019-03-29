@@ -13,16 +13,17 @@ import (
 
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestBufferlessBSONSource(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	var testValues = []bson.M{
-		{"_": bson.Binary{Kind: 0x80, Data: []byte("apples")}},
-		{"_": bson.Binary{Kind: 0x80, Data: []byte("bananas")}},
-		{"_": bson.Binary{Kind: 0x80, Data: []byte("cherries")}},
+		{"_": primitive.Binary{Subtype: 0x80, Data: []byte("apples")}},
+		{"_": primitive.Binary{Subtype: 0x80, Data: []byte("bananas")}},
+		{"_": primitive.Binary{Subtype: 0x80, Data: []byte("cherries")}},
 	}
 	Convey("with a buffer containing several bson documents with binary fields", t, func() {
 		writeBuf := bytes.NewBuffer(make([]byte, 0, 1024))

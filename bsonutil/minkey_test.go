@@ -12,7 +12,7 @@ import (
 	"github.com/mongodb/mongo-tools-common/json"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestMinKeyValue(t *testing.T) {
@@ -26,9 +26,9 @@ func TestMinKeyValue(t *testing.T) {
 				key: json.MinKey{},
 			}
 
-			err := ConvertJSONDocumentToBSON(jsonMap)
+			err := ConvertLegacyExtJSONDocumentToBSON(jsonMap)
 			So(err, ShouldBeNil)
-			So(jsonMap[key], ShouldResemble, bson.MinKey)
+			So(jsonMap[key], ShouldResemble, primitive.MinKey{})
 		})
 
 		Convey(`works for MinKey document ('{ "$minKey": 1 }')`, func() {
@@ -39,9 +39,9 @@ func TestMinKeyValue(t *testing.T) {
 				},
 			}
 
-			err := ConvertJSONDocumentToBSON(jsonMap)
+			err := ConvertLegacyExtJSONDocumentToBSON(jsonMap)
 			So(err, ShouldBeNil)
-			So(jsonMap[key], ShouldResemble, bson.MinKey)
+			So(jsonMap[key], ShouldResemble, primitive.MinKey{})
 		})
 	})
 }

@@ -8,11 +8,10 @@ package archive
 
 import (
 	"bytes"
+	"testing"
 
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	//	"gopkg.in/mgo.v2/bson"
-	"testing"
 )
 
 func TestPrelude(t *testing.T) {

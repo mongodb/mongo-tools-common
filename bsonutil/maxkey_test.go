@@ -7,12 +7,12 @@
 package bsonutil
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/json"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func TestMaxKeyValue(t *testing.T) {
@@ -26,22 +26,22 @@ func TestMaxKeyValue(t *testing.T) {
 				key: json.MaxKey{},
 			}
 
-			err := ConvertJSONDocumentToBSON(jsonMap)
+			err := ConvertLegacyExtJSONDocumentToBSON(jsonMap)
 			So(err, ShouldBeNil)
-			So(jsonMap[key], ShouldResemble, bson.MaxKey)
+			So(jsonMap[key], ShouldResemble, primitive.MaxKey{})
 		})
 
 		Convey(`works for MaxKey document ('{ "$maxKey": 1 }')`, func() {
-			key := "key"
+			key := "maxKey"
 			jsonMap := map[string]interface{}{
 				key: map[string]interface{}{
 					"$maxKey": 1,
 				},
 			}
 
-			err := ConvertJSONDocumentToBSON(jsonMap)
+			err := ConvertLegacyExtJSONDocumentToBSON(jsonMap)
 			So(err, ShouldBeNil)
-			So(jsonMap[key], ShouldResemble, bson.MaxKey)
+			So(jsonMap[key], ShouldResemble, primitive.MaxKey{})
 		})
 	})
 }

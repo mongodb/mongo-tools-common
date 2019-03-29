@@ -13,7 +13,7 @@ import (
 
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestMarshalDMarshalJSON(t *testing.T) {
@@ -89,12 +89,12 @@ func TestFindValueByKey(t *testing.T) {
 
 	Convey("Given a bson.D document and a specific key", t, func() {
 		subDocument := &bson.D{
-			bson.DocElem{Name: "field4", Value: "c"},
+			bson.E{Key: "field4", Value: "c"},
 		}
 		document := &bson.D{
-			bson.DocElem{Name: "field1", Value: "a"},
-			bson.DocElem{Name: "field2", Value: "b"},
-			bson.DocElem{Name: "field3", Value: subDocument},
+			bson.E{Key: "field1", Value: "a"},
+			bson.E{Key: "field2", Value: "b"},
+			bson.E{Key: "field3", Value: subDocument},
 		}
 		Convey("the corresponding value top-level keys should be returned", func() {
 			value, err := FindValueByKey("field1", document)
@@ -119,7 +119,7 @@ func TestEscapedKey(t *testing.T) {
 
 	Convey("Given a bson.D document with a key that requires escaping", t, func() {
 		document := bson.D{
-			bson.DocElem{Name: `foo"bar`, Value: "a"},
+			bson.E{Key: `foo"bar`, Value: "a"},
 		}
 		Convey("it can be marshaled without error", func() {
 			asJSON, err := json.Marshal(MarshalD(document))

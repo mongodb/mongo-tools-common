@@ -25,7 +25,7 @@ func TestNumberLongValue(t *testing.T) {
 				key: json.NumberLong(42),
 			}
 
-			err := ConvertJSONDocumentToBSON(jsonMap)
+			err := ConvertLegacyExtJSONDocumentToBSON(jsonMap)
 			So(err, ShouldBeNil)
 			So(jsonMap[key], ShouldEqual, int64(42))
 		})
@@ -38,7 +38,7 @@ func TestNumberLongValue(t *testing.T) {
 				},
 			}
 
-			err := ConvertJSONDocumentToBSON(jsonMap)
+			err := ConvertLegacyExtJSONDocumentToBSON(jsonMap)
 			So(err, ShouldBeNil)
 			So(jsonMap[key], ShouldEqual, int64(42))
 		})
