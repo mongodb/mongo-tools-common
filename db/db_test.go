@@ -8,12 +8,14 @@ package db
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -232,6 +234,25 @@ func TestGetIndexes(t *testing.T) {
 			provider.DropDatabase("exists")
 			provider.Close()
 		})
+	})
+}
+
+func TestIsConnectionError(t *testing.T) {
+	cmdErr := mongo.CommandError{
+		Name:    "NotMaster",
+		Message: "not master",
+		Code:    10,
+	}
+	we := mongo.WriteError{
+		Message: "not master",
+		Code:    10,
+		Index:   10,
+	}
+
+	Convey("IsConnectionError should check different types of errors", t, func() {
+		So(IsConnectionError(errors.New("not master")), ShouldBeTrue)
+		So(IsConnectionError(cmdErr), ShouldBeTrue)
+		So(IsConnectionError(we), ShouldBeTrue)
 	})
 }
 

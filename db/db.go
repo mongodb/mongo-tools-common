@@ -269,9 +269,14 @@ func IsConnectionError(err error) bool {
 
 	// The new driver stringifies command errors as "(Name) Message" rather than just "message". Cast to the
 	// CommandError type if possible to extract the correct error message.
-	errMsg := err.Error()
-	if cmdErr, ok := err.(mongo.CommandError); ok {
-		errMsg = cmdErr.Message
+	var errMsg string
+	switch e := err.(type) {
+	case mongo.CommandError:
+		errMsg = e.Message
+	case mongo.WriteError:
+		errMsg = e.Message
+	default:
+		errMsg = err.Error()
 	}
 
 	lowerCaseError := strings.ToLower(errMsg)
