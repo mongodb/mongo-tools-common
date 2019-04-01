@@ -15,90 +15,81 @@ import (
 	"time"
 )
 
-func TestNewMongoWriteConcernOpts(t *testing.T) {
+func TestNewMongoWriteConcern(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("When building write concern object", t, func() {
 		Convey("and given a write concern string value, and a boolean indicating if the "+
-			"write concern is to be used on a replica set, on calling NewMongoWriteConcernOpts...", func() {
+			"write concern is to be used on a replica set, on calling NewMongoWriteConcern...", func() {
 			Convey("no error should be returned if the write concern is valid", func() {
-				writeConcern, err := NewMongoWriteConcernOpts(`{w:34}`, nil)
+				writeConcern, err := NewMongoWriteConcern(`{w:34}`, nil)
 				So(err, ShouldBeNil)
-				So(writeConcern.WNumber, ShouldEqual, 34)
-				So(writeConcern.WNumberSet, ShouldEqual, true)
+				So(writeConcern.GetW(), ShouldEqual, 34)
 
-				writeConcern, err = NewMongoWriteConcernOpts(`{w:"majority"}`, nil)
+				writeConcern, err = NewMongoWriteConcern(`{w:"majority"}`, nil)
 				So(err, ShouldBeNil)
-				So(writeConcern.WString, ShouldEqual, majString)
-				So(writeConcern.WNumberSet, ShouldEqual, false)
+				So(writeConcern.GetW(), ShouldEqual, majString)
 
-				writeConcern, err = NewMongoWriteConcernOpts(`majority`, nil)
+				writeConcern, err = NewMongoWriteConcern(`majority`, nil)
 				So(err, ShouldBeNil)
-				So(writeConcern.WString, ShouldEqual, majString)
-				So(writeConcern.WNumberSet, ShouldEqual, false)
+				So(writeConcern.GetW(), ShouldEqual, majString)
 
-				writeConcern, err = NewMongoWriteConcernOpts(`tagset`, nil)
+				writeConcern, err = NewMongoWriteConcern(`tagset`, nil)
 				So(err, ShouldBeNil)
-				So(writeConcern.WString, ShouldEqual, "tagset")
-				So(writeConcern.WNumberSet, ShouldEqual, false)
+				So(writeConcern.GetW(), ShouldEqual, "tagset")
 			})
 			Convey("with a w value of 0, without j set, an unack'd write concern should be returned", func() {
-				writeConcern, err := NewMongoWriteConcernOpts(`{w:0}`, nil)
+				writeConcern, err := NewMongoWriteConcern(`{w:0}`, nil)
 				So(err, ShouldBeNil)
-				So(writeConcern.WNumber, ShouldEqual, 0)
-				So(writeConcern.WNumberSet, ShouldEqual, true)
+				So(writeConcern.GetW(), ShouldEqual, 0)
 			})
 			Convey("with a negative w value, an error should be returned", func() {
-				writeConcern, err := NewMongoWriteConcernOpts(`{w:-1}`, nil)
+				writeConcern, err := NewMongoWriteConcern(`{w:-1}`, nil)
 				So(writeConcern, ShouldBeNil)
 				So(err, ShouldNotBeNil)
-				writeConcern, err = NewMongoWriteConcernOpts(`{w:-2}`, nil)
+				writeConcern, err = NewMongoWriteConcern(`{w:-2}`, nil)
 				So(writeConcern, ShouldBeNil)
 				So(err, ShouldNotBeNil)
 			})
 			Convey("with a w value of 0, with j set, a non-nil write concern should be returned", func() {
-				writeConcern, err := NewMongoWriteConcernOpts(`{w:0, j:true}`, nil)
+				writeConcern, err := NewMongoWriteConcern(`{w:0, j:true}`, nil)
 				So(err, ShouldBeNil)
-				So(writeConcern.WNumber, ShouldEqual, 0)
-				So(writeConcern.WNumberSet, ShouldEqual, true)
-				So(writeConcern.J, ShouldBeTrue)
+				So(writeConcern.GetW(), ShouldEqual, 0)
+				So(writeConcern.GetJ(), ShouldBeTrue)
 			})
 			// Regression test for TOOLS-1741
 			Convey("When passing an empty writeConcern and empty URI"+
 				"then write concern should default to being majority", func() {
-				writeConcern, err := NewMongoWriteConcernOpts("", nil)
+				writeConcern, err := NewMongoWriteConcern("", nil)
 				So(err, ShouldBeNil)
-				So(writeConcern.WString, ShouldEqual, majString)
-				So(writeConcern.WNumberSet, ShouldEqual, false)
+				So(writeConcern.GetW(), ShouldEqual, majString)
 			})
 		})
 		Convey("and given a connection string", func() {
 			Convey("with a w value of 0, without j set, an unack'd write concern should be returned", func() {
-				writeConcern, err := NewMongoWriteConcernOpts(``, &connstring.ConnString{WNumber: 0, WNumberSet: true})
+				writeConcern, err := NewMongoWriteConcern(``, &connstring.ConnString{WNumber: 0, WNumberSet: true})
 				So(err, ShouldBeNil)
-				So(writeConcern.WNumber, ShouldEqual, 0)
-				So(writeConcern.WNumberSet, ShouldEqual, true)
+				So(writeConcern.GetW(), ShouldEqual, 0)
 			})
 			Convey("with a negative w value, an error should be returned", func() {
-				_, err := NewMongoWriteConcernOpts(``, &connstring.ConnString{WNumber: -1, WNumberSet: true})
+				_, err := NewMongoWriteConcern(``, &connstring.ConnString{WNumber: -1, WNumberSet: true})
 				So(err, ShouldNotBeNil)
-				_, err = NewMongoWriteConcernOpts(``, &connstring.ConnString{WNumber: -2, WNumberSet: true})
+				_, err = NewMongoWriteConcern(``, &connstring.ConnString{WNumber: -2, WNumberSet: true})
 				So(err, ShouldNotBeNil)
 			})
 		})
 		Convey("and given both, should prefer commandline", func() {
-			writeConcern, err := NewMongoWriteConcernOpts(`{w: 4}`, &connstring.ConnString{WNumber: 0, WNumberSet: true})
+			writeConcern, err := NewMongoWriteConcern(`{w: 4}`, &connstring.ConnString{WNumber: 0, WNumberSet: true})
 			So(err, ShouldBeNil)
-			So(writeConcern.WNumberSet, ShouldBeTrue)
-			So(writeConcern.WNumber, ShouldEqual, 4)
+			So(writeConcern.GetW(), ShouldEqual, 4)
 		})
 	})
 }
 
-func TestConstructWCOptionsFromConnString(t *testing.T) {
+func TestConstructWCFromConnString(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
-	Convey("Given a parsed &connstring, on calling constructWCOptionsFromConnString...", t, func() {
+	Convey("Given a parsed &connstring, on calling constructWCFromConnString...", t, func() {
 
 		Convey("non integer values should set the correct boolean "+
 			"field", func() {
@@ -106,10 +97,9 @@ func TestConstructWCOptionsFromConnString(t *testing.T) {
 			cs := &connstring.ConnString{
 				WString: writeConcernString,
 			}
-			writeConcern, err := constructWCOptionsFromConnString(cs)
+			writeConcern, err := constructWCFromConnString(cs)
 			So(err, ShouldBeNil)
-			So(writeConcern.WString, ShouldEqual, majString)
-			So(writeConcern.WNumberSet, ShouldEqual, false)
+			So(writeConcern.GetW(), ShouldEqual, majString)
 		})
 
 		Convey("Int values should be assigned to the 'w' field ", func() {
@@ -117,10 +107,9 @@ func TestConstructWCOptionsFromConnString(t *testing.T) {
 				WNumber:    4,
 				WNumberSet: true,
 			}
-			writeConcern, err := constructWCOptionsFromConnString(cs)
+			writeConcern, err := constructWCFromConnString(cs)
 			So(err, ShouldBeNil)
-			So(writeConcern.WNumber, ShouldEqual, 4)
-			So(writeConcern.WNumberSet, ShouldEqual, true)
+			So(writeConcern.GetW(), ShouldEqual, 4)
 		})
 
 		Convey("&connstrings with valid j, wtimeout, and w should be "+
@@ -133,12 +122,11 @@ func TestConstructWCOptionsFromConnString(t *testing.T) {
 				J:          true,
 				WTimeout:   time.Second * 43,
 			}
-			writeConcern, err := constructWCOptionsFromConnString(cs)
+			writeConcern, err := constructWCFromConnString(cs)
 			So(err, ShouldBeNil)
-			So(writeConcern.WNumber, ShouldEqual, expectedW)
-			So(writeConcern.WNumberSet, ShouldEqual, true)
-			So(writeConcern.J, ShouldBeTrue)
-			So(writeConcern.WTimeout, ShouldEqual, expectedWTimeout)
+			So(writeConcern.GetW(), ShouldEqual, expectedW)
+			So(writeConcern.GetJ(), ShouldBeTrue)
+			So(writeConcern.GetWTimeout(), ShouldEqual, expectedWTimeout)
 		})
 
 		Convey("Unacknowledge write concern strings should return a corresponding object "+
@@ -147,10 +135,9 @@ func TestConstructWCOptionsFromConnString(t *testing.T) {
 				WNumber:    0,
 				WNumberSet: true,
 			}
-			writeConcern, err := constructWCOptionsFromConnString(cs)
+			writeConcern, err := constructWCFromConnString(cs)
 			So(err, ShouldBeNil)
-			So(writeConcern.WNumber, ShouldEqual, 0)
-			So(writeConcern.WNumberSet, ShouldEqual, true)
+			So(writeConcern.GetW(), ShouldEqual, 0)
 		})
 	})
 }
