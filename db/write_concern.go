@@ -130,7 +130,7 @@ func parseJSONWriteConcern(jsonWriteConcern map[string]interface{}) (*writeconce
 			return nil, fmt.Errorf("invalid '%v' argument: %v", wTimeout, wtimeout)
 		}
 		// Previous implementation assumed passed in string was milliseconds
-		opts = append(opts, writeconcern.WTimeout(time.Duration(timeoutVal) * time.Millisecond))
+		opts = append(opts, writeconcern.WTimeout(time.Duration(timeoutVal)*time.Millisecond))
 	}
 
 	return writeconcern.New(opts...), nil
