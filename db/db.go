@@ -52,6 +52,9 @@ const (
 // Hard coded socket timeout in seconds
 const SocketTimeout = 600
 
+// Connection establishment timeout in seconds
+const ConnectTimeout = 30
+
 const (
 	ErrLostConnection     = "lost connection to server"
 	ErrNoReachableServers = "no reachable servers"
@@ -73,9 +76,6 @@ type SessionProvider struct {
 
 	// the master client used for operations
 	client *mongo.Client
-
-	// whether Connect has been called on the mongoClient
-	connectCalled bool
 }
 
 // ApplyOpsResponse represents the response from an 'applyOps' command.
@@ -106,11 +106,6 @@ func (sp *SessionProvider) GetSession() (*mongo.Client, error) {
 		return nil, errors.New("SessionProvider already closed")
 	}
 
-	if !sp.connectCalled {
-		sp.client.Connect(context.Background())
-		sp.connectCalled = true
-	}
-
 	return sp.client, nil
 }
 
@@ -119,7 +114,7 @@ func (sp *SessionProvider) Close() {
 	sp.Lock()
 	defer sp.Unlock()
 	if sp.client != nil {
-		sp.client.Disconnect(context.Background())
+		_ = sp.client.Disconnect(context.Background())
 		sp.client = nil
 	}
 }
@@ -143,6 +138,14 @@ func NewSessionProvider(opts options.ToolOptions) (*SessionProvider, error) {
 	err = client.Connect(context.Background())
 	if err != nil {
 		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ConnectTimeout*time.Second)
+	defer cancel()
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to server: %v", err)
 	}
 
 	// create the provider
