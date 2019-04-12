@@ -52,9 +52,6 @@ const (
 // Hard coded socket timeout in seconds
 const SocketTimeout = 600
 
-// Connection establishment timeout in seconds
-const ConnectTimeout = 30
-
 const (
 	ErrLostConnection     = "lost connection to server"
 	ErrNoReachableServers = "no reachable servers"
