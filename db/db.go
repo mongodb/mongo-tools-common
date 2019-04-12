@@ -140,10 +140,7 @@ func NewSessionProvider(opts options.ToolOptions) (*SessionProvider, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), ConnectTimeout*time.Second)
-	defer cancel()
-
-	err = client.Ping(ctx, nil)
+	err = client.Ping(context.Background(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to server: %v", err)
 	}
