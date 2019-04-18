@@ -54,7 +54,6 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 
 				Convey("should have flushed 3 times with one doc still buffered", func() {
 					So(flushCount, ShouldEqual, 3)
-					So(bufBulk.byteCount, ShouldBeGreaterThan, 0)
 					So(bufBulk.docCount, ShouldEqual, 1)
 				})
 			})
@@ -73,7 +72,6 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 
 				Convey("should have no docs buffered", func() {
 					So(bufBulk.docCount, ShouldEqual, 0)
-					So(bufBulk.byteCount, ShouldEqual, 0)
 				})
 			})
 		})
