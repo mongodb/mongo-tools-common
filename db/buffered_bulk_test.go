@@ -40,15 +40,20 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 
 		Convey("using a test collection and a doc limit of 3", func() {
 			testCol := session.Database("tools-test").Collection("bulk1")
-			bufBulk = NewBufferedBulkInserter(testCol, 3, false)
+			bufBulk = NewUnorderedBufferedBulkInserter(testCol, 3)
 			So(bufBulk, ShouldNotBeNil)
 
 			Convey("inserting 10 documents into the BufferedBulkInserter", func() {
 				flushCount := 0
 				for i := 0; i < 10; i++ {
-					So(bufBulk.Insert(bson.D{}), ShouldBeNil)
+					result, err := bufBulk.Insert(bson.D{})
+					So(err, ShouldBeNil)
 					if bufBulk.docCount%3 == 0 {
 						flushCount++
+						So(result, ShouldNotBeNil)
+						So(result.InsertedCount, ShouldEqual, 3)
+					} else {
+						So(result, ShouldBeNil)
 					}
 				}
 
@@ -61,14 +66,19 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 
 		Convey("using a test collection and a doc limit of 1", func() {
 			testCol := session.Database("tools-test").Collection("bulk2")
-			bufBulk = NewBufferedBulkInserter(testCol, 1, false)
+			bufBulk = NewUnorderedBufferedBulkInserter(testCol, 1)
 			So(bufBulk, ShouldNotBeNil)
 
 			Convey("inserting 10 documents into the BufferedBulkInserter and flushing", func() {
 				for i := 0; i < 10; i++ {
-					So(bufBulk.Insert(bson.D{}), ShouldBeNil)
+					result, err := bufBulk.Insert(bson.D{})
+					So(err, ShouldBeNil)
+					So(result, ShouldNotBeNil)
+					So(result.InsertedCount, ShouldEqual, 1)
 				}
-				So(bufBulk.Flush(), ShouldBeNil)
+				result, err := bufBulk.Flush()
+				So(err, ShouldBeNil)
+				So(result, ShouldBeNil)
 
 				Convey("should have no docs buffered", func() {
 					So(bufBulk.docCount, ShouldEqual, 0)
@@ -78,15 +88,21 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 
 		Convey("using a test collection and a doc limit of 1000", func() {
 			testCol := session.Database("tools-test").Collection("bulk3")
-			bufBulk = NewBufferedBulkInserter(testCol, 100, false)
+			bufBulk = NewUnorderedBufferedBulkInserter(testCol, 100)
 			So(bufBulk, ShouldNotBeNil)
 
 			Convey("inserting 1,000,000 documents into the BufferedBulkInserter and flushing", func() {
 
 				for i := 0; i < 1000000; i++ {
-					bufBulk.Insert(bson.M{"_id": i})
+					result, err := bufBulk.Insert(bson.M{"_id": i})
+					So(err, ShouldBeNil)
+					if (i+1)%100 == 0 {
+						So(result, ShouldNotBeNil)
+						So(result.InsertedCount, ShouldEqual, 100)
+					}
 				}
-				So(bufBulk.Flush(), ShouldBeNil)
+				_, err := bufBulk.Flush()
+				So(err, ShouldBeNil)
 
 				Convey("should have inserted all of the documents", func() {
 					count, err := testCol.CountDocuments(context.Background(), bson.M{})
