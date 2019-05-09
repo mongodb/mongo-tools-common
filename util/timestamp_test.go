@@ -9,29 +9,51 @@ package util
 import (
 	"testing"
 
-	"github.com/mongodb/mongo-tools-common/testtype"
-	. "github.com/smartystreets/goconvey/convey"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestTimestampGreaterThan(t *testing.T) {
-	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
-	reference := primitive.Timestamp{T: 5, I: 0}
+func TestTimestampComparisons(t *testing.T) {
+	t.Run("TestTimestampGreaterThan", func(t *testing.T) {
+		reference := primitive.Timestamp{T: 5, I: 5}
 
-	Convey("With some sample values", t, func() {
-		Convey("different T's should compare correctly", func() {
-			So(TimestampGreaterThan(primitive.Timestamp{T: 1000, I: 0}, reference), ShouldBeTrue)
-			So(TimestampGreaterThan(reference, primitive.Timestamp{T: 1000, I: 0}), ShouldBeFalse)
-		})
+		cases := []struct {
+			name string
+			lhs, rhs primitive.Timestamp
+			expected bool
+		}{
+			{"different T", primitive.Timestamp{T: 1000, I: 0}, reference, true},
+			{"equal T", primitive.Timestamp{T: 5, I: 1}, reference, false},
+			{"equal T and I", reference, reference, false},
+		}
 
-		Convey("matching T's should compare correctly", func() {
-			So(TimestampGreaterThan(primitive.Timestamp{T: 5, I: 1}, reference), ShouldBeTrue)
-			So(TimestampGreaterThan(reference, primitive.Timestamp{T: 5, I: 1}), ShouldBeFalse)
-		})
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				if res := TimestampGreaterThan(tc.lhs, tc.rhs); res != tc.expected {
+					t.Fatalf("comparison mismatch; expected %v, got %v", tc.expected, res)
+				}
+			})
+		}
+	})
 
-		Convey("equal timestamps should compare correctly", func() {
-			So(TimestampGreaterThan(reference, reference), ShouldBeFalse)
-		})
+	t.Run("TestTimestampGreaterThan", func(t *testing.T) {
+		reference := primitive.Timestamp{T: 1000, I: 5}
+
+		cases := []struct {
+			name string
+			lhs, rhs primitive.Timestamp
+			expected bool
+		}{
+			{"different T", primitive.Timestamp{T: 5, I: 0}, reference, true},
+			{"equal T", primitive.Timestamp{T: 1000, I: 10}, reference, false},
+			{"equal T and I", reference, reference, false},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				if res := TimestampLessThan(tc.lhs, tc.rhs); res != tc.expected {
+					t.Fatalf("comparison mismatch; expected %v, got %v", tc.expected, res)
+				}
+			})
+		}
 	})
 }
-
