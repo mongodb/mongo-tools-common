@@ -47,6 +47,20 @@ func getOpsForCase(name string, data bson.Raw) ([]db.Oplog, error) {
 	return ops, nil
 }
 
+func mapTestTxnByID() (map[ID]*TestData, error) {
+	m := make(map[ID]*TestData)
+	for _, c := range testCases {
+		meta, err := NewMeta(c.ops[0])
+		if err != nil {
+			return nil, err
+		}
+		if meta.IsTxn() {
+			m[meta.id] = c
+		}
+	}
+	return m, nil
+}
+
 type TestData struct {
 	name         string
 	entryCount   int
