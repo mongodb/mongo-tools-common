@@ -29,7 +29,7 @@ func readTestData() (bson.Raw, error) {
 }
 
 func getOpsForCase(name string, data bson.Raw) ([]db.Oplog, error) {
-	rawArray, err := data.LookupErr(name)
+	rawArray, err := data.LookupErr(name, "ops")
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't find ops for case %s: %v", name, err)
 	}
@@ -75,11 +75,11 @@ var testCases = []*TestData{
 	{name: "not transaction", entryCount: 1, notTxn: true},
 	{name: "applyops not transaction", entryCount: 1, notTxn: true},
 	{name: "small, unprepared", entryCount: 1, innerOpCount: 3, commits: true},
-	{name: "large, unprepared", entryCount: 3, innerOpCount: 10, commits: true},
-	{name: "small, prepared, committed", entryCount: 2, innerOpCount: 3, commits: true},
-	{name: "small, prepared, aborted", entryCount: 2, innerOpCount: 3, aborts: true},
+	{name: "large, unprepared", entryCount: 3, innerOpCount: 6, commits: true},
+	{name: "small, prepared, committed", entryCount: 2, innerOpCount: 4, commits: true},
+	{name: "small, prepared, aborted", entryCount: 2, innerOpCount: 5, aborts: true},
 	{name: "large, prepared, committed", entryCount: 4, innerOpCount: 10, commits: true},
-	{name: "large, prepared, aborted", entryCount: 4, innerOpCount: 10, aborts: true},
+	{name: "large, prepared, aborted", entryCount: 4, innerOpCount: 9, aborts: true},
 }
 
 func TestMain(m *testing.M) {
