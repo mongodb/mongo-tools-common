@@ -63,7 +63,7 @@ func GetExtendedBsonD(doc bson.D) (bson.D, error) {
 			return nil, err
 		}
 		bsonDoc = append(bsonDoc, bson.E{
-			Key:  docElem.Key,
+			Key:   docElem.Key,
 			Value: bsonValue,
 		})
 	}
