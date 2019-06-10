@@ -1,11 +1,11 @@
 package txn
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/db"
 	"github.com/mongodb/mongo-tools-common/testtype"
+	"github.com/mongodb/mongo-tools-common/testutil"
 )
 
 // test each type of transaction individually and serially
@@ -33,28 +33,11 @@ func TestMixedTxnBuffer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Copy initial ops so we can destructively shuffle them together
 	streams := make([][]db.Oplog, len(testCases))
-	opCount := 0
 	for i, c := range testCases {
-		streams[i] = make([]db.Oplog, len(c.ops))
-		copy(streams[i], c.ops)
-		opCount += len(c.ops)
+		streams[i] = c.ops
 	}
-
-	ops := make([]db.Oplog, 0, opCount)
-	for len(streams) != 0 {
-		// randomly pick a stream to add an op
-		rand.Shuffle(len(streams), func(i, j int) {
-			streams[i], streams[j] = streams[j], streams[i]
-		})
-		ops = append(ops, streams[0][0])
-		// remove the op and its stream if empty
-		streams[0] = streams[0][1:]
-		if len(streams[0]) == 0 {
-			streams = streams[1:]
-		}
-	}
+	ops := testutil.MergeOplogStreams(streams)
 
 	testBufferOps(t, buffer, ops, txnByID)
 }
