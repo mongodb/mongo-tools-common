@@ -11,8 +11,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/session"
-	"go.mongodb.org/mongo-driver/x/network/description"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/description"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
 	"go.mongodb.org/mongo-driver/x/network/result"
 	"go.mongodb.org/mongo-driver/x/network/wiremessage"
 )
@@ -32,6 +32,10 @@ func (at *AbortTransaction) Encode(desc description.SelectedServer) (wiremessage
 
 func (at *AbortTransaction) encode(desc description.SelectedServer) *Write {
 	cmd := bsonx.Doc{{"abortTransaction", bsonx.Int32(1)}}
+	if at.Session.RecoveryToken != nil {
+		tokenDoc, _ := bsonx.ReadDoc(at.Session.RecoveryToken)
+		cmd = append(cmd, bsonx.Elem{"recoveryToken", bsonx.Document(tokenDoc)})
+	}
 	return &Write{
 		DB:           "admin",
 		Command:      cmd,
@@ -56,6 +60,7 @@ func (at *AbortTransaction) decode(desc description.SelectedServer, rdr bson.Raw
 	at.err = bson.Unmarshal(rdr, &at.result)
 	if at.err == nil && at.result.WriteConcernError != nil {
 		at.err = Error{
+			Name:    at.result.WriteConcernError.Name,
 			Code:    int32(at.result.WriteConcernError.Code),
 			Message: at.result.WriteConcernError.ErrMsg,
 		}

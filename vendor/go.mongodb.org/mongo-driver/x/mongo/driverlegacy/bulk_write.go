@@ -13,11 +13,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/session"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/topology"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/uuid"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/description"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/topology"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/uuid"
 	"go.mongodb.org/mongo-driver/x/network/command"
-	"go.mongodb.org/mongo-driver/x/network/description"
 	"go.mongodb.org/mongo-driver/x/network/result"
 )
 
@@ -61,7 +61,7 @@ func BulkWrite(
 	if sess != nil && sess.PinnedServer != nil {
 		selector = sess.PinnedServer
 	}
-	ss, err := topo.SelectServer(ctx, selector)
+	ss, err := topo.SelectServerLegacy(ctx, selector)
 	if err != nil {
 		return result.BulkWrite{}, err
 	}
@@ -101,8 +101,13 @@ func BulkWrite(
 			continue
 		}
 
+		bypassDocValidation := bwOpts.BypassDocumentValidation
+		if bypassDocValidation != nil && !*bypassDocValidation {
+			bypassDocValidation = nil
+		}
+
 		batchRes, batchErr, err := runBatch(ctx, ns, topo, selector, ss, sess, clock, writeConcern, retryWrite,
-			bwOpts.BypassDocumentValidation, continueOnError, batch, registry)
+			bypassDocValidation, continueOnError, batch, registry)
 
 		mergeResults(&bwRes, batchRes, opIndex)
 		bwErr.WriteConcernError = batchErr.WriteConcernError
@@ -259,7 +264,7 @@ func runInsert(
 
 	res, origErr := insert(ctx, &cmd, ss, nil)
 	if shouldRetry(origErr, res.WriteConcernError) {
-		newServer, err := topo.SelectServer(ctx, selector)
+		newServer, err := topo.SelectServerLegacy(ctx, selector)
 		if err != nil || !retrySupported(topo, ss.Description(), cmd.Session, cmd.WriteConcern) {
 			return res, origErr
 		}
@@ -327,7 +332,7 @@ func runDelete(
 
 	res, origErr := delete(ctx, &cmd, ss, nil)
 	if shouldRetry(origErr, res.WriteConcernError) {
-		newServer, err := topo.SelectServer(ctx, selector)
+		newServer, err := topo.SelectServerLegacy(ctx, selector)
 		if err != nil || !retrySupported(topo, ss.Description(), cmd.Session, cmd.WriteConcern) {
 			return res, origErr
 		}
@@ -405,7 +410,7 @@ func runUpdate(
 
 	res, origErr := update(ctx, &cmd, ss, nil)
 	if shouldRetry(origErr, res.WriteConcernError) {
-		newServer, err := topo.SelectServer(ctx, selector)
+		newServer, err := topo.SelectServerLegacy(ctx, selector)
 		if err != nil || !retrySupported(topo, ss.Description(), cmd.Session, cmd.WriteConcern) {
 			return res, origErr
 		}

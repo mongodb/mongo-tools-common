@@ -8,8 +8,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/x/bsonx"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/session"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/topology"
+	"go.mongodb.org/mongo-driver/x/mongo/driver"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/topology"
 	"go.mongodb.org/mongo-driver/x/network/command"
 	"go.mongodb.org/mongo-driver/x/network/wiremessage"
 )
@@ -17,16 +18,17 @@ import (
 // BatchCursor is a batch implementation of a cursor. It returns documents in entire batches instead
 // of one at a time. An individual document cursor can be built on top of this batch cursor.
 type BatchCursor struct {
-	clientSession *session.Client
-	clock         *session.ClusterClock
-	namespace     command.Namespace
-	id            int64
-	err           error
-	server        *topology.Server
-	opts          []bsonx.Elem
-	currentBatch  *bsoncore.DocumentSequence
-	firstBatch    bool
-	batchNumber   int
+	clientSession        *session.Client
+	clock                *session.ClusterClock
+	namespace            command.Namespace
+	id                   int64
+	err                  error
+	server               *topology.Server
+	opts                 []bsonx.Elem
+	currentBatch         *bsoncore.DocumentSequence
+	firstBatch           bool
+	batchNumber          int
+	postBatchResumeToken bsoncore.Document
 
 	// legacy server (< 3.2) fields
 	batchSize   int32
@@ -82,6 +84,13 @@ func NewBatchCursor(result bsoncore.Document, clientSession *session.Client, clo
 			if !ok {
 				return nil, fmt.Errorf("id should be an int64 but it is a BSON %s", elem.Value().Type)
 			}
+		case "postBatchResumeToken":
+			pbrt, ok := elem.Value().DocumentOK()
+			if !ok {
+				return nil, fmt.Errorf("post batch resume token should be a document but it is a BSON %s", elem.Value().Type)
+			}
+
+			bc.postBatchResumeToken = pbrt
 		}
 	}
 
@@ -175,7 +184,7 @@ func (bc *BatchCursor) Next(ctx context.Context) bool {
 func (bc *BatchCursor) Batch() *bsoncore.DocumentSequence { return bc.currentBatch }
 
 // Server returns a pointer to the cursor's server.
-func (bc *BatchCursor) Server() *topology.Server { return bc.server }
+func (bc *BatchCursor) Server() driver.Server { return bc.server }
 
 // Err returns the latest error encountered.
 func (bc *BatchCursor) Err() error { return bc.err }
@@ -195,7 +204,7 @@ func (bc *BatchCursor) Close(ctx context.Context) error {
 	}
 
 	defer bc.closeImplicitSession()
-	conn, err := bc.server.Connection(ctx)
+	conn, err := bc.server.ConnectionLegacy(ctx)
 	if err != nil {
 		return err
 	}
@@ -218,6 +227,11 @@ func (bc *BatchCursor) Close(ctx context.Context) error {
 	return conn.Close()
 }
 
+// PostBatchResumeToken returns the latest seen post batch resume token.
+func (bc *BatchCursor) PostBatchResumeToken() bsoncore.Document {
+	return bc.postBatchResumeToken
+}
+
 func (bc *BatchCursor) closeImplicitSession() {
 	if bc.clientSession != nil && bc.clientSession.SessionType == session.Implicit {
 		bc.clientSession.EndSession()
@@ -234,7 +248,7 @@ func (bc *BatchCursor) getMore(ctx context.Context) {
 		return
 	}
 
-	conn, err := bc.server.Connection(ctx)
+	conn, err := bc.server.ConnectionLegacy(ctx)
 	if err != nil {
 		bc.err = err
 		return
@@ -291,7 +305,19 @@ func (bc *BatchCursor) getMore(ctx context.Context) {
 	bc.currentBatch.Data = arr
 	bc.currentBatch.ResetIterator()
 
-	return
+	pbrt, err := response.LookupErr("cursor", "postBatchResumeToken")
+	if err != nil {
+		// don't set bc.err because post batch resume token is only returned on server versions >= 4.0.7
+		return
+	}
+
+	pbrtDoc, ok := pbrt.DocumentOK()
+	if !ok {
+		bc.err = fmt.Errorf("expected BSON type for post batch resume token to be EmbeddedDocument but got %s", pbrt.Type)
+		return
+	}
+
+	bc.postBatchResumeToken = bsoncore.Document(pbrtDoc)
 }
 
 func (bc *BatchCursor) legacy() bool {
@@ -299,7 +325,7 @@ func (bc *BatchCursor) legacy() bool {
 }
 
 func (bc *BatchCursor) legacyKillCursor(ctx context.Context) error {
-	conn, err := bc.server.Connection(ctx)
+	conn, err := bc.server.ConnectionLegacy(ctx)
 	if err != nil {
 		return err
 	}
@@ -333,7 +359,7 @@ func (bc *BatchCursor) legacyGetMore(ctx context.Context) {
 		return
 	}
 
-	conn, err := bc.server.Connection(ctx)
+	conn, err := bc.server.ConnectionLegacy(ctx)
 	if err != nil {
 		bc.err = err
 		return

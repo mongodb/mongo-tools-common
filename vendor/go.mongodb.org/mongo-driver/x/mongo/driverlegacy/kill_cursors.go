@@ -12,7 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/x/network/connection"
 	"go.mongodb.org/mongo-driver/x/network/wiremessage"
 
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/topology"
+	"go.mongodb.org/mongo-driver/x/mongo/driver"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/description"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/topology"
 	"go.mongodb.org/mongo-driver/x/network/command"
 	"go.mongodb.org/mongo-driver/x/network/result"
 )
@@ -22,17 +24,26 @@ import (
 func KillCursors(
 	ctx context.Context,
 	ns command.Namespace,
-	server *topology.Server,
+	server driver.Server,
 	cursorID int64,
 ) (result.KillCursors, error) {
-	desc := server.SelectedDescription()
-	conn, err := server.Connection(ctx)
+	var conn connection.Connection
+	var desc description.SelectedServer
+	var err error
+
+	if legacyServer, ok := server.(*topology.Server); ok {
+		desc = legacyServer.SelectedDescription()
+		conn, err = legacyServer.ConnectionLegacy(ctx)
+	} else if legacySs, ok := server.(*topology.SelectedServer); ok {
+		desc = legacySs.Description()
+		conn, err = legacySs.ConnectionLegacy(ctx)
+	}
 	if err != nil {
 		return result.KillCursors{}, err
 	}
 	defer conn.Close()
 
-	if desc.WireVersion.Max < 4 {
+	if desc.WireVersion == nil || desc.WireVersion.Max < 4 {
 		return result.KillCursors{}, legacyKillCursors(ctx, ns, cursorID, conn)
 	}
 

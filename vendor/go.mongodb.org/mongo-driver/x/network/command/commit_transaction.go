@@ -11,8 +11,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/session"
-	"go.mongodb.org/mongo-driver/x/network/description"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/description"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
 	"go.mongodb.org/mongo-driver/x/network/result"
 	"go.mongodb.org/mongo-driver/x/network/wiremessage"
 )
@@ -60,6 +60,7 @@ func (ct *CommitTransaction) decode(desc description.SelectedServer, rdr bson.Ra
 	ct.err = bson.Unmarshal(rdr, &ct.result)
 	if ct.err == nil && ct.result.WriteConcernError != nil {
 		ct.err = Error{
+			Name:    ct.result.WriteConcernError.Name,
 			Code:    int32(ct.result.WriteConcernError.Code),
 			Message: ct.result.WriteConcernError.ErrMsg,
 		}

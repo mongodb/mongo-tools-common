@@ -13,11 +13,11 @@ import (
 	"go.mongodb.org/mongo-driver/x/bsonx"
 
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/session"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/topology"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy/uuid"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/description"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/topology"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/uuid"
 	"go.mongodb.org/mongo-driver/x/network/command"
-	"go.mongodb.org/mongo-driver/x/network/description"
 	"go.mongodb.org/mongo-driver/x/network/result"
 )
 
@@ -37,7 +37,7 @@ func Update(
 	if cmd.Session != nil && cmd.Session.PinnedServer != nil {
 		selector = cmd.Session.PinnedServer
 	}
-	ss, err := topo.SelectServer(ctx, selector)
+	ss, err := topo.SelectServerLegacy(ctx, selector)
 	if err != nil {
 		return result.Update{}, err
 	}
@@ -104,7 +104,7 @@ func Update(
 	// Retry if appropriate
 	if cerr, ok := originalErr.(command.Error); (ok && cerr.Retryable()) ||
 		(res.WriteConcernError != nil && command.IsWriteConcernErrorRetryable(res.WriteConcernError)) {
-		ss, err := topo.SelectServer(ctx, selector)
+		ss, err := topo.SelectServerLegacy(ctx, selector)
 
 		// Return original error if server selection fails or new server does not support retryable writes
 		if err != nil || !retrySupported(topo, ss.Description(), cmd.Session, cmd.WriteConcern) {
@@ -125,7 +125,7 @@ func update(
 ) (result.Update, error) {
 	desc := ss.Description()
 
-	conn, err := ss.Connection(ctx)
+	conn, err := ss.ConnectionLegacy(ctx)
 	if err != nil {
 		if oldErr != nil {
 			return result.Update{}, oldErr

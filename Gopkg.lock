@@ -87,7 +87,8 @@
   revision = "73f8eece6fdcd902c185bf651de50f3828bed5ed"
 
 [[projects]]
-  digest = "1:305116d943d35382349686adfcef4786746272e77c2e7d2eba6b30caa94e2cf4"
+  branch = "master"
+  digest = "1:87b9414ed034127ef5240232a831ee49f904a5ce56006fdf18e3f13a2b915f85"
   name = "go.mongodb.org/mongo-driver"
   packages = [
     "bson",
@@ -106,23 +107,27 @@
     "version",
     "x/bsonx",
     "x/bsonx/bsoncore",
+    "x/mongo/driver",
+    "x/mongo/driver/address",
+    "x/mongo/driver/auth",
+    "x/mongo/driver/auth/internal/gssapi",
+    "x/mongo/driver/connstring",
+    "x/mongo/driver/description",
+    "x/mongo/driver/dns",
+    "x/mongo/driver/operation",
+    "x/mongo/driver/session",
+    "x/mongo/driver/topology",
+    "x/mongo/driver/uuid",
+    "x/mongo/driver/wiremessage",
     "x/mongo/driverlegacy",
-    "x/mongo/driverlegacy/auth",
-    "x/mongo/driverlegacy/auth/internal/gssapi",
-    "x/mongo/driverlegacy/session",
-    "x/mongo/driverlegacy/topology",
-    "x/mongo/driverlegacy/uuid",
-    "x/network/address",
     "x/network/command",
     "x/network/compressor",
     "x/network/connection",
-    "x/network/connstring",
-    "x/network/description",
     "x/network/result",
     "x/network/wiremessage",
   ]
   pruneopts = "UT"
-  revision = "bb984ba94a90e2bdf108128bf6bef0c0505a4bc7"
+  revision = "60e65d0f2639c81f74a92904fcd10900e37b9be6"
 
 [[projects]]
   digest = "1:79784b4d6789bbd40f17a9d204051bdd887d889acbbdc24ed8263b3dca28dfbf"
@@ -171,8 +176,7 @@
     "go.mongodb.org/mongo-driver/mongo/readpref",
     "go.mongodb.org/mongo-driver/mongo/writeconcern",
     "go.mongodb.org/mongo-driver/tag",
-    "go.mongodb.org/mongo-driver/x/network/connection",
-    "go.mongodb.org/mongo-driver/x/network/connstring",
+    "go.mongodb.org/mongo-driver/x/mongo/driver/connstring",
     "golang.org/x/crypto/ssh/terminal",
   ]
   solver-name = "gps-cdcl"
