@@ -11,7 +11,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	mopt "go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 // Query flags
@@ -122,10 +121,9 @@ func (sp *SessionProvider) GetNodeType() (NodeType, error) {
 	result := session.Database("admin").RunCommand(
 		context.Background(),
 		&bson.M{"ismaster": 1},
-		mopt.RunCmd().SetReadPreference(readpref.Nearest()),
 	)
 	if result.Err() != nil {
-		return Unknown, err
+		return Unknown, result.Err()
 	}
 	err = result.Decode(&masterDoc)
 	if err != nil {
