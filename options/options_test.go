@@ -248,7 +248,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				Name: "auth fields set",
 				CS: connstring.ConnString{
 					AuthMechanism: "MONGODB-X509",
-					AuthSource:    "authSource",
+					AuthSource:    "",
 					Username:      "user",
 					Password:      "password",
 				},
@@ -272,7 +272,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					Auth: &Auth{
 						Username:  "user",
 						Password:  "password",
-						Source:    "authSource",
+						Source:    "",
 						Mechanism: "MONGODB-X509",
 					},
 					Namespace:      &Namespace{},
@@ -285,7 +285,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				Name: "should ask for password",
 				CS: connstring.ConnString{
 					AuthMechanism: "MONGODB-X509",
-					AuthSource:    "authSource",
+					AuthSource:    "",
 					Username:      "user",
 				},
 				OptsIn: &ToolOptions{
@@ -307,7 +307,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					SSL:        &SSL{},
 					Auth: &Auth{
 						Username:  "user",
-						Source:    "authSource",
+						Source:    "",
 						Mechanism: "MONGODB-X509",
 					},
 					Namespace:      &Namespace{},
