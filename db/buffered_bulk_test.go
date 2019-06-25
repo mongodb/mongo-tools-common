@@ -93,14 +93,18 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 
 			Convey("inserting 1,000,000 documents into the BufferedBulkInserter and flushing", func() {
 
+				errCnt := 0
 				for i := 0; i < 1000000; i++ {
 					result, err := bufBulk.Insert(bson.M{"_id": i})
-					So(err, ShouldBeNil)
-					if (i+1)%100 == 0 {
+					if err != nil {
+						errCnt++
+					}
+					if (i+1)%10000 == 0 {
 						So(result, ShouldNotBeNil)
 						So(result.InsertedCount, ShouldEqual, 100)
 					}
 				}
+				So(errCnt, ShouldEqual, 0)
 				_, err := bufBulk.Flush()
 				So(err, ShouldBeNil)
 
