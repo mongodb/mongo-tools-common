@@ -262,19 +262,15 @@ func (b *Buffer) Stop() error {
 	// clean up.
 
 	b.wg.Wait()
-	errs := make([]error, 0)
+	var firstErr error
 	for _, state := range b.txns {
 		err := state.purge()
-		if err != nil {
-			errs = append(errs, err)
+		if err != nil && firstErr == nil {
+			firstErr = err
 		}
 	}
 
-	if len(errs) != 0 {
-		return errs[0]
-	}
-
-	return nil
+	return firstErr
 }
 
 // sendErrAndClose is a utility for putting an error on a channel before closing.
