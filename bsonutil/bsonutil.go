@@ -100,6 +100,21 @@ func FindIntByKey(keyName string, document *bson.D) (int, error) {
 	}
 }
 
+// FindSubdocumentByKey returns the value of keyName in document as a document.
+// Returns an error if keyName is not found in the top-level of the document,
+// or if it is found but its value is not a document.
+func FindSubdocumentByKey(keyName string, document *bson.D) (bson.D, error) {
+	value, err := FindValueByKey(keyName, document)
+	if err != nil {
+		return bson.D{}, err
+	}
+	doc, ok := value.(bson.D)
+	if !ok {
+		return bson.D{}, fmt.Errorf("field '%s' is not a document", keyName)
+	}
+	return doc, nil
+}
+
 // ParseSpecialKeys takes a JSON document and inspects it for any extended JSON
 // type (e.g $numberLong) and replaces any such values with the corresponding
 // BSON type. (uses legacy extJSON parser)
