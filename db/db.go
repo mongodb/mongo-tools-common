@@ -285,6 +285,10 @@ func loadCert(data []byte) ([]byte, error) {
 func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 	clientopt := mopt.Client()
 
+	if opts.RetryWrites != nil {
+		clientopt.SetRetryWrites(*opts.RetryWrites)
+	}
+
 	if opts.URI == nil || opts.URI.ConnectionString == "" {
 		// XXX Normal operations shouldn't ever reach here because a URI should
 		// be created in options parsing, but tests still manually construct

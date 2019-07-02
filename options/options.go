@@ -85,6 +85,9 @@ type ToolOptions struct {
 	// WriteConcern, if specified, sets the client default
 	WriteConcern *writeconcern.WriteConcern
 
+	// RetryWrites, if specified, sets the client default.
+	RetryWrites *bool
+
 	// for caching the parser
 	parser *flags.Parser
 
