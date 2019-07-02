@@ -47,6 +47,7 @@ type connection struct {
 	desc             description.Server
 	compressor       wiremessage.CompressorID
 	zliblevel        int
+	connected        int32 // must be accessed using the sync/atomic package
 
 	// pool related fields
 	pool       *pool
@@ -91,6 +92,7 @@ func newConnection(ctx context.Context, addr address.Address, opts ...Connection
 		readTimeout:      cfg.readTimeout,
 		writeTimeout:     cfg.writeTimeout,
 	}
+	atomic.StoreInt32(&c.connected, connected)
 
 	c.bumpIdleDeadline()
 
@@ -134,7 +136,7 @@ func newConnection(ctx context.Context, addr address.Address, opts ...Connection
 
 func (c *connection) writeWireMessage(ctx context.Context, wm []byte) error {
 	var err error
-	if c.nc == nil {
+	if atomic.LoadInt32(&c.connected) != connected {
 		return ConnectionError{ConnectionID: c.id, message: "connection is closed"}
 	}
 	select {
@@ -168,7 +170,7 @@ func (c *connection) writeWireMessage(ctx context.Context, wm []byte) error {
 
 // readWireMessage reads a wiremessage from the connection. The dst parameter will be overwritten.
 func (c *connection) readWireMessage(ctx context.Context, dst []byte) ([]byte, error) {
-	if c.nc == nil {
+	if atomic.LoadInt32(&c.connected) != connected {
 		return dst, ConnectionError{ConnectionID: c.id, message: "connection is closed"}
 	}
 
@@ -231,12 +233,12 @@ func (c *connection) readWireMessage(ctx context.Context, dst []byte) ([]byte, e
 }
 
 func (c *connection) close() error {
-	if c.nc == nil {
+	if atomic.LoadInt32(&c.connected) != connected {
 		return nil
 	}
 	if c.pool == nil {
 		err := c.nc.Close()
-		c.nc = nil
+		atomic.StoreInt32(&c.connected, disconnected)
 		return err
 	}
 	return c.pool.close(c)
@@ -252,7 +254,7 @@ func (c *connection) expired() bool {
 		return true
 	}
 
-	return c.nc == nil
+	return atomic.LoadInt32(&c.connected) == disconnected
 }
 
 func (c *connection) bumpIdleDeadline() {
@@ -279,8 +281,8 @@ func (c initConnection) ReadWireMessage(ctx context.Context, dst []byte) ([]byte
 	return c.readWireMessage(ctx, dst)
 }
 
-// Connection implements the driver.Connection interface. It allows reading and writing wire
-// messages.
+// Connection implements the driver.Connection interface to allow reading and writing wire
+// messages and the driver.Expirable interface to allow expiring.
 type Connection struct {
 	*connection
 	s *Server
@@ -289,6 +291,7 @@ type Connection struct {
 }
 
 var _ driver.Connection = (*Connection)(nil)
+var _ driver.Expirable = (*Connection)(nil)
 
 // WriteWireMessage handles writing a wire message to the underlying connection.
 func (c *Connection) WriteWireMessage(ctx context.Context, wm []byte) error {
@@ -384,6 +387,29 @@ func (c *Connection) Close() error {
 	}
 	c.connection = nil
 	return nil
+}
+
+// Expire closes this connection and will close the underlying socket.
+func (c *Connection) Expire() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.connection == nil {
+		return nil
+	}
+	if c.s != nil {
+		c.s.sem.Release(1)
+	}
+	err := c.close()
+	if err != nil {
+		return err
+	}
+	c.connection = nil
+	return nil
+}
+
+// Alive returns if the connection is still alive.
+func (c *Connection) Alive() bool {
+	return c.connection != nil
 }
 
 // ID returns the ID of this connection.
