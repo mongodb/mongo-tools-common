@@ -8,6 +8,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	mopt "go.mongodb.org/mongo-driver/mongo/options"
@@ -89,6 +90,24 @@ func (sp *SessionProvider) ServerVersion() (string, error) {
 		return "", err
 	}
 	return out.Version, nil
+}
+
+func (sp *SessionProvider) ServerVersionArray() (Version, error) {
+	var version Version
+	out := struct {
+		VersionArray []int32 `bson:"versionArray"`
+	}{}
+	err := sp.RunString("buildInfo", &out, "admin")
+	if err != nil {
+		return version, fmt.Errorf("error getting buildInfo: %v", err)
+	}
+	if len(out.VersionArray) < 3 {
+		return version, fmt.Errorf("buildInfo.versionArray had fewer than 3 elements")
+	}
+	for i := 0; i <= 2; i++ {
+		version[i] = int(out.VersionArray[i])
+	}
+	return version, nil
 }
 
 // DatabaseNames returns a slice containing the names of all the databases on the

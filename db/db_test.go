@@ -243,3 +243,26 @@ type listDatabasesCommand struct {
 func (*listDatabasesCommand) AsRunnable() interface{} {
 	return "listDatabases"
 }
+
+func TestServerVersionArray(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+
+	auth := DBGetAuthOptions()
+	ssl := DBGetSSLOptions()
+
+	Convey("With a valid session provider", t, func() {
+		opts := options.ToolOptions{
+			Connection: &options.Connection{
+				Port: DefaultTestPort,
+			},
+			SSL:  &ssl,
+			Auth: &auth,
+		}
+		provider, err := NewSessionProvider(opts)
+		So(err, ShouldBeNil)
+
+		version, err := provider.ServerVersionArray()
+		So(err, ShouldBeNil)
+		So(version.GT(Version{}), ShouldBeTrue)
+	})
+}
