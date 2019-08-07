@@ -32,27 +32,35 @@ type Oplog struct {
 	PrevOpTime bson.Raw            `bson:"prevOpTime,omitempty"`
 }
 
+// OplogTailTime represents two ways of describing the "end" of the oplog at a
+// point in time.  The Latest field represents the last visible (storage
+// committed) timestamp.  The Restart field represents a (possibly older)
+// timestamp that can be used to start tailing or copying the oplog without
+// losing parts of transactions in progress.
+type OplogTailTime struct {
+	Latest  primitive.Timestamp
+	Restart primitive.Timestamp
+}
+
 var zeroTimestamp = primitive.Timestamp{}
 
-// GetOplogTimestamps returns the latest visible timestamp and a timestamp that
-// should be used to start an oplog copy/tailing operation (the earlier of the
-// oldest active transaction timestamp or the latest visible timestamp).
-func GetOplogTimestamps(client *mongo.Client) (latestVisible primitive.Timestamp, copyStart primitive.Timestamp, err error) {
+// GetOplogTailTime constructs an OplogTailTime
+func GetOplogTailTime(client *mongo.Client) (OplogTailTime, error) {
 	// Check oldest active first to be sure it is less-than-or-equal to the
 	// latest visible.
 	oldestActive, err := GetOldestActiveTransactionTimestamp(client)
 	if err != nil {
-		return zeroTimestamp, zeroTimestamp, err
+		return OplogTailTime{}, err
 	}
-	latestVisible, err = GetLatestVisibleOplogTimestamp(client)
+	latestVisible, err := GetLatestVisibleOplogTimestamp(client)
 	if err != nil {
-		return zeroTimestamp, zeroTimestamp, err
+		return OplogTailTime{}, err
 	}
-	// No oldest active means the latest visible is the copy start time as well.
+	// No oldest active means the latest visible is the restart time as well.
 	if oldestActive == zeroTimestamp {
-		return latestVisible, latestVisible, nil
+		return OplogTailTime{Latest: latestVisible, Restart: latestVisible}, nil
 	}
-	return latestVisible, oldestActive, nil
+	return OplogTailTime{Latest: latestVisible, Restart: oldestActive}, nil
 }
 
 // GetOldestActiveTransactionTimestamp returns the oldest active transaction
