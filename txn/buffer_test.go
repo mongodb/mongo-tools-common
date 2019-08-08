@@ -6,6 +6,8 @@ import (
 	"github.com/mongodb/mongo-tools-common/db"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	"github.com/mongodb/mongo-tools-common/testutil"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // test each type of transaction individually and serially
@@ -110,4 +112,74 @@ func assertNoStateForID(t *testing.T, meta Meta, buffer *Buffer) {
 	if ok {
 		t.Errorf("state not cleared for %v", meta.id)
 	}
+}
+
+func TestOldestTimestamp(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
+	buffer := NewBuffer()
+
+	// With no transactions, oldest active is zero value
+	oldest := buffer.OldestTimestamp()
+	if oldest != zeroTimestamp {
+		t.Errorf("expected zero timestamp, but got %v", oldest)
+	}
+
+	// Constructing manually requires pointers to int64, so they can't be constants.
+	txnN := []int64{0, 1}
+
+	ops := []db.Oplog{
+		{
+			Timestamp: primitive.Timestamp{T: 1234, I: 1},
+			LSID:      bson.Raw{0, 0, 0, 0, 1},
+			TxnNumber: &txnN[0],
+			Operation: "c",
+			Namespace: "admin.$cmd",
+			Object: bson.D{
+				{"applyOps", bson.A{bson.D{{"op", "n"}}}},
+				{"partialTxn", true},
+			},
+		},
+		{
+			Timestamp: primitive.Timestamp{T: 1235, I: 1},
+			LSID:      bson.Raw{0, 0, 0, 0, 2},
+			TxnNumber: &txnN[1],
+			Operation: "c",
+			Namespace: "admin.$cmd",
+			Object: bson.D{
+				{"applyOps", bson.A{bson.D{{"op", "n"}}}},
+				{"partialTxn", true},
+			},
+		},
+		{
+			Timestamp: primitive.Timestamp{T: 1236, I: 1},
+			LSID:      bson.Raw{0, 0, 0, 0, 1},
+			TxnNumber: &txnN[0],
+			Operation: "c",
+			Namespace: "admin.$cmd",
+			Object: bson.D{
+				{"applyOps", bson.A{bson.D{{"op", "n"}}}},
+				{"partialTxn", true},
+			},
+		},
+	}
+
+	for _, v := range ops {
+		meta, err := NewMeta(v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = buffer.AddOp(meta, v)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// With uncommitted transactions, we should see the oldest among them.
+	oldest = buffer.OldestTimestamp()
+	expect := primitive.Timestamp{T: 1234, I: 1}
+	if oldest != expect {
+		t.Fatalf("expected timestamp %v, but got %v", expect, oldest)
+	}
+
 }
