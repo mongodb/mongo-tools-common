@@ -26,11 +26,11 @@
   revision = "3e4dfb77656c424b6d1196a4d5fed0fcf63677cc"
 
 [[projects]]
-  digest = "1:8e9ae4fedb2abb5267f2cd69f8d3010e6c464a9c51d1fa1f9d192c0757ac691a"
+  digest = "1:0778dc7fce1b4669a8bfa7ae506ec1f595b6ab0f8989c1c0d22a8ca1144e9972"
   name = "github.com/howeyc/gopass"
   packages = ["."]
   pruneopts = "UT"
-  revision = "44476384cd4721b68705e72f19e95d1a3a504370"
+  revision = "bf9dde6d0d2c004a008c27aaee91170c786f6db8"
 
 [[projects]]
   digest = "1:fb26351f6c6501b149453ecc70fdb5ffeb08191bf4aa3e32dd5cd1e78336df23"
@@ -141,6 +141,14 @@
   packages = ["semaphore"]
   pruneopts = "UT"
   revision = "112230192c580c3556b8cee6403af37a4fc5f28c"
+
+[[projects]]
+  branch = "master"
+  digest = "1:47844666be86089349a441f5f0ece22f42a87a8cb8c9a31294c593f43209ad19"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  pruneopts = "UT"
+  revision = "c7b8b68b14567162c6602a7c5659ee0f26417c18"
 
 [[projects]]
   digest = "1:1093f2eb4b344996604f7d8b29a16c5b22ab9e1b25652140d3fede39f640d5cd"
