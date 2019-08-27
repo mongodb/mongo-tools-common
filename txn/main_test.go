@@ -80,6 +80,9 @@ var testCases = []*TestData{
 	{name: "small, prepared, aborted", entryCount: 2, innerOpCount: 5, aborts: true},
 	{name: "large, prepared, committed", entryCount: 4, innerOpCount: 10, commits: true},
 	{name: "large, prepared, aborted", entryCount: 4, innerOpCount: 9, aborts: true},
+	{name: "not transaction with lsid", entryCount: 1, notTxn: true},
+	{name: "not transaction with lsid and txnNumber", entryCount: 1, notTxn: true},
+	{name: "not transaction with lsid and txnNumber and command", entryCount: 1, notTxn: true},
 }
 
 func TestMain(m *testing.M) {

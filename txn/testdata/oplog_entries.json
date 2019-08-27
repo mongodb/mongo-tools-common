@@ -328,5 +328,45 @@
         ],
         "ns": "txntest.h",
         "postimage": []
+    },
+    "not transaction with lsid": {
+        "ops": [
+            {
+                "ts":{"$timestamp":{"t":1515616500,"i":1}},"t":{"$numberLong":"1"},
+                "op":"i","ns":"txntest.i","o":{"_id":0,"x":0},
+                "ui":{"$binary":{"base64":"4p4kSLicSracQeNvveXz3g==","subType":"04"}},
+                "lsid":{"id":{"$binary":{"base64":"IK+8+nZ+Eem9p6vK9BEt9g==","subType":"04"}}}
+            }
+        ],
+        "ns": "txntest.i",
+        "postimage": [
+            {"_id":0,"x":0}
+        ]
+    },
+    "not transaction with lsid and txnNumber": {
+        "ops": [
+            {
+                "ts":{"$timestamp":{"t":1515616500,"i":1}},"t":{"$numberLong":"1"},
+                "op":"i","ns":"txntest.j","o":{"_id":0,"x":0},
+                "ui":{"$binary":{"base64":"4p4kSLicSracQeNvveXz3g==","subType":"04"}},
+                "lsid":{"id":{"$binary":{"base64":"JK+8+nZ+Eem9p6vK9BEt9g==","subType":"04"}}},"txnNumber":{"$numberLong":"1"}
+            }
+        ],
+        "ns": "txntest.j",
+        "postimage": [
+            {"_id":0,"x":0}
+        ]
+    },
+    "not transaction with lsid and txnNumber and command": {
+        "ops": [
+            {
+                "ts":{"$timestamp":{"t":1515616500,"i":1}},"t":{"$numberLong":"1"},
+                "op":"c","ns":"txntest.$cmd", "o" : { "createIndexes" : "k", "v" : 2, "key" : { "x" : 1 }, "name" : "x_1" },
+                "ui":{"$binary":{"base64":"4p4kSLicSracQeNvveXz3g==","subType":"04"}},
+                "lsid":{"id":{"$binary":{"base64":"KK+8+nZ+Eem9p6vK9BEt9g==","subType":"04"}}},"txnNumber":{"$numberLong":"1"}
+            }
+        ],
+        "ns": "txntest.k",
+        "postimage": [ ]
     }
 }
