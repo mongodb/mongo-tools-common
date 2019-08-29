@@ -9,7 +9,6 @@
 package password
 
 import (
-	"os"
 	"syscall"
 
 	"github.com/howeyc/gopass"
@@ -25,6 +24,6 @@ func IsTerminal() bool {
 }
 
 func GetPass() string {
-	pass, _ := gopass.GetPasswdPrompt("", false, os.Stdin, os.Stderr)
+	pass, _ := gopass.GetPasswd()
 	return string(pass)
 }
