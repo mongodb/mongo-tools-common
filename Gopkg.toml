@@ -30,7 +30,7 @@
 
 [[constraint]]
   name = "github.com/howeyc/gopass"
-  revision = "bf9dde6d0d2c004a008c27aaee91170c786f6db8"
+  revision = "44476384cd4721b68705e72f19e95d1a3a504370"
 
 [[constraint]]
   name = "github.com/jessevdk/go-flags"
