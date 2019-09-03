@@ -40,7 +40,7 @@ type txnState struct {
 	ingestDone chan struct{}
 	ingestErr  error
 	stopChan   chan struct{}
-	timestamp  primitive.Timestamp
+	startTime  primitive.Timestamp
 	wg         sync.WaitGroup
 }
 
@@ -50,7 +50,7 @@ func newTxnState(op db.Oplog) *txnState {
 		ingestDone: make(chan struct{}),
 		stopChan:   make(chan struct{}),
 		buffer:     make([]db.Oplog, 0),
-		timestamp:  op.Timestamp,
+		startTime:  op.Timestamp,
 	}
 }
 
@@ -224,8 +224,8 @@ func (b *Buffer) OldestTimestamp() primitive.Timestamp {
 	defer b.Unlock()
 	oldest := zeroTimestamp
 	for _, v := range b.txns {
-		if oldest == zeroTimestamp || util.TimestampLessThan(v.timestamp, oldest) {
-			oldest = v.timestamp
+		if oldest == zeroTimestamp || util.TimestampLessThan(v.startTime, oldest) {
+			oldest = v.startTime
 		}
 	}
 	return oldest
