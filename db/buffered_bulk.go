@@ -98,9 +98,9 @@ func (bb *BufferedBulkInserter) InsertRaw(rawBytes []byte) (*mongo.BulkWriteResu
 	return bb.addModel(mongo.NewInsertOneModel().SetDocument(rawBytes))
 }
 
-// Remove adds a document to the buffer for bulk removal. If the buffer becomes full, the bulk remove is performed, returning
+// Delete adds a document to the buffer for bulk removal. If the buffer becomes full, the bulk delete is performed, returning
 // any error that occurs.
-func (bb *BufferedBulkInserter) Remove(selector, replacement bson.D) (*mongo.BulkWriteResult, error) {
+func (bb *BufferedBulkInserter) Delete(selector, replacement bson.D) (*mongo.BulkWriteResult, error) {
 	return bb.addModel(mongo.NewDeleteOneModel().SetFilter(selector))
 }
 
