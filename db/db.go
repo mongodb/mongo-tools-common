@@ -119,7 +119,11 @@ func (sp *SessionProvider) DB(name string) *mongo.Database {
 func NewSessionProvider(opts options.ToolOptions) (*SessionProvider, error) {
 	// finalize auth options, filling in missing passwords
 	if opts.Auth.ShouldAskForPassword() {
-		opts.Auth.Password = password.Prompt()
+		pass, err := password.Prompt()
+		if err != nil {
+			return nil, fmt.Errorf("error reading password: %v", err)
+		}
+		opts.Auth.Password = pass
 	}
 
 	client, err := configureClient(opts)
