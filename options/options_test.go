@@ -215,12 +215,14 @@ func TestParseAndSetOptions(t *testing.T) {
 				Name: "connection fields set",
 				CS: connstring.ConnString{
 					ConnectTimeout: time.Duration(100) * time.Millisecond,
+					SocketTimeout:  time.Duration(200) * time.Millisecond,
 				},
 				OptsIn: &ToolOptions{
 					General:   &General{},
 					Verbosity: &Verbosity{},
 					Connection: &Connection{
-						Timeout: 3,
+						Timeout:       3,
+						SocketTimeout: 0,
 					},
 					URI:            &URI{},
 					SSL:            &SSL{},
@@ -233,7 +235,8 @@ func TestParseAndSetOptions(t *testing.T) {
 					General:   &General{},
 					Verbosity: &Verbosity{},
 					Connection: &Connection{
-						Timeout: 100,
+						Timeout:       100,
+						SocketTimeout: 200,
 					},
 					URI:            &URI{},
 					SSL:            &SSL{},
@@ -401,6 +404,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				}
 
 				So(testCase.OptsIn.Connection.Timeout, ShouldResemble, testCase.OptsExpected.Connection.Timeout)
+				So(testCase.OptsIn.Connection.SocketTimeout, ShouldResemble, testCase.OptsExpected.Connection.SocketTimeout)
 				So(testCase.OptsIn.Username, ShouldResemble, testCase.OptsExpected.Username)
 				So(testCase.OptsIn.Password, ShouldResemble, testCase.OptsExpected.Password)
 				So(testCase.OptsIn.Source, ShouldResemble, testCase.OptsExpected.Source)
@@ -428,6 +432,7 @@ func TestHiddenOptionsDefaults(t *testing.T) {
 		Convey("hidden options should have expected values", func() {
 			So(opts.MaxProcs, ShouldEqual, runtime.NumCPU())
 			So(opts.Timeout, ShouldEqual, 3)
+			So(opts.SocketTimeout, ShouldEqual, 0)
 		})
 	})
 
