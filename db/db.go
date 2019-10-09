@@ -299,6 +299,10 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 		clientopt.SetWriteConcern(writeconcern.New(writeconcern.WMajority()))
 	}
 
+	if opts.Compressors != "" && opts.Compressors != "none" {
+		clientopt.SetCompressors(strings.Split(opts.Compressors, ","))
+	}
+
 	if opts.Auth != nil && opts.Auth.IsSet() {
 		cred := mopt.Credential{
 			Username:      opts.Auth.Username,

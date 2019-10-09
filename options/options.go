@@ -139,10 +139,11 @@ type Connection struct {
 	Host string `short:"h" long:"host" value-name:"<hostname>" description:"mongodb host to connect to (setname/host1,host2 for replica sets)"`
 	Port string `long:"port" value-name:"<port>" description:"server port (can also use --host hostname:port)"`
 
-	Timeout                int `long:"dialTimeout" default:"3" hidden:"true" description:"dial timeout in seconds"`
-	SocketTimeout          int `long:"socketTimeout" default:"0" hidden:"true" description:"socket timeout in seconds (0 for no timeout)"`
-	TCPKeepAliveSeconds    int `long:"TCPKeepAliveSeconds" default:"30" hidden:"true" description:"seconds between TCP keep alives"`
-	ServerSelectionTimeout int `long:"serverSelectionTimeout" hidden:"true" description:"seconds to wait for server selection; 0 means driver default"`
+	Timeout                int    `long:"dialTimeout" default:"3" hidden:"true" description:"dial timeout in seconds"`
+	SocketTimeout          int    `long:"socketTimeout" default:"0" hidden:"true" description:"socket timeout in seconds (0 for no timeout)"`
+	TCPKeepAliveSeconds    int    `long:"TCPKeepAliveSeconds" default:"30" hidden:"true" description:"seconds between TCP keep alives"`
+	ServerSelectionTimeout int    `long:"serverSelectionTimeout" hidden:"true" description:"seconds to wait for server selection; 0 means driver default"`
+	Compressors            string `long:"compressors" default:"none" hidden:"true" value-name:"<snappy,...>" description:"comma-separated list of compressors to enable. Use 'none' to disable."`
 }
 
 // Struct holding ssl-related options
@@ -513,6 +514,9 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 			return fmt.Errorf(IncompatibleArgsErrorFormat, "--dialTimeout")
 		case opts.Connection.SocketTimeout != 0:
 			return fmt.Errorf(IncompatibleArgsErrorFormat, "--socketTimeout")
+		// TODO: TOOLS-2348 will need to address this new argument
+		case opts.Connection.Compressors != "none":
+			return fmt.Errorf(IncompatibleArgsErrorFormat, "--compressors")
 		}
 		opts.Connection.Timeout = int(cs.ConnectTimeout / time.Millisecond)
 		opts.Connection.SocketTimeout = int(cs.SocketTimeout / time.Millisecond)
