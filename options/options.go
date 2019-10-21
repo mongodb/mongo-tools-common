@@ -515,7 +515,7 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 		case opts.Connection.SocketTimeout != 0:
 			return fmt.Errorf(IncompatibleArgsErrorFormat, "--socketTimeout")
 		// TODO: TOOLS-2348 will need to address this new argument
-		case opts.Connection.Compressors != "none":
+		case opts.Connection.Compressors != "" && opts.Connection.Compressors != "none":
 			return fmt.Errorf(IncompatibleArgsErrorFormat, "--compressors")
 		}
 		opts.Connection.Timeout = int(cs.ConnectTimeout / time.Millisecond)
