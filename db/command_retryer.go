@@ -408,6 +408,16 @@ func RunRetryableCreateIndexesWithFallback(c *mongo.Collection, indexes []bson.D
 	return nil
 }
 
+// RunRetryableCollectionInfo runs GetCollectionInfo (listCollections)
+// and retries after network errors.
+func RunRetryableCollectionInfo(c *mongo.Collection) (collInfo *CollectionInfo, err error) {
+	err = RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
+		collInfo, err = GetCollectionInfo(c)
+		return err
+	})
+	return
+}
+
 // To ensure w:majority on the destination we need to first perform a
 // w:majority no-op applyOps to "flush" the destination cluster.
 // This ensures that a retry attempt is based on a majority commit
