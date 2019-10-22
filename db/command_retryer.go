@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // const (
@@ -136,52 +137,52 @@ func RunRetryableFunc(s *mongo.Client, f func(isRetry bool) error) error {
 	return errors.Wrapf(err, "gave up retrying after %v failed attempts which took %s", i+1, time.Since(start))
 }
 
-// // RunRetryableInsert inserts the given documents into the collection and
-// // retries after a network error.
-// func RunRetryableInsert(c *mongo.Collection, docs []interface{}, opts ...*options.InsertManyOptions) error {
-// 	for len(docs) > 0 {
-// 		err := RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
-// 			_, err := c.InsertMany(context.Background(), docs, opts...)
-// 			return err
-// 		})
-// 		if !isDuplicateKeyError(err) {
-// 			return err
-// 		}
-// 		// After duplicate key error, insert one at a time until the
-// 		// first success. Then we can bulk insert the remaining docs.
-// 		// TODO: This may be very slow. Some faster approaches might be:
-// 		// - count by query to get all the docs on the destination
-// 		//   with these _ids
-// 		// - run a find on the destination oplog for this collection
-// 		//   to get the last inserted document.
+// RunRetryableInsert inserts the given documents into the collection and
+// retries after a network error.
+func RunRetryableInsert(c *mongo.Collection, docs []interface{}, opts ...*options.InsertManyOptions) error {
+	for len(docs) > 0 {
+		err := RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
+			_, err := c.InsertMany(context.Background(), docs, opts...)
+			return err
+		})
+		if !errorutil.IsDuplicateKeyError(err) {
+			return err
+		}
+		// After duplicate key error, insert one at a time until the
+		// first success. Then we can bulk insert the remaining docs.
+		// TODO: This may be very slow. Some faster approaches might be:
+		// - count by query to get all the docs on the destination
+		//   with these _ids
+		// - run a find on the destination oplog for this collection
+		//   to get the last inserted document.
 
-// 		// translate InsertManyOptions into InsertOneOptions
-// 		insertOneOpts := options.InsertOne()
-// 		for _, opt := range opts {
-// 			if opt.BypassDocumentValidation != nil {
-// 				insertOneOpts.SetBypassDocumentValidation(*opt.BypassDocumentValidation)
-// 			}
-// 		}
+		// translate InsertManyOptions into InsertOneOptions
+		insertOneOpts := options.InsertOne()
+		for _, opt := range opts {
+			if opt.BypassDocumentValidation != nil {
+				insertOneOpts.SetBypassDocumentValidation(*opt.BypassDocumentValidation)
+			}
+		}
 
-// 		i := 0
-// 		for i < len(docs) {
-// 			err := RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
-// 				_, err := c.InsertOne(context.Background(), docs[i], insertOneOpts)
-// 				return err
-// 			})
-// 			i++
-// 			if err == nil {
-// 				break
-// 			} else if isDuplicateKeyError(err) {
-// 				continue
-// 			} else {
-// 				return err
-// 			}
-// 		}
-// 		docs = docs[i:]
-// 	}
-// 	return nil
-// }
+		i := 0
+		for i < len(docs) {
+			err := RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
+				_, err := c.InsertOne(context.Background(), docs[i], insertOneOpts)
+				return err
+			})
+			i++
+			if err == nil {
+				break
+			} else if isDuplicateKeyError(err) {
+				continue
+			} else {
+				return err
+			}
+		}
+		docs = docs[i:]
+	}
+	return nil
+}
 
 // // RunRetryableCreate runs a create collection command and retries after a
 // // network error.

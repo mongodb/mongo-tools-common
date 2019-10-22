@@ -40,8 +40,8 @@ func isDuplicateKeyCode(code int) bool {
 	return code == 11000 || code == 11001 || code == 12582
 }
 
-// isDuplicateKeyError checks if err is a "DuplicateKey" error.
-func isDuplicateKeyError(err error) bool {
+// IsDuplicateKeyError checks if err is a "DuplicateKey" error.
+func IsDuplicateKeyError(err error) bool {
 	if cmdErr, ok := err.(mongo.CommandError); ok {
 		return isDuplicateKeyCode(int(cmdErr.Code))
 	}
