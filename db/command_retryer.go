@@ -524,10 +524,10 @@ func applyOpsBatchBypassValidation(toSession CommandRunner, entries []bson.Raw, 
 		return nil, errors.New("cannot send an empty applyOps!")
 	}
 
-	var dummyCommand = db.Oplog{
+	var dummyCommand = Oplog{
 		Namespace: "noop.$cmd",
 		Operation: "c",
-		Object:    bson.D{{"applyOps", []db.Oplog{noopOplog}}},
+		Object:    bson.D{{"applyOps", []Oplog{noopOplog}}},
 	}
 
 	if len(entries) > 1 {
