@@ -173,7 +173,7 @@ func RunRetryableInsert(c *mongo.Collection, docs []interface{}, opts ...*option
 			i++
 			if err == nil {
 				break
-			} else if isDuplicateKeyError(err) {
+			} else if errorutil.IsDuplicateKeyError(err) {
 				continue
 			} else {
 				return err
