@@ -13,8 +13,12 @@ import (
 
 // ApplyOpsResponse represents the response from an 'applyOps' command.
 type ApplyOpsResponse struct {
-	Ok     bool   `bson:"ok"`
-	ErrMsg string `bson:"errmsg"`
+	Ok       int    `bson:"ok"       json:"ok,omitempty"`
+	ErrMsg   string `bson:"errmsg"   json:"errmsg,omitempty"`
+	Applied  int    `bson:"applied"  json:"applied,omitempty"`
+	Code     int    `bson:"code"     json:"code,omitempty"`
+	CodeName string `bson:"codeName" json:"codeName,omitempty"`
+	Results  []bool `bson:"results"  json:"results,omitempty"`
 }
 
 // Oplog represents a MongoDB oplog document.

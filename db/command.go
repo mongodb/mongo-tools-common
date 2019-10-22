@@ -31,14 +31,8 @@ const (
 )
 
 // CommandRunner exposes functions that can be run against a server
-// XXX Does anything rely on this?
 type CommandRunner interface {
-	Run(command interface{}, out interface{}, database string) error
-	RunString(commandName string, out interface{}, database string) error
-	FindOne(db, collection string, skip int, query interface{}, sort []string, into interface{}, opts int) error
-	Remove(db, collection string, query interface{}) error
-	DatabaseNames() ([]string, error)
-	CollectionNames(db string) ([]string, error)
+	Run(cmd interface{}, result interface{}) error
 }
 
 // // Remove removes all documents matched by query q in the db database and c collection.

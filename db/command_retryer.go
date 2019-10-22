@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mongodb/mongo-tools-common/bsonutil"
+	"github.com/mongodb/mongo-tools-common/errorutil"
 	"github.com/mongodb/mongo-tools-common/log"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -391,7 +392,7 @@ func RunRetryableCreateIndexesWithFallback(c *mongo.Collection, indexes []bson.D
 	if err == nil {
 		return nil
 	}
-	if !(isInvalidIndexSpecificationOptionError(err) || isCannotCreateIndexError(err)) {
+	if !(errorutil.IsInvalidIndexSpecificationOptionError(err) || errorutil.IsCannotCreateIndexError(err)) {
 		return err
 	}
 	log.Logvf(log.Always, "createIndexes for collection `%v` failed: %v. retrying each index build individually",
@@ -429,7 +430,7 @@ func RecoverSession(start time.Time, session *mongo.Client, description string, 
 			// Reconnected.
 			return nil
 		}
-		if IsReconnectableError(err) {
+		if errorutil.IsReconnectableError(err) {
 			log.Logvf(log.Always, "Reconnection attempt %v failed: %#v", i+1, err)
 			continue
 		} else {
@@ -445,12 +446,12 @@ func RecoverSession(start time.Time, session *mongo.Client, description string, 
 
 // runWithWriteConcernMajority runs a command with w:majority and and checks
 // for write concern errors.
-func runWithWriteConcernMajority(c mmCommandRunner, cmd bson.D, res interface{}) error {
+func runWithWriteConcernMajority(c CommandRunner, cmd bson.D, res interface{}) error {
 	return runCheckWriteConcernError(c, withWMajority(cmd), res)
 }
 
 // runCheckWriteConcernError runs a command checks for write concern errors.
-func runCheckWriteConcernError(c mmCommandRunner, cmd bson.D, res interface{}) error {
+func runCheckWriteConcernError(c CommandRunner, cmd bson.D, res interface{}) error {
 	raw := bson.Raw{}
 	cmdErr := c.Run(cmd, &raw)
 	// Unmarshal the final type, even on error.
@@ -477,12 +478,8 @@ func runCheckWriteConcernError(c mmCommandRunner, cmd bson.D, res interface{}) e
 	return nil
 }
 
-type mmCommandRunner interface {
-	Run(cmd interface{}, result interface{}) error
-}
-
 // TODO: Look into Command Runner
-func createIndexes(database mmCommandRunner, collection string, indexes []bson.D) error {
+func createIndexes(database CommandRunner, collection string, indexes []bson.D) error {
 	// We create all indexes belonging to a single collection in one command
 	// so the server can build the indexes in a single collection scan.
 	createIndexesCmd := bson.D{
@@ -522,9 +519,15 @@ func RemoveKey(key string, document *bson.D) (interface{}, bool) {
 }
 
 // applyOpsBatch applies a batch of oplog operations using applyOps.
-func applyOpsBatchBypassValidation(toSession mmCommandRunner, entries []bson.Raw, bypassValidation bool) (*ApplyOpsResponse, error) {
+func applyOpsBatchBypassValidation(toSession CommandRunner, entries []bson.Raw, bypassValidation bool) (*ApplyOpsResponse, error) {
 	if len(entries) == 0 {
-		return nil, ErrEmptyApplyOps
+		return nil, errors.New("cannot send an empty applyOps!")
+	}
+
+	var dummyCommand = db.Oplog{
+		Namespace: "noop.$cmd",
+		Operation: "c",
+		Object:    bson.D{{"applyOps", []db.Oplog{noopOplog}}},
 	}
 
 	if len(entries) > 1 {

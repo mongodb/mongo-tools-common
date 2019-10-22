@@ -1,4 +1,4 @@
-package errrorutil
+package errorutil
 
 import (
 	"fmt"
@@ -120,14 +120,14 @@ func isBadHintError(err error) bool {
 	return false
 }
 
-// isInvalidIndexSpecificationOptionError checks if err is an "InvalidIndexSpecificationOption" error.
-func isInvalidIndexSpecificationOptionError(err error) bool {
+// IsInvalidIndexSpecificationOptionError checks if err is an "InvalidIndexSpecificationOption" error.
+func IsInvalidIndexSpecificationOptionError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	return ok && e.Code == 197
 }
 
-// isCannotCreateIndexError checks if err is a "CannotCreateIndex" error.
-func isCannotCreateIndexError(err error) bool {
+// IsCannotCreateIndexError checks if err is a "CannotCreateIndex" error.
+func IsCannotCreateIndexError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	return ok && e.Code == 67
 }
