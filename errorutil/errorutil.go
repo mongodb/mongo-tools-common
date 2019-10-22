@@ -24,8 +24,8 @@ func (err *WriteConcernError) Error() string {
 	return fmt.Sprintf("WriteConcernError: %s, code: %v, codeName: %v", err.Message, err.Code, err.CodeName)
 }
 
-// isCursorNotFoundError checks if err is an "CursorNotFound" error.
-func isCursorNotFoundError(err error) bool {
+// IsCursorNotFoundError checks if err is an "CursorNotFound" error.
+func IsCursorNotFoundError(err error) bool {
 	code := getErrorCode(err)
 	return code == 43 || strings.Contains(err.Error(), "cursor not found")
 }
