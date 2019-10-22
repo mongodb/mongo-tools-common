@@ -30,8 +30,8 @@ func isCursorNotFoundError(err error) bool {
 	return code == 43 || strings.Contains(err.Error(), "cursor not found")
 }
 
-// isAuthError checks if err is an "Unauthorized" error.
-func isAuthError(err error) bool {
+// IsAuthError checks if err is an "Unauthorized" error.
+func IsAuthError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	return ok && e.Code == 13
 }
@@ -86,20 +86,20 @@ func IsUserNotFound(err error) bool {
 	return ok && e.Code == 11
 }
 
-// isViewError checks if err is an "CommandNotSupportedOnView" error.
-func isViewError(err error) bool {
+// IsViewError checks if err is an "CommandNotSupportedOnView" error.
+func IsViewError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	return ok && e.Code == 166
 }
 
-// isOptionsError checks if err is an "InvalidOptions" error.
-func isOptionsError(err error) bool {
+// IsOptionsError checks if err is an "InvalidOptions" error.
+func IsOptionsError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	return ok && e.Code == 72
 }
 
-// isBadHintError checks if err is an "bad hint" error.
-func isBadHintError(err error) bool {
+// IsBadHintError checks if err is an "bad hint" error.
+func IsBadHintError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	if ok {
 		if e.Code == 17007 {
