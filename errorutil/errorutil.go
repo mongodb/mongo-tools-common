@@ -62,14 +62,14 @@ func IsDuplicateKeyError(err error) bool {
 	return false
 }
 
-// isNoNamespaceError checks if err is an "NamespaceNotFound" error.
-func isNoNamespaceError(err error) bool {
+// IsNoNamespaceError checks if err is an "NamespaceNotFound" error.
+func IsNoNamespaceError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	return ok && e.Code == 26
 }
 
-// isNamespaceExistsError checks if err is an "NamespaceExists" error.
-func isNamespaceExistsError(err error) bool {
+// IsNamespaceExistsError checks if err is an "NamespaceExists" error.
+func IsNamespaceExistsError(err error) bool {
 	e, ok := err.(mongo.CommandError)
 	return ok && e.Code == 48
 }

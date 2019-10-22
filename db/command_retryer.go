@@ -95,21 +95,21 @@ func (dbcr *dbCommandRunner) Run(cmd interface{}, result interface{}) error {
 	return res.Decode(result)
 }
 
-// // RunCommandWithLog runs the given command with some logging.
-// func RunCommandWithLog(d *mongo.Database, cmd bson.D, result interface{}) error {
-// 	cmdName := cmd[0].Key
-// 	log.Logvf(log.DebugLow, "Running %s on database: `%v`", cmdName, d.Name())
-// 	start := time.Now()
-// 	err := runCheckWriteConcernError(&dbCommandRunner{d}, cmd, result)
-// 	if err != nil {
-// 		log.Logvf(log.Always, "%s on database: `%v`, finished in %s with error: %v",
-// 			cmdName, d.Name(), time.Since(start), err)
-// 		return err
-// 	}
-// 	log.Logvf(log.DebugLow, "%s on database: `%v`, finished in %s",
-// 		cmdName, d.Name(), time.Since(start))
-// 	return nil
-// }
+// RunCommandWithLog runs the given command with some logging.
+func RunCommandWithLog(d *mongo.Database, cmd bson.D, result interface{}) error {
+	cmdName := cmd[0].Key
+	log.Logvf(log.DebugLow, "Running %s on database: `%v`", cmdName, d.Name())
+	start := time.Now()
+	err := runCheckWriteConcernError(&dbCommandRunner{d}, cmd, result)
+	if err != nil {
+		log.Logvf(log.Always, "%s on database: `%v`, finished in %s with error: %v",
+			cmdName, d.Name(), time.Since(start), err)
+		return err
+	}
+	log.Logvf(log.DebugLow, "%s on database: `%v`, finished in %s",
+		cmdName, d.Name(), time.Since(start))
+	return nil
+}
 
 // RunRetryableFunc runs the given function and retries after a network error.
 func RunRetryableFunc(s *mongo.Client, f func(isRetry bool) error) error {
@@ -184,81 +184,81 @@ func RunRetryableInsert(c *mongo.Collection, docs []interface{}, opts ...*option
 	return nil
 }
 
-// // RunRetryableCreate runs a create collection command and retries after a
-// // network error.
-// func RunRetryableCreate(db *mongo.Database, createCmd bson.D) error {
-// 	return RunRetryableFunc(db.Client(), func(isRetry bool) error {
-// 		err := RunCommandWithLog(db, withWMajority(createCmd), nil)
-// 		// Ignore when the namespace already exists on a retry attempt.
-// 		if isRetry && isNamespaceExistsError(err) {
-// 			return nil
-// 		}
-// 		return err
-// 	})
-// }
+// RunRetryableCreate runs a create collection command and retries after a
+// network error.
+func RunRetryableCreate(db *mongo.Database, createCmd bson.D) error {
+	return RunRetryableFunc(db.Client(), func(isRetry bool) error {
+		err := RunCommandWithLog(db, withWMajority(createCmd), nil)
+		// Ignore when the namespace already exists on a retry attempt.
+		if isRetry && errorutil.IsNamespaceExistsError(err) {
+			return nil
+		}
+		return err
+	})
+}
 
-// // RunRetryableRenameAndDrop renames and drops the given collection,
-// // retrying after network errors.
-// func RunRetryableRenameAndDrop(c *mongo.Collection) error {
-// 	newColl := c.Database().Collection(fmt.Sprintf("_mongomirror_drop_pending_%s", c.Name()))
-// 	cmd := bson.D{
-// 		{"renameCollection", FullCollectionName(c)},
-// 		{"to", FullCollectionName(newColl)},
-// 	}
-// 	err := RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
-// 		err := RunCommandWithLog(c.Database().Client().Database("admin"), withWMajority(cmd), nil)
-// 		// Ignore when the namespace is not found on a retry attempt.
-// 		if isRetry && isNoNamespaceError(err) {
-// 			return nil
-// 		}
-// 		return err
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return RunRetryableDrop(newColl)
-// }
+// RunRetryableRenameAndDrop renames and drops the given collection,
+// retrying after network errors.
+func RunRetryableRenameAndDrop(c *mongo.Collection) error {
+	newColl := c.Database().Collection(fmt.Sprintf("_mongomirror_drop_pending_%s", c.Name()))
+	cmd := bson.D{
+		{"renameCollection", FullCollectionName(c)},
+		{"to", FullCollectionName(newColl)},
+	}
+	err := RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
+		err := RunCommandWithLog(c.Database().Client().Database("admin"), withWMajority(cmd), nil)
+		// Ignore when the namespace is not found on a retry attempt.
+		if isRetry && errorutil.IsNoNamespaceError(err) {
+			return nil
+		}
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	return RunRetryableDrop(newColl)
+}
 
-// // RunRetryableDrop drops the given collection and retries after a network error.
-// func RunRetryableDrop(c *mongo.Collection) error {
-// 	if c.Name() == "system.js" {
-// 		// The server does not let you drop "system.js" collections unless
-// 		// you say the magic words, SERVER-5972.
-// 		return RunRetryableRenameAndDrop(c)
-// 	}
-// 	return RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
-// 		err := RunCommandWithLog(c.Database(), withWMajority(bson.D{{"drop", c.Name()}}), nil)
-// 		// Ignore when the namespace is not found on a retry attempt.
-// 		if isRetry && isNoNamespaceError(err) {
-// 			return nil
-// 		}
-// 		return err
-// 	})
-// }
+// RunRetryableDrop drops the given collection and retries after a network error.
+func RunRetryableDrop(c *mongo.Collection) error {
+	if c.Name() == "system.js" {
+		// The server does not let you drop "system.js" collections unless
+		// you say the magic words, SERVER-5972.
+		return RunRetryableRenameAndDrop(c)
+	}
+	return RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
+		err := RunCommandWithLog(c.Database(), withWMajority(bson.D{{"drop", c.Name()}}), nil)
+		// Ignore when the namespace is not found on a retry attempt.
+		if isRetry && errorutil.IsNoNamespaceError(err) {
+			return nil
+		}
+		return err
+	})
+}
 
-// // RunRetryableDropDatabase drops the given database and retries after a network error.
-// func RunRetryableDropDatabase(db *mongo.Database) error {
-// 	return RunRetryableFunc(db.Client(), func(isRetry bool) error {
-// 		return RunCommandWithLog(db, withWMajority(bson.D{{"dropDatabase", 1}}), nil)
-// 	})
-// }
+// RunRetryableDropDatabase drops the given database and retries after a network error.
+func RunRetryableDropDatabase(db *mongo.Database) error {
+	return RunRetryableFunc(db.Client(), func(isRetry bool) error {
+		return RunCommandWithLog(db, withWMajority(bson.D{{"dropDatabase", 1}}), nil)
+	})
+}
 
-// // RunRetryableCollMod runs a collMod command to modify a view definition
-// // and retries after a network error.  On 3.6+, collMod supports write concern,
-// // otherwise, we wait for a no-op applyOps.
-// func RunRetryableCollMod(c *mongo.Collection, collModCmd bson.D, destInfo *BuildInfo) error {
-// 	return RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
-// 		if destInfo.VersionAtLeast(3, 6, 0) {
-// 			return RunCommandWithLog(c.Database(), withWMajority(collModCmd), nil)
-// 		}
+// RunRetryableCollMod runs a collMod command to modify a view definition
+// and retries after a network error.  On 3.6+, collMod supports write concern,
+// otherwise, we wait for a no-op applyOps.
+func RunRetryableCollMod(c *mongo.Collection, collModCmd bson.D, destInfo *BuildInfo) error {
+	return RunRetryableFunc(c.Database().Client(), func(isRetry bool) error {
+		if destInfo.VersionAtLeast(3, 6, 0) {
+			return RunCommandWithLog(c.Database(), withWMajority(collModCmd), nil)
+		}
 
-// 		err := RunCommandWithLog(c.Database(), collModCmd, nil)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		return WaitForWriteConcernMajority(c.Database().Client())
-// 	})
-// }
+		err := RunCommandWithLog(c.Database(), collModCmd, nil)
+		if err != nil {
+			return err
+		}
+		return WaitForWriteConcernMajority(c.Database().Client())
+	})
+}
 
 // ApplyOpsErrorToLog returns an error to log given an applyOps response and
 // an mgo error. The response contains more information than the mgo error
