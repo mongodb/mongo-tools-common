@@ -12,17 +12,26 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mongodb/mongo-tools-common/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// type CollectionInfo struct {
+// 	Name    string  `bson:"name"`
+// 	Type    string  `bson:"type"`
+// 	Options bson.M `bson:"options"`
+// 	Info    bson.M `bson:"info"`
+// }
+
 type CollectionInfo struct {
 	Name    string  `bson:"name"`
 	Type    string  `bson:"type"`
-	Options bson.M `bson:"options"`
-	Info    bson.M `bson:"info"`
+	Options *bson.D `bson:"options"`
+	Info    struct {
+		UUID *primitive.Binary `bson:"uuid,omitempty"`
+	}
+	IdIndex *bson.D `bson:"idIndex,omitempty"`
 }
 
 func (ci *CollectionInfo) IsView() bool {
@@ -34,19 +43,14 @@ func (ci *CollectionInfo) IsSystemCollection() bool {
 }
 
 func (ci *CollectionInfo) GetUUID() string {
-	if ci.Info == nil {
+	if ci.Info.UUID == nil {
 		return ""
 	}
-	if v, ok := ci.Info["uuid"]; ok {
-		switch x := v.(type) {
-		case primitive.Binary:
-			if x.Subtype == 4 {
-				return hex.EncodeToString(x.Data)
-			}
-		default:
-			log.Logvf(log.DebugHigh, "unknown UUID BSON type '%T'", v)
-		}
+
+	if ci.Info.UUID.Subtype == 4 {
+		return hex.EncodeToString(ci.Info.UUID.Data)
 	}
+
 	return ""
 }
 
