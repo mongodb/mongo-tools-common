@@ -253,7 +253,7 @@ func IsReconnectableError(err error) bool {
 		}
 	}
 
-	if isNetworkError(err) {
+	if IsNetworkError(err) {
 		// Retry on network errors, eg no reachable servers, connection reset
 		// by peer, operation timed out, etc...
 		return true
