@@ -133,7 +133,7 @@ func IsCannotCreateIndexError(err error) bool {
 }
 
 // isNetworkError checks if err is a network error.
-func isNetworkError(err error) bool {
+func IsNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}

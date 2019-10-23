@@ -315,7 +315,7 @@ func RunRetryableCreateIndexes(c *mongo.Collection, indexes []bson.D, destInfo *
 		log.Logvf(log.DebugLow, "Running createIndexes for collection: `%v`, indexes: %v",
 			FullCollectionName(c), indexes)
 		start := time.Now()
-		err := createIndexes(&DbCommandRunner{c.Database()}, c.Name(), indexes)
+		err := CreateIndexes(&DbCommandRunner{c.Database()}, c.Name(), indexes)
 		if err != nil {
 			log.Logvf(log.Always, "createIndexes for collection: `%v`, finished in %s with error: %v",
 				FullCollectionName(c), time.Since(start), err)
@@ -455,9 +455,9 @@ func RecoverSession(start time.Time, session *mongo.Client, description string, 
 		"failed attempts which took %s", description, i, time.Since(start))
 }
 
-// runWithWriteConcernMajority runs a command with w:majority and and checks
+// RunWithWriteConcernMajority runs a command with w:majority and and checks
 // for write concern errors.
-func runWithWriteConcernMajority(c CommandRunner, cmd bson.D, res interface{}) error {
+func RunWithWriteConcernMajority(c CommandRunner, cmd bson.D, res interface{}) error {
 	return runCheckWriteConcernError(c, withWMajority(cmd), res)
 }
 
@@ -490,13 +490,13 @@ func runCheckWriteConcernError(c CommandRunner, cmd bson.D, res interface{}) err
 }
 
 // TODO: Look into Command Runner
-func createIndexes(database CommandRunner, collection string, indexes []bson.D) error {
+func CreateIndexes(database CommandRunner, collection string, indexes []bson.D) error {
 	// We create all indexes belonging to a single collection in one command
 	// so the server can build the indexes in a single collection scan.
 	createIndexesCmd := bson.D{
 		{"createIndexes", collection},
 		{"indexes", indexes}}
-	return runWithWriteConcernMajority(database, createIndexesCmd, nil)
+	return RunWithWriteConcernMajority(database, createIndexesCmd, nil)
 }
 
 // WaitForWriteConcernMajority runs a no-op applyOps with writeConcern majority
@@ -555,7 +555,7 @@ func applyOpsBatchBypassValidation(toSession CommandRunner, entries []bson.Raw, 
 	if bypassValidation {
 		cmd = append(cmd, bson.E{"bypassDocumentValidation", true})
 	}
-	err := runWithWriteConcernMajority(toSession, cmd, res)
+	err := RunWithWriteConcernMajority(toSession, cmd, res)
 	// The ApplyOpsResponse will contain more useful information than the mgo
 	// error when an error response is returned by the server. For example,
 	// the "results" array is used to figure out exactly which operation failed.
