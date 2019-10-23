@@ -101,7 +101,7 @@ type Namespace struct {
 	Collection string `short:"c" long:"collection" value-name:"<collection-name>" description:"collection to use"`
 }
 
-func (ns *Namespace) String() string {
+func (ns Namespace) String() string {
 	return ns.DB + "." + ns.Collection
 }
 
