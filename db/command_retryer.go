@@ -79,14 +79,14 @@ func FullCollectionName(c *mongo.Collection) string {
 	return fmt.Sprintf("%s.%s", c.Database().Name(), c.Name())
 }
 
-// dbCommandRunner wraps a *mongo.Database and implements the CommandRunner interface
+// DbCommandRunner wraps a *mongo.Database and implements the CommandRunner interface
 // This type was created to minimize diff noise while porting mongomirror to the new driver.
 // TODO(MGOMIRROR-241) Remove this type
-type dbCommandRunner struct {
+type DbCommandRunner struct {
 	*mongo.Database
 }
 
-func (dbcr *dbCommandRunner) Run(cmd interface{}, result interface{}) error {
+func (dbcr *DbCommandRunner) Run(cmd interface{}, result interface{}) error {
 	res := dbcr.RunCommand(context.Background(), cmd)
 	if err := res.Err(); err != nil {
 		return err
@@ -100,7 +100,7 @@ func RunCommandWithLog(d *mongo.Database, cmd bson.D, result interface{}) error 
 	cmdName := cmd[0].Key
 	log.Logvf(log.DebugLow, "Running %s on database: `%v`", cmdName, d.Name())
 	start := time.Now()
-	err := runCheckWriteConcernError(&dbCommandRunner{d}, cmd, result)
+	err := runCheckWriteConcernError(&DbCommandRunner{d}, cmd, result)
 	if err != nil {
 		log.Logvf(log.Always, "%s on database: `%v`, finished in %s with error: %v",
 			cmdName, d.Name(), time.Since(start), err)
@@ -286,7 +286,7 @@ func RunRetryableApplyOps(s *mongo.Client, entries []bson.Raw, bytes int, bypass
 		}
 
 		start := time.Now()
-		res, err = applyOpsBatchBypassValidation(&dbCommandRunner{Database: s.Database("admin")}, entries, bypassValidation)
+		res, err = applyOpsBatchBypassValidation(&DbCommandRunner{Database: s.Database("admin")}, entries, bypassValidation)
 		end := time.Since(start)
 
 		if err == nil {
@@ -315,7 +315,7 @@ func RunRetryableCreateIndexes(c *mongo.Collection, indexes []bson.D, destInfo *
 		log.Logvf(log.DebugLow, "Running createIndexes for collection: `%v`, indexes: %v",
 			FullCollectionName(c), indexes)
 		start := time.Now()
-		err := createIndexes(&dbCommandRunner{c.Database()}, c.Name(), indexes)
+		err := createIndexes(&DbCommandRunner{c.Database()}, c.Name(), indexes)
 		if err != nil {
 			log.Logvf(log.Always, "createIndexes for collection: `%v`, finished in %s with error: %v",
 				FullCollectionName(c), time.Since(start), err)
@@ -506,7 +506,7 @@ func WaitForWriteConcernMajority(s *mongo.Client) error {
 	if err != nil {
 		return err
 	}
-	_, err = applyOpsBatch(&dbCommandRunner{
+	_, err = ApplyOpsBatch(&DbCommandRunner{
 		Database: s.Database("admin"),
 	}, []bson.Raw{rawOp})
 	return err
@@ -532,7 +532,7 @@ func RemoveKey(key string, document *bson.D) (interface{}, bool) {
 // applyOpsBatch applies a batch of oplog operations using applyOps.
 func applyOpsBatchBypassValidation(toSession CommandRunner, entries []bson.Raw, bypassValidation bool) (*ApplyOpsResponse, error) {
 	if len(entries) == 0 {
-		return nil, errors.New("cannot send an empty applyOps!")
+		return nil, ErrEmptyApplyOps
 	}
 
 	var dummyCommand = Oplog{
@@ -583,7 +583,9 @@ func withWMajority(cmd bson.D) bson.D {
 // The dummy applyOps command cannot be empty.
 var noopOplog = Oplog{Operation: "n", Namespace: "", Object: bson.D{{"msg", "mongomirror noop"}}}
 
-// applyOpsBatch applies a batch of oplog operations using applyOps.
-func applyOpsBatch(toSession CommandRunner, entries []bson.Raw) (*ApplyOpsResponse, error) {
+// ApplyOpsBatch applies a batch of oplog operations using applyOps.
+func ApplyOpsBatch(toSession CommandRunner, entries []bson.Raw) (*ApplyOpsResponse, error) {
 	return applyOpsBatchBypassValidation(toSession, entries, true)
 }
+
+var ErrEmptyApplyOps = errors.New("cannot send an empty applyOps!")
