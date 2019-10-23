@@ -437,3 +437,23 @@ func TestHiddenOptionsDefaults(t *testing.T) {
 	})
 
 }
+
+func TestNamespace_String(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
+	cases := []struct {
+		ns     Namespace
+		expect string
+	}{
+		{Namespace{"foo", "bar"}, "foo.bar"},
+		{Namespace{"foo", "bar.baz"}, "foo.bar.baz"},
+	}
+
+	for _, c := range cases {
+		got := c.ns.String()
+		if got != c.expect {
+			t.Errorf("invalid string conversion for %#v, got '%s', expected '%s'", c.ns, got, c.expect)
+		}
+	}
+
+}

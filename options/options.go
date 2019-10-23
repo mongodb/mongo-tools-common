@@ -101,6 +101,10 @@ type Namespace struct {
 	Collection string `short:"c" long:"collection" value-name:"<collection-name>" description:"collection to use"`
 }
 
+func (ns *Namespace) String() string {
+	return ns.DB + "." + ns.Collection
+}
+
 // Struct holding generic options
 type General struct {
 	Help    bool `long:"help" description:"print usage"`
