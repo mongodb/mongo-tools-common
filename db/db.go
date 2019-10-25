@@ -288,7 +288,12 @@ func configureClient(opts options.ToolOptions) (*mongo.Client, error) {
 	clientopt.SetReplicaSet(opts.ReplicaSetName)
 
 	clientopt.SetAppName(opts.AppName)
-	clientopt.SetDirect(opts.Direct)
+	if opts.Direct {
+		clientopt.SetDirect(true)
+		t := true
+		clientopt.AuthenticateToAnything = &t
+	}
+
 	if opts.ReadPreference != nil {
 		clientopt.SetReadPreference(opts.ReadPreference)
 	}
