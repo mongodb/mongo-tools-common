@@ -39,13 +39,19 @@ const (
 type Demultiplexer struct {
 	In io.Reader
 	//TODO wrap up these three into a structure
-	outs               map[string]DemuxOut
-	lengths            map[string]int64
-	currentNamespace   string
-	buf                [db.MaxBSONSize]byte
-	NamespaceChan      chan string
+	outs             map[string]DemuxOut
+	lengths          map[string]int64
+	currentNamespace string
+	buf              [db.MaxBSONSize]byte
+
+	// NamespaceChan is used to send a namespace to a consumer of namespaces.
+	NamespaceChan chan string
+
+	// NamespaceErrorChan is used to receive an error or nil from a namespace
+	// consumer immediately after each namespace is sent and validated.
 	NamespaceErrorChan chan error
-	NamespaceStatus    map[string]int
+
+	NamespaceStatus map[string]int
 }
 
 func CreateDemux(namespaceMetadatas []*CollectionMetadata, in io.Reader) *Demultiplexer {
