@@ -12,6 +12,7 @@ import (
 	"hash/crc32"
 	"io"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/db"
@@ -20,6 +21,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+const testDocCount = 10000
 
 var testIntents = []*intents.Intent{
 	&intents.Intent{
@@ -66,7 +69,7 @@ func TestBasicMux(t *testing.T) {
 
 	var err error
 
-	Convey("with 10000 docs in each of five collections", t, func() {
+	Convey("with thousands of docs in each of five collections", t, func() {
 		buf := &closingBuffer{bytes.Buffer{}}
 
 		mux := NewMultiplexer(buf, new(testNotifier))
@@ -195,7 +198,7 @@ func makeIns(testIntents []*intents.Intent, mux *Multiplexer, inChecksum map[str
 				return
 			}
 			staticBSONBuf := make([]byte, db.MaxBSONSize)
-			for i := 0; i < 10000; i++ {
+			for i := 0; i < testDocCount; i++ {
 				bsonBytes, _ := bson.Marshal(testDoc{Bar: index * i, Baz: ns})
 				bsonBuf := staticBSONBuf[:len(bsonBytes)]
 				copy(bsonBuf, bsonBytes)
@@ -232,6 +235,7 @@ func makeOuts(testIntents []*intents.Intent, demux *Demultiplexer, outChecksum m
 				var length int
 				length, err = muxOut.Read(bs)
 				if err != nil {
+					muxOut.Close()
 					break
 				}
 				sum.Write(bs[:length])
@@ -243,4 +247,113 @@ func makeOuts(testIntents []*intents.Intent, demux *Demultiplexer, outChecksum m
 			errCh <- err
 		}()
 	}
+}
+
+func buildSingleIntentArchive(t *testing.T, singleIntent *intents.Intent) *closingBuffer {
+	var err error
+
+	buf := &closingBuffer{bytes.Buffer{}}
+
+	mux := NewMultiplexer(buf, new(testNotifier))
+	muxIns := map[string]*MuxIn{}
+
+	inChecksum := map[string]hash.Hash{}
+	inLengths := map[string]*int{}
+	errChan := make(chan error)
+
+	makeIns([]*intents.Intent{singleIntent}, mux, inChecksum, muxIns, inLengths, errChan)
+
+	go mux.Run()
+
+	err = <-errChan
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	close(mux.Control)
+	err = <-mux.Completed
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	return buf
+}
+
+func TestTOOLS1826(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
+	singleIntent := testIntents[0]
+
+	demux := &Demultiplexer{
+		In:              buildSingleIntentArchive(t, singleIntent),
+		NamespaceStatus: make(map[string]int),
+	}
+
+	muxOut := &RegularCollectionReceiver{
+		Intent: singleIntent,
+		Demux:  demux,
+		Origin: singleIntent.Namespace(),
+	}
+	muxOut.Open()
+
+	var demuxErr error
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		demuxErr = demux.Run()
+	}()
+
+	// Closing the receiver before reading shouldn't panic.
+	muxOut.Close()
+
+	wg.Wait()
+	if demuxErr != errInterrupted {
+		t.Fatalf("unexpected error: %v", demuxErr)
+	}
+}
+
+func TestTOOLS2403(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
+	singleIntent := testIntents[0]
+
+	demux := &Demultiplexer{
+		In:              buildSingleIntentArchive(t, singleIntent),
+		NamespaceStatus: make(map[string]int),
+	}
+
+	muxOut := &RegularCollectionReceiver{
+		Intent: singleIntent,
+		Demux:  demux,
+		Origin: singleIntent.Namespace(),
+	}
+	muxOut.Open()
+
+	var demuxErr error
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		demuxErr = demux.Run()
+	}()
+
+	// Read all the documents, but don't read past into EOF.
+	bs := make([]byte, db.MaxBSONSize)
+	for i := 0; i < testDocCount; i++ {
+		_, err := muxOut.Read(bs)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Closing the intent before reading EOF should not deadlock.
+	muxOut.Close()
+
+	wg.Wait()
+	if demuxErr != nil {
+		t.Fatalf("unexpected error: %v", demuxErr)
+	}
+
+	return
 }
