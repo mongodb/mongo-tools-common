@@ -248,6 +248,7 @@ type RegularCollectionReceiver struct {
 	partialReadBuf   []byte
 	hash             hash.Hash64
 	closeOnce        sync.Once
+	endOnce          sync.Once
 	openOnce         sync.Once
 	err              error
 }
@@ -374,7 +375,10 @@ func (receiver *RegularCollectionReceiver) Close() error {
 // it waits on the readBufChan, which is closed by the reader-side Close()
 // method.
 func (receiver *RegularCollectionReceiver) End() {
-	close(receiver.readLenChan)
+	// To keep this idempotent, close the channel only once.
+	receiver.endOnce.Do(func() {
+		close(receiver.readLenChan)
+	})
 	<-receiver.readBufChan
 }
 
