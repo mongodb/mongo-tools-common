@@ -26,11 +26,11 @@
   revision = "3e4dfb77656c424b6d1196a4d5fed0fcf63677cc"
 
 [[projects]]
-  digest = "1:fb26351f6c6501b149453ecc70fdb5ffeb08191bf4aa3e32dd5cd1e78336df23"
+  digest = "1:bedcc29d570d02d8cc999d8d6ef6bd860ec10154e67d2821d87eeb5202243897"
   name = "github.com/jessevdk/go-flags"
   packages = ["."]
   pruneopts = "UT"
-  revision = "97448c91aac742cbca3d020b3e769013a420a06f"
+  revision = "4e64e4a4e2552194cf594243e23aa9baf3b4297e"
 
 [[projects]]
   digest = "1:4b63210654b1f2b664f74ec434a1bb1cb442b3d75742cc064a10808d1cca6361"
