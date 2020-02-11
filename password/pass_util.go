@@ -25,7 +25,7 @@ func IsTerminal() bool {
 }
 
 func GetPass() (string, error) {
-	oldState, err := terminal.MakeRaw(0)
+	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
