@@ -69,6 +69,7 @@ func (bw *bulkWrite) execute(ctx context.Context) error {
 		bw.mergeResults(batchRes, opIndex)
 
 		bwErr.WriteConcernError = batchErr.WriteConcernError
+		bwErr.Labels = append(bwErr.Labels, batchErr.Labels...)
 		for i := range batchErr.WriteErrors {
 			batchErr.WriteErrors[i].Index = batchErr.WriteErrors[i].Index + int(opIndex)
 		}
@@ -116,6 +117,7 @@ func (bw *bulkWrite) runBatch(ctx context.Context, batch bulkWriteBatch) (BulkWr
 				return BulkWriteResult{}, batchErr, err
 			}
 			writeErrors = writeErr.WriteErrors
+			batchErr.Labels = writeErr.Labels
 			batchErr.WriteConcernError = convertDriverWriteConcernError(writeErr.WriteConcernError)
 		}
 		batchRes.InsertedCount = int64(res.N)
@@ -127,6 +129,7 @@ func (bw *bulkWrite) runBatch(ctx context.Context, batch bulkWriteBatch) (BulkWr
 				return BulkWriteResult{}, batchErr, err
 			}
 			writeErrors = writeErr.WriteErrors
+			batchErr.Labels = writeErr.Labels
 			batchErr.WriteConcernError = convertDriverWriteConcernError(writeErr.WriteConcernError)
 		}
 		batchRes.DeletedCount = int64(res.N)
@@ -138,6 +141,7 @@ func (bw *bulkWrite) runBatch(ctx context.Context, batch bulkWriteBatch) (BulkWr
 				return BulkWriteResult{}, batchErr, err
 			}
 			writeErrors = writeErr.WriteErrors
+			batchErr.Labels = writeErr.Labels
 			batchErr.WriteConcernError = convertDriverWriteConcernError(writeErr.WriteConcernError)
 		}
 		batchRes.MatchedCount = int64(res.N)
@@ -153,7 +157,7 @@ func (bw *bulkWrite) runBatch(ctx context.Context, batch bulkWriteBatch) (BulkWr
 	for _, we := range convWriteErrors {
 		batchErr.WriteErrors = append(batchErr.WriteErrors, BulkWriteError{
 			WriteError: we,
-			Request:    batch.models[0],
+			Request:    batch.models[we.Index],
 		})
 	}
 	return batchRes, batchErr, nil
@@ -177,7 +181,7 @@ func (bw *bulkWrite) runInsert(ctx context.Context, batch bulkWriteBatch) (opera
 		Session(bw.session).WriteConcern(bw.writeConcern).CommandMonitor(bw.collection.client.monitor).
 		ServerSelector(bw.selector).ClusterClock(bw.collection.client.clock).
 		Database(bw.collection.db.name).Collection(bw.collection.name).
-		Deployment(bw.collection.client.topology)
+		Deployment(bw.collection.client.deployment).Crypt(bw.collection.client.crypt)
 	if bw.bypassDocumentValidation != nil && *bw.bypassDocumentValidation {
 		op = op.BypassDocumentValidation(*bw.bypassDocumentValidation)
 	}
@@ -223,7 +227,7 @@ func (bw *bulkWrite) runDelete(ctx context.Context, batch bulkWriteBatch) (opera
 		Session(bw.session).WriteConcern(bw.writeConcern).CommandMonitor(bw.collection.client.monitor).
 		ServerSelector(bw.selector).ClusterClock(bw.collection.client.clock).
 		Database(bw.collection.db.name).Collection(bw.collection.name).
-		Deployment(bw.collection.client.topology)
+		Deployment(bw.collection.client.deployment).Crypt(bw.collection.client.crypt)
 	if bw.ordered != nil {
 		op = op.Ordered(*bw.ordered)
 	}
@@ -287,7 +291,7 @@ func (bw *bulkWrite) runUpdate(ctx context.Context, batch bulkWriteBatch) (opera
 		Session(bw.session).WriteConcern(bw.writeConcern).CommandMonitor(bw.collection.client.monitor).
 		ServerSelector(bw.selector).ClusterClock(bw.collection.client.clock).
 		Database(bw.collection.db.name).Collection(bw.collection.name).
-		Deployment(bw.collection.client.topology)
+		Deployment(bw.collection.client.deployment).Crypt(bw.collection.client.crypt)
 	if bw.ordered != nil {
 		op = op.Ordered(*bw.ordered)
 	}
