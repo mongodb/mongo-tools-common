@@ -199,8 +199,8 @@ func TestParseAndSetOptions(t *testing.T) {
 					AuthMechanism: "GSSAPI",
 					AuthMechanismProperties: map[string]string{
 						"SERVICE_NAME": "service",
-						"SERVICE_HOST": "servicehost",
 					},
+					AuthMechanismPropertiesSet: true,
 				},
 				WithGSSAPI: true,
 				OptsIn:     New("", "", "", "", enabledURIOnly),
@@ -213,8 +213,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					Auth:       &Auth{},
 					Namespace:  &Namespace{},
 					Kerberos: &Kerberos{
-						Service:     "service",
-						ServiceHost: "servicehost",
+						Service: "service",
 					},
 					enabledOptions: enabledURIOnly,
 				},
@@ -223,15 +222,16 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "connection fields set",
 				CS: connstring.ConnString{
-					ConnectTimeout: time.Duration(100) * time.Millisecond,
-					SocketTimeout:  time.Duration(200) * time.Millisecond,
+					ConnectTimeout:    time.Duration(100) * time.Millisecond,
+					ConnectTimeoutSet: true,
+					SocketTimeout:     time.Duration(200) * time.Millisecond,
+					SocketTimeoutSet:  true,
 				},
 				OptsIn: &ToolOptions{
 					General:   &General{},
 					Verbosity: &Verbosity{},
 					Connection: &Connection{
-						Timeout:       3,
-						SocketTimeout: 0,
+						Timeout: 3, // The default value
 					},
 					URI:            &URI{},
 					SSL:            &SSL{},
@@ -261,6 +261,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				CS: connstring.ConnString{
 					AuthMechanism: "MONGODB-X509",
 					AuthSource:    "",
+					AuthSourceSet: true,
 					Username:      "user",
 					Password:      "password",
 				},
@@ -370,7 +371,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				ShouldError: false,
 			},
 			{
-				Name: "fail when uri and options set",
+				Name: "Don't fail when uri and options set",
 				CS: connstring.ConnString{
 					Hosts: []string{"host"},
 				},
@@ -387,8 +388,20 @@ func TestParseAndSetOptions(t *testing.T) {
 					Kerberos:       &Kerberos{},
 					enabledOptions: EnabledOptions{Connection: true, URI: true},
 				},
-				OptsExpected: New("", "", "", "", EnabledOptions{Connection: true, URI: true}),
-				ShouldError:  true,
+				OptsExpected: &ToolOptions{
+					General:   &General{},
+					Verbosity: &Verbosity{},
+					Connection: &Connection{
+						Host: "host",
+					},
+					URI:            &URI{},
+					SSL:            &SSL{},
+					Auth:           &Auth{},
+					Namespace:      &Namespace{},
+					Kerberos:       &Kerberos{},
+					enabledOptions: EnabledOptions{Connection: true, URI: true},
+				},
+				ShouldError: false,
 			},
 		}
 

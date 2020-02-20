@@ -550,6 +550,8 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 		if opts.Host != "" {
 			// build hosts from --host and --port
 			seedlist, replicaSetName := util.SplitHostArg(opts.Host)
+			opts.ReplicaSetName = replicaSetName
+
 			if opts.Port != "" {
 				for i := range seedlist {
 					if strings.Index(seedlist[i], ":") == -1 { // no port
@@ -578,20 +580,6 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 				if _, ok := optionHostSet[host]; !ok {
 					return ConflictingArgsErrorFormat("host", strings.Join(cs.Hosts, ","), opts.Host, "--host")
 				}
-			}
-
-			// check replica set name equality
-			if replicaSetName != "" && cs.ReplicaSet != "" {
-				if replicaSetName != cs.ReplicaSet {
-					return ConflictingArgsErrorFormat("replica set name", cs.ReplicaSet, opts.Host, "--host")
-				}
-
-			}
-			if replicaSetName != "" && cs.ReplicaSet == "" {
-				cs.ReplicaSet = opts.ReplicaSetName
-			}
-			if replicaSetName == "" && cs.ReplicaSet != "" {
-				opts.ReplicaSetName = cs.ReplicaSet
 			}
 		}
 
@@ -708,6 +696,20 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 	}
 
 	opts.Direct = (cs.Connect == connstring.SingleConnect)
+
+	// check replica set name equality
+	if opts.ReplicaSetName != "" && cs.ReplicaSet != "" {
+		if opts.ReplicaSetName != cs.ReplicaSet {
+			return ConflictingArgsErrorFormat("replica set name", cs.ReplicaSet, opts.Host, "--host")
+		}
+
+	}
+	if opts.ReplicaSetName != "" && cs.ReplicaSet == "" {
+		cs.ReplicaSet = opts.ReplicaSetName
+	}
+	if opts.ReplicaSetName == "" && cs.ReplicaSet != "" {
+		opts.ReplicaSetName = cs.ReplicaSet
+	}
 
 	if (cs.SSL || opts.UseSSL) && !BuiltWithSSL {
 		if strings.HasPrefix(cs.Original, "mongodb+srv") {
