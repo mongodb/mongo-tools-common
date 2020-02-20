@@ -96,6 +96,11 @@ type ToolOptions struct {
 
 	// for checking which options were enabled on this tool
 	enabledOptions EnabledOptions
+
+	// The number of positonal arguments besides the URI that a tool wishes to parse.
+	// This is zero for most tools, but would be 1 for a tool like mongorestore that
+	// can also take a directory as a positional argument.
+	numberOfPostionalArgs int
 }
 
 type Namespace struct {
@@ -461,6 +466,15 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, err
 	}
 
+	args, uri, err := checkArgsForURI(args)
+	if err != nil {
+		return []string{}, err
+	}
+
+	if opts.ConnectionString != "" && len(uri.Hosts) != 0 {
+		return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
+	}
+
 	failpoint.ParseFailpoints(opts.Failpoints)
 
 	err = opts.NormalizeOptionsAndURI()
@@ -469,6 +483,25 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	}
 
 	return args, err
+}
+
+func checkArgsForURI(args []string) ([]string, connstring.ConnString, error) {
+	newArgs := []string{}
+	var foundURI bool
+	var cs connstring.ConnString
+	var err error
+	for _, arg := range args {
+		cs, err = connstring.ParseWithoutValidating(arg)
+		if err == nil {
+			if foundURI {
+				return []string{}, connstring.ConnString{}, fmt.Errorf("too many URIs found in positional arguments: only one URI can be passed as a positional argument")
+			}
+			foundURI = true
+		} else {
+			newArgs = append(newArgs, arg)
+		}
+	}
+	return newArgs, cs, nil
 }
 
 // NormalizeOptionsAndURI syncs the connection string an toolOptions objects.
