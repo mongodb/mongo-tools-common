@@ -401,6 +401,10 @@ func TestParseAndSetOptions(t *testing.T) {
 
 				BuiltWithSSL = testCase.WithSSL
 				BuiltWithGSSAPI = testCase.WithGSSAPI
+				defer func() {
+					BuiltWithSSL = true
+					BuiltWithGSSAPI = true
+				}()
 
 				testCase.OptsIn.URI.connString = testCase.CS
 
