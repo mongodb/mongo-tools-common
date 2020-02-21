@@ -97,8 +97,8 @@ type ToolOptions struct {
 	// for checking which options were enabled on this tool
 	enabledOptions EnabledOptions
 
-	// The number of positonal arguments besides the URI that a tool wishes to parse.
-	// This is zero for most tools, but would be 1 for a tool like mongorestore that
+	// The number of positonal arguments that a tool wishes to parse.
+	// This is 1 for most tools, but would be 2 for a tool like mongorestore that
 	// can also take a directory as a positional argument.
 	numberOfPostionalArgs int
 }
@@ -232,6 +232,13 @@ func New(appName, versionStr, gitCommit, usageStr string, enabled EnabledOptions
 		parser: flags.NewNamedParser(
 			fmt.Sprintf("%v %v", appName, usageStr), flags.None),
 		enabledOptions: enabled,
+	}
+
+	switch appName {
+	case "mongorestore":
+		opts.numberOfPostionalArgs = 2
+	default:
+		opts.numberOfPostionalArgs = 1
 	}
 
 	// Called when -v or --verbose is parsed
@@ -466,7 +473,7 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, err
 	}
 
-	if len(args) > opts.numberOfPostionalArgs+1 {
+	if len(args) > opts.numberOfPostionalArgs {
 		var extraErrorInfo string
 		switch opts.AppName {
 		case "mongorestore":
@@ -488,7 +495,7 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 			return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
 		}
 		opts.ConnectionString = uri.Original
-	} else if len(args) > opts.numberOfPostionalArgs+1 {
+	} else if len(args) > opts.numberOfPostionalArgs {
 		switch opts.AppName {
 		case "mongorestore":
 			return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string." +
