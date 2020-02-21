@@ -521,20 +521,20 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 func checkArgsForURI(args []string) ([]string, connstring.ConnString, error) {
 	newArgs := []string{}
 	var foundURI bool
-	var cs connstring.ConnString
-	var err error
+	var parsedURI connstring.ConnString
 	for _, arg := range args {
-		cs, err = connstring.ParseWithoutValidating(arg)
+		cs, err := connstring.ParseWithoutValidating(arg)
 		if err == nil {
 			if foundURI {
 				return []string{}, connstring.ConnString{}, fmt.Errorf("too many URIs found in positional arguments: only one URI can be set as a positional argument")
 			}
 			foundURI = true
+			parsedURI = cs
 		} else {
 			newArgs = append(newArgs, arg)
 		}
 	}
-	return newArgs, cs, nil
+	return newArgs, parsedURI, nil
 }
 
 // NormalizeOptionsAndURI syncs the connection string an toolOptions objects.
