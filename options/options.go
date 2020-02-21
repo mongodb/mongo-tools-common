@@ -475,6 +475,8 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
 	}
 
+	opts.ConnectionString = uri.Original
+
 	failpoint.ParseFailpoints(opts.Failpoints)
 
 	err = opts.NormalizeOptionsAndURI()
