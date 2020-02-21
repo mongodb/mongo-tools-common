@@ -466,16 +466,39 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, err
 	}
 
+	if len(args) > opts.numberOfPostionalArgs+1 {
+		var extraErrorInfo string
+		switch opts.AppName {
+		case "mongorestore":
+			extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a directory/BSON-file name). " +
+				"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
+		default:
+			extraErrorInfo = "One connection string can be specified as a positional argument"
+		}
+		return []string{}, fmt.Errorf("too many positional arguments: %s", extraErrorInfo)
+	}
+
 	args, uri, err := checkArgsForURI(args)
 	if err != nil {
 		return []string{}, err
 	}
 
-	if len(uri.Hosts) != 0 {
+	if len(uri.Hosts) != 0 { // Successfully parsed a URI
 		if opts.ConnectionString != "" {
 			return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
 		}
 		opts.ConnectionString = uri.Original
+	} else if len(args) > opts.numberOfPostionalArgs+1 {
+		switch opts.AppName {
+		case "mongorestore":
+			return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string." +
+				"Please provide only one directory/BSON-file and only one MongoDB connection string." +
+				"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
+			)
+		default:
+			return []string{}, fmt.Errorf("cannot parse positional argument %s as a connection string", args[0])
+		}
+
 	}
 
 	failpoint.ParseFailpoints(opts.Failpoints)
@@ -497,7 +520,7 @@ func checkArgsForURI(args []string) ([]string, connstring.ConnString, error) {
 		cs, err = connstring.ParseWithoutValidating(arg)
 		if err == nil {
 			if foundURI {
-				return []string{}, connstring.ConnString{}, fmt.Errorf("too many URIs found in positional arguments: only one URI can be passed as a positional argument")
+				return []string{}, connstring.ConnString{}, fmt.Errorf("too many URIs found in positional arguments: only one URI can be set as a positional argument")
 			}
 			foundURI = true
 		} else {
