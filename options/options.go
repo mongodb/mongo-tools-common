@@ -495,7 +495,7 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 			return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
 		}
 		opts.ConnectionString = uri.Original
-	} else if len(args) > opts.numberOfPostionalArgs {
+	} else if len(args) == opts.numberOfPostionalArgs {
 		switch opts.AppName {
 		case "mongorestore":
 			return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string." +
