@@ -97,7 +97,7 @@ type ToolOptions struct {
 	// for checking which options were enabled on this tool
 	enabledOptions EnabledOptions
 
-	parsedPositionalArgumentAsURI bool
+	ParsedPositionalArgumentAsURI bool
 }
 
 type Namespace struct {
