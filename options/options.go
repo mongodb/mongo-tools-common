@@ -237,6 +237,8 @@ func New(appName, versionStr, gitCommit, usageStr string, enabled EnabledOptions
 	switch appName {
 	case "mongorestore":
 		opts.numberOfPostionalArgs = 2
+	case "mongofiles":
+		opts.numberOfPostionalArgs = 4 // put_id can have up to 4 args ("put_id", filename, _id, URI)
 	default:
 		opts.numberOfPostionalArgs = 1
 	}
@@ -498,8 +500,8 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	} else if len(args) == opts.numberOfPostionalArgs {
 		switch opts.AppName {
 		case "mongorestore":
-			return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string." +
-				"Please provide only one directory/BSON-file and only one MongoDB connection string." +
+			return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
+				"Please provide only one directory/BSON-file and only one MongoDB connection string. " +
 				"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
 			)
 		default:
