@@ -96,6 +96,9 @@ type ToolOptions struct {
 
 	// for checking which options were enabled on this tool
 	enabledOptions EnabledOptions
+
+	// Will attempt to parse positional arguments as connection strings if true
+	parsePositionalArgsAsURI bool
 }
 
 type Namespace struct {
@@ -210,7 +213,7 @@ func parseVal(val string) int {
 }
 
 // Ask for a new instance of tool options
-func New(appName, versionStr, gitCommit, usageStr string, enabled EnabledOptions) *ToolOptions {
+func New(appName, versionStr, gitCommit, usageStr string, parsePositionalArgsAsURI bool, enabled EnabledOptions) *ToolOptions {
 	opts := &ToolOptions{
 		AppName:    appName,
 		VersionStr: versionStr,
@@ -226,7 +229,8 @@ func New(appName, versionStr, gitCommit, usageStr string, enabled EnabledOptions
 		Kerberos:   &Kerberos{},
 		parser: flags.NewNamedParser(
 			fmt.Sprintf("%v %v", appName, usageStr), flags.None),
-		enabledOptions: enabled,
+		enabledOptions:           enabled,
+		parsePositionalArgsAsURI: parsePositionalArgsAsURI,
 	}
 
 	// Called when -v or --verbose is parsed
@@ -461,9 +465,11 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, err
 	}
 
-	args, err = opts.setURIFromPositionalArg(args)
-	if err != nil {
-		return []string{}, err
+	if opts.ParsePositionalArgsAsURI {
+		args, err = opts.setURIFromPositionalArg(args)
+		if err != nil {
+			return []string{}, err
+		}
 	}
 
 	failpoint.ParseFailpoints(opts.Failpoints)
