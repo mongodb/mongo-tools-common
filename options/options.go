@@ -531,6 +531,7 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 			return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
 		}
 		opts.ConnectionString = parsedURI.Original
+	}
 	// } else if len(args) == opts.numberOfPostionalArgs {
 	// 	switch opts.AppName {
 	// 	case "mongorestore":
