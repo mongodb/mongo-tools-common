@@ -235,7 +235,7 @@ func New(appName, versionStr, gitCommit, usageStr string, enabled EnabledOptions
 	}
 
 	switch appName {
-	case "mongorestore":
+	case "mongorestore", "mongoimport", "mongostat", "mongotop":
 		opts.numberOfPostionalArgs = 2
 	case "mongofiles":
 		opts.numberOfPostionalArgs = 4 // put_id can have up to 4 args ("put_id", filename, _id, URI)
