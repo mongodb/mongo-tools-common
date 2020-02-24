@@ -475,39 +475,9 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, err
 	}
 
-	if len(args) > opts.numberOfPostionalArgs {
-		var extraErrorInfo string
-		switch opts.AppName {
-		case "mongorestore":
-			extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a directory/BSON-file name). " +
-				"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
-		default:
-			extraErrorInfo = "One connection string can be specified as a positional argument"
-		}
-		return []string{}, fmt.Errorf("too many positional arguments: %s", extraErrorInfo)
-	}
-
-	args, uri, err := checkArgsForURI(args)
+	args, err = opts.setURIFromPositionalArg(args)
 	if err != nil {
 		return []string{}, err
-	}
-
-	if len(uri.Hosts) != 0 { // Successfully parsed a URI
-		if opts.ConnectionString != "" {
-			return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
-		}
-		opts.ConnectionString = uri.Original
-	} else if len(args) == opts.numberOfPostionalArgs {
-		switch opts.AppName {
-		case "mongorestore":
-			return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
-				"Please provide only one directory/BSON-file and only one MongoDB connection string. " +
-				"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
-			)
-		default:
-			return []string{}, fmt.Errorf("cannot parse positional argument %s as a connection string", args[0])
-		}
-
 	}
 
 	failpoint.ParseFailpoints(opts.Failpoints)
@@ -520,15 +490,34 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	return args, err
 }
 
-func checkArgsForURI(args []string) ([]string, connstring.ConnString, error) {
+func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error) {
 	newArgs := []string{}
 	var foundURI bool
 	var parsedURI connstring.ConnString
+
+	// if len(args) > opts.numberOfPostionalArgs {
+	// 	var extraErrorInfo string
+	// 	switch opts.AppName {
+	// 	case "mongorestore":
+	// 		extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a directory/BSON-file name). " +
+	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
+	// 	case "mongoimport":
+	// 		extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a file name). " +
+	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
+	// 	case "mongostat", "mongotop":
+	// 		extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a polling interval in seconds). " +
+	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
+	// 	default:
+	// 		extraErrorInfo = "One connection string can be specified as a positional argument"
+	// 	}
+	// 	return []string{}, fmt.Errorf("too many positional arguments: %s", extraErrorInfo)
+	// }
+
 	for _, arg := range args {
 		cs, err := connstring.ParseWithoutValidating(arg)
 		if err == nil {
 			if foundURI {
-				return []string{}, connstring.ConnString{}, fmt.Errorf("too many URIs found in positional arguments: only one URI can be set as a positional argument")
+				return []string{}, fmt.Errorf("too many URIs found in positional arguments: only one URI can be set as a positional argument")
 			}
 			foundURI = true
 			parsedURI = cs
@@ -536,7 +525,36 @@ func checkArgsForURI(args []string) ([]string, connstring.ConnString, error) {
 			newArgs = append(newArgs, arg)
 		}
 	}
-	return newArgs, parsedURI, nil
+
+	// if foundURI { // Successfully parsed a URI
+	// 	if opts.ConnectionString != "" {
+	// 		return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
+	// 	}
+	// 	opts.ConnectionString = parsedURI.Original
+	// } else if len(args) == opts.numberOfPostionalArgs {
+	// 	switch opts.AppName {
+	// 	case "mongorestore":
+	// 		return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
+	// 			"Please provide only one directory/BSON-file and only one MongoDB connection string. " +
+	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
+	// 		)
+	// 	case "mongimport":
+	// 		return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
+	// 			"Please provide only one file name and only one MongoDB connection string. " +
+	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
+	// 		)
+	// 	case "mongostat", "mongotop":
+	// 		return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
+	// 			"Please provide only one polling interval in seconds and only one MongoDB connection string. " +
+	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
+	// 		)
+	// 	default:
+	// 		return []string{}, fmt.Errorf("cannot parse positional argument %s as a connection string", args[0])
+	// 	}
+
+	// }
+
+	return newArgs, nil
 }
 
 // NormalizeOptionsAndURI syncs the connection string an toolOptions objects.
