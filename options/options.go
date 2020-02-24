@@ -96,8 +96,6 @@ type ToolOptions struct {
 
 	// for checking which options were enabled on this tool
 	enabledOptions EnabledOptions
-
-	ParsedPositionalArgumentAsURI bool
 }
 
 type Namespace struct {
@@ -230,15 +228,6 @@ func New(appName, versionStr, gitCommit, usageStr string, enabled EnabledOptions
 			fmt.Sprintf("%v %v", appName, usageStr), flags.None),
 		enabledOptions: enabled,
 	}
-
-	// switch appName {
-	// case "mongorestore", "mongoimport", "mongostat", "mongotop":
-	// 	opts.numberOfPostionalArgs = 2
-	// case "mongofiles":
-	// 	opts.numberOfPostionalArgs = 4 // put_id can have up to 4 args ("put_id", filename, _id, URI)
-	// default:
-	// 	opts.numberOfPostionalArgs = 1
-	// }
 
 	// Called when -v or --verbose is parsed
 	opts.SetVerbosity = func(val string) {
@@ -492,24 +481,6 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 	var foundURI bool
 	var parsedURI connstring.ConnString
 
-	// if len(args) > opts.numberOfPostionalArgs {
-	// 	var extraErrorInfo string
-	// 	switch opts.AppName {
-	// 	case "mongorestore":
-	// 		extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a directory/BSON-file name). " +
-	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
-	// 	case "mongoimport":
-	// 		extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a file name). " +
-	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
-	// 	case "mongostat", "mongotop":
-	// 		extraErrorInfo = "Only two positional arguments can be specified (a MongoDB URI and a polling interval in seconds). " +
-	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes"
-	// 	default:
-	// 		extraErrorInfo = "One connection string can be specified as a positional argument"
-	// 	}
-	// 	return []string{}, fmt.Errorf("too many positional arguments: %s", extraErrorInfo)
-	// }
-
 	for _, arg := range args {
 		cs, err := connstring.ParseWithoutValidating(arg)
 		if err == nil {
@@ -527,31 +498,8 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 		if opts.ConnectionString != "" {
 			return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
 		}
-		opts.ParsedPositionalArgumentAsURI = true
 		opts.ConnectionString = parsedURI.Original
 	}
-	// } else if len(args) == opts.numberOfPostionalArgs {
-	// 	switch opts.AppName {
-	// 	case "mongorestore":
-	// 		return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
-	// 			"Please provide only one directory/BSON-file and only one MongoDB connection string. " +
-	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
-	// 		)
-	// 	case "mongimport":
-	// 		return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
-	// 			"Please provide only one file name and only one MongoDB connection string. " +
-	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
-	// 		)
-	// 	case "mongostat", "mongotop":
-	// 		return []string{}, fmt.Errorf("two positional arguments provided but neither can be parsed as a connection string. " +
-	// 			"Please provide only one polling interval in seconds and only one MongoDB connection string. " +
-	// 			"Connection strings must begin with mongodb:// or mongodb+srv:// schemes",
-	// 		)
-	// 	default:
-	// 		return []string{}, fmt.Errorf("cannot parse positional argument %s as a connection string", args[0])
-	// 	}
-
-	// }
 
 	return newArgs, nil
 }
