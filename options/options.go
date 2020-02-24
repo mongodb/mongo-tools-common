@@ -97,10 +97,7 @@ type ToolOptions struct {
 	// for checking which options were enabled on this tool
 	enabledOptions EnabledOptions
 
-	// The number of positonal arguments that a tool wishes to parse.
-	// This is 1 for most tools, but would be 2 for a tool like mongorestore that
-	// can also take a directory as a positional argument.
-	numberOfPostionalArgs int
+	parsedPositionalArgumentAsURI bool
 }
 
 type Namespace struct {
@@ -234,14 +231,14 @@ func New(appName, versionStr, gitCommit, usageStr string, enabled EnabledOptions
 		enabledOptions: enabled,
 	}
 
-	switch appName {
-	case "mongorestore", "mongoimport", "mongostat", "mongotop":
-		opts.numberOfPostionalArgs = 2
-	case "mongofiles":
-		opts.numberOfPostionalArgs = 4 // put_id can have up to 4 args ("put_id", filename, _id, URI)
-	default:
-		opts.numberOfPostionalArgs = 1
-	}
+	// switch appName {
+	// case "mongorestore", "mongoimport", "mongostat", "mongotop":
+	// 	opts.numberOfPostionalArgs = 2
+	// case "mongofiles":
+	// 	opts.numberOfPostionalArgs = 4 // put_id can have up to 4 args ("put_id", filename, _id, URI)
+	// default:
+	// 	opts.numberOfPostionalArgs = 1
+	// }
 
 	// Called when -v or --verbose is parsed
 	opts.SetVerbosity = func(val string) {
