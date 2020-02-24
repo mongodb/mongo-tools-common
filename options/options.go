@@ -465,7 +465,7 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 		return []string{}, err
 	}
 
-	if opts.ParsePositionalArgsAsURI {
+	if opts.parsePositionalArgsAsURI {
 		args, err = opts.setURIFromPositionalArg(args)
 		if err != nil {
 			return []string{}, err
