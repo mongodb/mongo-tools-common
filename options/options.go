@@ -527,6 +527,7 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 		if opts.ConnectionString != "" {
 			return []string{}, fmt.Errorf(IncompatibleArgsErrorFormat, "a URI in a positional argument")
 		}
+		opts.ParsedPositionalArgumentAsURI = true
 		opts.ConnectionString = parsedURI.Original
 	}
 	// } else if len(args) == opts.numberOfPostionalArgs {
