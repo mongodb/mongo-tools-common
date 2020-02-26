@@ -493,6 +493,7 @@ func TestOptionsParsing(t *testing.T) {
 			{"--host foo", "mongodb://foo", ShouldSucceed},
 			{"--host foo", "mongodb://bar", ShouldFail},
 			{"--port 27018", "mongodb://foo", ShouldSucceed},
+			{"--port 27018", "mongodb://foo:27017", ShouldFail},
 			{"--port 27018", "mongodb://foo:27019", ShouldFail},
 			{"--port 27018", "mongodb://foo:27018", ShouldSucceed},
 			{"--host foo:27019 --port 27018", "mongodb://foo", ShouldFail},
