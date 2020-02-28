@@ -147,7 +147,6 @@ func RemoveKey(key string, document *bson.D) (interface{}, bool) {
 	return nil, false
 }
 
-
 // ParseSpecialKeys takes a JSON document and inspects it for any extended JSON
 // type (e.g $numberLong) and replaces any such values with the corresponding
 // BSON type. (uses legacy extJSON parser)
