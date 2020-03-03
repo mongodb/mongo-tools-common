@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
@@ -44,6 +45,8 @@ type FindAndModify struct {
 	selector                 description.ServerSelector
 	writeConcern             *writeconcern.WriteConcern
 	retry                    *driver.RetryMode
+	crypt                    *driver.Crypt
+	hint                     bsoncore.Value
 
 	result FindAndModifyResult
 }
@@ -131,6 +134,7 @@ func (fam *FindAndModify) Execute(ctx context.Context) error {
 		Deployment:     fam.deployment,
 		Selector:       fam.selector,
 		WriteConcern:   fam.writeConcern,
+		Crypt:          fam.crypt,
 	}.Execute(ctx, nil)
 
 }
@@ -185,6 +189,13 @@ func (fam *FindAndModify) command(dst []byte, desc description.SelectedServer) (
 	if fam.upsert != nil {
 
 		dst = bsoncore.AppendBooleanElement(dst, "upsert", *fam.upsert)
+	}
+	if fam.hint.Type != bsontype.Type(0) {
+
+		if desc.WireVersion == nil || !desc.WireVersion.Includes(8) {
+			return nil, errors.New("the 'hint' command parameter requires a minimum server wire version of 8")
+		}
+		dst = bsoncore.AppendValueElement(dst, "hint", fam.hint)
 	}
 
 	return dst, nil
@@ -390,5 +401,25 @@ func (fam *FindAndModify) Retry(retry driver.RetryMode) *FindAndModify {
 	}
 
 	fam.retry = &retry
+	return fam
+}
+
+// Crypt sets the Crypt object to use for automatic encryption and decryption.
+func (fam *FindAndModify) Crypt(crypt *driver.Crypt) *FindAndModify {
+	if fam == nil {
+		fam = new(FindAndModify)
+	}
+
+	fam.crypt = crypt
+	return fam
+}
+
+// Hint specifies the index to use.
+func (fam *FindAndModify) Hint(hint bsoncore.Value) *FindAndModify {
+	if fam == nil {
+		fam = new(FindAndModify)
+	}
+
+	fam.hint = hint
 	return fam
 }

@@ -7,6 +7,10 @@
 package options
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
@@ -14,6 +18,11 @@ import (
 	"runtime"
 	"testing"
 	"time"
+)
+
+const (
+	ShouldSucceed = iota
+	ShouldFail
 )
 
 func TestVerbosityFlag(t *testing.T) {
@@ -190,8 +199,8 @@ func TestParseAndSetOptions(t *testing.T) {
 					AuthMechanism: "GSSAPI",
 					AuthMechanismProperties: map[string]string{
 						"SERVICE_NAME": "service",
-						"SERVICE_HOST": "servicehost",
 					},
+					AuthMechanismPropertiesSet: true,
 				},
 				WithGSSAPI: true,
 				OptsIn:     New("", "", "", "", enabledURIOnly),
@@ -204,8 +213,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					Auth:       &Auth{},
 					Namespace:  &Namespace{},
 					Kerberos: &Kerberos{
-						Service:     "service",
-						ServiceHost: "servicehost",
+						Service: "service",
 					},
 					enabledOptions: enabledURIOnly,
 				},
@@ -214,15 +222,16 @@ func TestParseAndSetOptions(t *testing.T) {
 			{
 				Name: "connection fields set",
 				CS: connstring.ConnString{
-					ConnectTimeout: time.Duration(100) * time.Millisecond,
-					SocketTimeout:  time.Duration(200) * time.Millisecond,
+					ConnectTimeout:    time.Duration(100) * time.Millisecond,
+					ConnectTimeoutSet: true,
+					SocketTimeout:     time.Duration(200) * time.Millisecond,
+					SocketTimeoutSet:  true,
 				},
 				OptsIn: &ToolOptions{
 					General:   &General{},
 					Verbosity: &Verbosity{},
 					Connection: &Connection{
-						Timeout:       3,
-						SocketTimeout: 0,
+						Timeout: 3, // The default value
 					},
 					URI:            &URI{},
 					SSL:            &SSL{},
@@ -252,6 +261,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				CS: connstring.ConnString{
 					AuthMechanism: "MONGODB-X509",
 					AuthSource:    "",
+					AuthSourceSet: true,
 					Username:      "user",
 					Password:      "password",
 				},
@@ -361,7 +371,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				ShouldError: false,
 			},
 			{
-				Name: "fail when uri and options set",
+				Name: "Don't fail when uri and options set",
 				CS: connstring.ConnString{
 					Hosts: []string{"host"},
 				},
@@ -378,8 +388,20 @@ func TestParseAndSetOptions(t *testing.T) {
 					Kerberos:       &Kerberos{},
 					enabledOptions: EnabledOptions{Connection: true, URI: true},
 				},
-				OptsExpected: New("", "", "", "", EnabledOptions{Connection: true, URI: true}),
-				ShouldError:  true,
+				OptsExpected: &ToolOptions{
+					General:   &General{},
+					Verbosity: &Verbosity{},
+					Connection: &Connection{
+						Host: "host",
+					},
+					URI:            &URI{},
+					SSL:            &SSL{},
+					Auth:           &Auth{},
+					Namespace:      &Namespace{},
+					Kerberos:       &Kerberos{},
+					enabledOptions: EnabledOptions{Connection: true, URI: true},
+				},
+				ShouldError: false,
 			},
 		}
 
@@ -392,6 +414,10 @@ func TestParseAndSetOptions(t *testing.T) {
 
 				BuiltWithSSL = testCase.WithSSL
 				BuiltWithGSSAPI = testCase.WithGSSAPI
+				defer func() {
+					BuiltWithSSL = true
+					BuiltWithGSSAPI = true
+				}()
 
 				testCase.OptsIn.URI.connString = testCase.CS
 
@@ -417,6 +443,184 @@ func TestParseAndSetOptions(t *testing.T) {
 				So(testCase.OptsIn.Auth.ShouldAskForPassword(), ShouldEqual, testCase.OptsIn.ShouldAskForPassword())
 			}
 		})
+	})
+}
+
+type optionsTester struct {
+	options string
+	uri     string
+	outcome int
+}
+
+func createOptionsTestCases(s []string) []optionsTester {
+	return []optionsTester{
+		{fmt.Sprintf("%s %s", s[0], s[2]), "mongodb://user:pass@foo", ShouldSucceed},
+		{fmt.Sprintf("%s %s", s[0], s[2]), fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[2]), ShouldSucceed},
+		{fmt.Sprintf("%s %s", s[0], s[2]), fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[3]), ShouldFail},
+		{"", fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[2]), ShouldSucceed},
+	}
+}
+
+func runOptionsTestCases(t *testing.T, testCases []optionsTester) {
+	enabled := EnabledOptions{
+		Auth:       true,
+		Connection: true,
+		Namespace:  true,
+		URI:        true,
+	}
+
+	for _, c := range testCases {
+		toolOptions := New("test", "", "", "", enabled)
+		argString := fmt.Sprintf("%s --uri %s", c.options, c.uri)
+		t.Logf("Test Case: %s\n", argString)
+		args := strings.Split(argString, " ")
+		_, err := toolOptions.ParseArgs(args)
+		if c.outcome == ShouldFail {
+			So(err, ShouldNotBeNil)
+		} else {
+			So(err, ShouldBeNil)
+		}
+	}
+}
+
+func TestOptionsParsing(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
+	Convey("With a list of CLI options and URIs", t, func() {
+		// handwritten test cases
+		specialTestCases := []optionsTester{
+			// Hosts and Ports
+			{"--host foo", "mongodb://foo", ShouldSucceed},
+			{"--host foo", "mongodb://bar", ShouldFail},
+			{"--port 27018", "mongodb://foo", ShouldSucceed},
+			{"--port 27018", "mongodb://foo:27017", ShouldFail},
+			{"--port 27018", "mongodb://foo:27019", ShouldFail},
+			{"--port 27018", "mongodb://foo:27018", ShouldSucceed},
+			{"--host foo:27019 --port 27018", "mongodb://foo", ShouldFail},
+			{"--host foo:27018 --port 27018", "mongodb://foo:27018", ShouldSucceed},
+			{"--host foo:27019 --port 27018", "mongodb://foo:27018", ShouldFail},
+
+			{"--host foo,bar,baz", "mongodb://foo,bar,baz", ShouldSucceed},
+			{"--host foo,bar,baz", "mongodb://baz,bar,foo", ShouldSucceed},
+			{"--host foo:27018,bar:27019,baz:27020", "mongodb://baz:27020,bar:27019,foo:27018", ShouldSucceed},
+			{"--host foo:27018,bar:27019,baz:27020", "mongodb://baz:27018,bar:27019,foo:27020", ShouldFail},
+			{"--host foo:27018,bar:27019,baz:27020 --port 27018", "mongodb://baz:27018,bar:27019,foo:27020", ShouldFail},
+			{"--host foo,bar,baz --port 27018", "mongodb://foo,bar,baz", ShouldSucceed},
+			{"--host foo,bar,baz --port 27018", "mongodb://foo:27018,bar:27018,baz:27018", ShouldSucceed},
+			{"--host foo,bar,baz --port 27018", "mongodb://foo:27018,bar:27019,baz:27020", ShouldFail},
+
+			{"--host repl/foo,bar,baz", "mongodb://foo,bar,baz", ShouldSucceed},
+			{"--host repl/foo,bar,baz", "mongodb://foo,bar,baz/?replicaSet=repl", ShouldSucceed},
+			{"--host repl/foo,bar,baz", "mongodb://foo,bar,baz/?replicaSet=quux", ShouldFail},
+
+			// Compressors
+			{"--compressors snappy", "mongodb://foo/?compressors=snappy", ShouldSucceed},
+			{"", "mongodb://foo/?compressors=snappy", ShouldSucceed},
+			{"--compressors snappy", "mongodb://foo/", ShouldSucceed},
+			{"--compressors snappy", "mongodb://foo/?compressors=zlib", ShouldFail},
+			// {"--compressors none", "mongodb://foo/?compressors=snappy", ShouldFail}, // Note: zero value problem
+			{"--compressors snappy", "mongodb://foo/?compressors=none", ShouldFail},
+
+			// Auth
+			{"--username alice", "mongodb://alice@foo", ShouldSucceed},
+			{"--username alice", "mongodb://foo", ShouldSucceed},
+			{"--username bob", "mongodb://alice@foo", ShouldFail},
+			{"", "mongodb://alice@foo", ShouldSucceed},
+
+			{"--password hunter2", "mongodb://alice@foo", ShouldSucceed},
+			{"--password hunter2", "mongodb://alice:hunter2@foo", ShouldSucceed},
+			{"--password hunter2", "mongodb://alice:swordfish@foo", ShouldFail},
+			{"", "mongodb://alice:hunter2@foo", ShouldSucceed},
+
+			{"--authenticationDatabase db1", "mongodb://user:pass@foo", ShouldSucceed},
+			{"--authenticationDatabase db1", "mongodb://user:pass@foo/?authSource=db1", ShouldSucceed},
+			{"--authenticationDatabase db1", "mongodb://user:pass@foo/?authSource=db2", ShouldFail},
+			{"", "mongodb://user:pass@foo/?authSource=db1", ShouldSucceed},
+			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db2", ShouldSucceed},
+			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db2?authSource=db1", ShouldSucceed},
+			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db1?authSource=db2", ShouldFail},
+
+			// Namespace
+			{"--db db1", "mongodb://foo", ShouldSucceed},
+			{"--db db1", "mongodb://foo/db1", ShouldSucceed},
+			{"--db db1", "mongodb://foo/db2", ShouldFail},
+			{"", "mongodb://foo/db1", ShouldSucceed},
+			{"--db db1", "mongodb://user:pass@foo/?authSource=db2", ShouldSucceed},
+			{"--db db1", "mongodb://user:pass@foo/db1?authSource=db2", ShouldSucceed},
+			{"--db db1", "mongodb://user:pass@foo/db2?authSource=db2", ShouldFail},
+
+			// Kerberos
+			{"--gssapiServiceName foo", "mongodb://user:pass@foo/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:foo", ShouldSucceed},
+			{"", "mongodb://user:pass@foo/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:foo", ShouldSucceed},
+			{"--gssapiServiceName foo", "mongodb://user:pass@foo/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:bar", ShouldFail},
+			{"--gssapiServiceName foo", "mongodb://user:pass@foo/?authMechanism=GSSAPI", ShouldSucceed},
+		}
+
+		// Each entry is expanded into 4 test cases with createTestCases()
+		genericTestCases := [][]string{
+			{"--serverSelectionTimeout", "serverSelectionTimeoutMS", "1000", "2000"},
+			{"--dialTimeout", "connectTimeoutMS", "1000", "2000"},
+			{"--socketTimeout", "socketTimeoutMS", "1000", "2000"},
+
+			{"--authenticationMechanism", "authMechanism", "SCRAM-SHA-1", "GSSAPI"},
+
+			{"--ssl", "ssl", "true", "false"},
+			{"--ssl", "tls", "true", "false"},
+
+			{"--sslCAFile", "sslCertificateAuthorityFile", "foo", "bar"},
+			{"--sslCAFile", "tlsCAFile", "foo", "bar"},
+
+			{"--sslPEMKeyFile", "sslClientCertificateKeyFile", "foo", "bar"},
+			{"--sslPEMKeyFile", "tlsCertificateKeyFile", "foo", "bar"},
+
+			{"--sslPEMKeyPassword", "sslClientCertificateKeyPassword", "foo", "bar"},
+			{"--sslPEMKeyPassword", "tlsCertificateKeyFilePassword", "foo", "bar"},
+
+			{"--sslAllowInvalidCertificates", "sslInsecure", "true", "false"},
+			{"--sslAllowInvalidCertificates", "tlsInsecure", "true", "false"},
+
+			{"--sslAllowInvalidHostnames", "sslInsecure", "true", "false"},
+			{"--sslAllowInvalidHostnames", "tlsInsecure", "true", "false"},
+		}
+
+		testCases := []optionsTester{}
+
+		for _, c := range genericTestCases {
+			testCases = append(testCases, createOptionsTestCases(c)...)
+		}
+
+		testCases = append(testCases, specialTestCases...)
+
+		Convey("parsing should succeed or fail as expected", func() {
+			runOptionsTestCases(t, testCases)
+		})
+	})
+}
+
+func TestOptionsParsingForSRV(t *testing.T) {
+
+	testtype.SkipUnlessTestType(t, testtype.SRVConnectionStringTestType)
+	atlasURI, ok := os.LookupEnv("ATLAS_URI")
+	if !ok {
+		t.Errorf("test requires ATLAS_URI to be set")
+	}
+	cs, err := connstring.ParseWithoutValidating(atlasURI)
+	if err != nil {
+		t.Errorf("Error parsing ATLAS_URI: %s", err)
+	}
+
+	Convey("With a list of CLI options and URIs parsing should succeed or fail as expected", t, func() {
+		testCases := []optionsTester{
+			{"", atlasURI, ShouldSucceed},
+			{"--authenticationDatabase admin", atlasURI, ShouldSucceed},
+			{"--authenticationDatabase db1", atlasURI, ShouldFail},
+			{"--ssl", atlasURI, ShouldSucceed},
+			{"--db db1", atlasURI, ShouldSucceed},
+			{fmt.Sprintf("--host %s/%s", cs.ReplicaSet, strings.Join(cs.Hosts, ",")), atlasURI, ShouldSucceed},
+			{fmt.Sprintf("--host %s/%s", "wrongReplSet", strings.Join(cs.Hosts, ",")), atlasURI, ShouldFail},
+		}
+
+		runOptionsTestCases(t, testCases)
 	})
 }
 
