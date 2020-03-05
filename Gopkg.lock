@@ -104,7 +104,7 @@
   revision = "73f8eece6fdcd902c185bf651de50f3828bed5ed"
 
 [[projects]]
-  digest = "1:a0853db2fff63bb68e7b2a45f4f65fe85b2dac3b469fa75c70844d1e501eca2a"
+  digest = "1:63f7dae66dc18fb59f4c9d897f5cc590d47da8af438c4f7a36098ac42a67a329"
   name = "go.mongodb.org/mongo-driver"
   packages = [
     "bson",
@@ -141,7 +141,7 @@
     "x/mongo/driver/wiremessage",
   ]
   pruneopts = "UT"
-  revision = "6f3c9d10a6095244ff3effe99e410357c36b47f6"
+  revision = "f429643407e6a1fc532048a6f81d8ea973ceda8a"
 
 [[projects]]
   digest = "1:1ae7a5abf5cbbb7b5eced808531eb743247f02c48be7ef0117d815b4cce152d0"
