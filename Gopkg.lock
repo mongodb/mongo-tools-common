@@ -144,7 +144,7 @@
   revision = "f429643407e6a1fc532048a6f81d8ea973ceda8a"
 
 [[projects]]
-  digest = "1:1ae7a5abf5cbbb7b5eced808531eb743247f02c48be7ef0117d815b4cce152d0"
+  digest = "1:b27b4a5b31f1d7e858e7568c51030704dbea84dd2c7a7f407fb7e8d0acadb676"
   name = "golang.org/x/crypto"
   packages = [
     "ocsp",
@@ -152,7 +152,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "1f22c0103821b9390939b6776727195525381532"
+  revision = "20be4c3c3ed52bfccdb2d59a412ee1a936d175a7"
 
 [[projects]]
   branch = "master"
@@ -164,6 +164,17 @@
   ]
   pruneopts = "UT"
   revision = "112230192c580c3556b8cee6403af37a4fc5f28c"
+
+[[projects]]
+  branch = "master"
+  digest = "1:e32edd8d81fe0447cb6855e2d2b0549b63717539513e09b3a1e4bb20d48f46c6"
+  name = "golang.org/x/sys"
+  packages = [
+    "unix",
+    "windows",
+  ]
+  pruneopts = "UT"
+  revision = "5c8b2ff67527cb88b770f693cebf3799036d8bc0"
 
 [[projects]]
   digest = "1:1093f2eb4b344996604f7d8b29a16c5b22ab9e1b25652140d3fede39f640d5cd"
