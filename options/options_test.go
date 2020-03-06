@@ -604,7 +604,7 @@ func TestOptionsParsingForSRV(t *testing.T) {
 	if !ok {
 		t.Errorf("test requires ATLAS_URI to be set")
 	}
-	cs, err := connstring.ParseWithoutValidating(atlasURI)
+	cs, err := connstring.Parse(atlasURI)
 	if err != nil {
 		t.Errorf("Error parsing ATLAS_URI: %s", err)
 	}
