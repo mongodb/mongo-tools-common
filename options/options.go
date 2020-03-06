@@ -680,6 +680,9 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 		if opts.Username == "" && cs.Username != "" {
 			opts.Username = cs.Username
 		}
+		if opts.Username == "" && cs.Username == "" && cs.Scheme == connstring.SchemeMongoDBSRV {
+			return fmt.Errorf("must set a username when using an SRV scheme")
+		}
 
 		if opts.Password != "" && cs.Password != "" {
 			if opts.Password != cs.Password {

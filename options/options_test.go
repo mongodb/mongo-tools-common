@@ -611,13 +611,14 @@ func TestOptionsParsingForSRV(t *testing.T) {
 
 	Convey("With a list of CLI options and URIs parsing should succeed or fail as expected", t, func() {
 		testCases := []optionsTester{
-			{"", atlasURI, ShouldSucceed},
-			{"--authenticationDatabase admin", atlasURI, ShouldSucceed},
-			{"--authenticationDatabase db1", atlasURI, ShouldFail},
-			{"--ssl", atlasURI, ShouldSucceed},
-			{"--db db1", atlasURI, ShouldSucceed},
-			{fmt.Sprintf("--host %s/%s", cs.ReplicaSet, strings.Join(cs.Hosts, ",")), atlasURI, ShouldSucceed},
-			{fmt.Sprintf("--host %s/%s", "wrongReplSet", strings.Join(cs.Hosts, ",")), atlasURI, ShouldFail},
+			{"", atlasURI, ShouldFail},
+			{"--username foo", atlasURI, ShouldSucceed},
+			{"--username foo --authenticationDatabase admin", atlasURI, ShouldSucceed},
+			{"--username foo --authenticationDatabase db1", atlasURI, ShouldFail},
+			{"--username foo --ssl", atlasURI, ShouldSucceed},
+			{"--username foo --db db1", atlasURI, ShouldSucceed},
+			{fmt.Sprintf("--username foo --host %s/%s", cs.ReplicaSet, strings.Join(cs.Hosts, ",")), atlasURI, ShouldSucceed},
+			{fmt.Sprintf("--username foo --host %s/%s", "wrongReplSet", strings.Join(cs.Hosts, ",")), atlasURI, ShouldFail},
 		}
 
 		runOptionsTestCases(t, testCases)
