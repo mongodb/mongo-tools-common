@@ -30,7 +30,7 @@ func TestVerbosityFlag(t *testing.T) {
 
 	Convey("With a new ToolOptions", t, func() {
 		enabled := EnabledOptions{false, false, false, false}
-		optPtr := New("", "", "", "", enabled)
+		optPtr := New("", "", "", "", true, enabled)
 		So(optPtr, ShouldNotBeNil)
 		So(optPtr.parser, ShouldNotBeNil)
 
@@ -120,8 +120,8 @@ func TestParseAndSetOptions(t *testing.T) {
 					SSLSet: true,
 				},
 				WithSSL:      false,
-				OptsIn:       New("", "", "", "", enabledURIOnly),
-				OptsExpected: New("", "", "", "", enabledURIOnly),
+				OptsIn:       New("", "", "", "", true, enabledURIOnly),
+				OptsExpected: New("", "", "", "", true, enabledURIOnly),
 				ShouldError:  true,
 			},
 			{
@@ -132,8 +132,8 @@ func TestParseAndSetOptions(t *testing.T) {
 					Original: "mongodb+srv://example.com/",
 				},
 				WithSSL:      false,
-				OptsIn:       New("", "", "", "", enabledURIOnly),
-				OptsExpected: New("", "", "", "", enabledURIOnly),
+				OptsIn:       New("", "", "", "", true, enabledURIOnly),
+				OptsExpected: New("", "", "", "", true, enabledURIOnly),
 				ShouldError:  true,
 			},
 			{
@@ -143,7 +143,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					SSLSet: true,
 				},
 				WithSSL: true,
-				OptsIn:  New("", "", "", "", enabledURIOnly),
+				OptsIn:  New("", "", "", "", true, enabledURIOnly),
 				OptsExpected: &ToolOptions{
 					General:    &General{},
 					Verbosity:  &Verbosity{},
@@ -167,7 +167,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					Original: "mongodb+srv://example.com/",
 				},
 				WithSSL: true,
-				OptsIn:  New("", "", "", "", enabledURIOnly),
+				OptsIn:  New("", "", "", "", true, enabledURIOnly),
 				OptsExpected: &ToolOptions{
 					General:    &General{},
 					Verbosity:  &Verbosity{},
@@ -189,8 +189,8 @@ func TestParseAndSetOptions(t *testing.T) {
 					AuthMechanism: "GSSAPI",
 				},
 				WithGSSAPI:   false,
-				OptsIn:       New("", "", "", "", enabledURIOnly),
-				OptsExpected: New("", "", "", "", enabledURIOnly),
+				OptsIn:       New("", "", "", "", true, enabledURIOnly),
+				OptsExpected: New("", "", "", "", true, enabledURIOnly),
 				ShouldError:  true,
 			},
 			{
@@ -203,7 +203,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					AuthMechanismPropertiesSet: true,
 				},
 				WithGSSAPI: true,
-				OptsIn:     New("", "", "", "", enabledURIOnly),
+				OptsIn:     New("", "", "", "", true, enabledURIOnly),
 				OptsExpected: &ToolOptions{
 					General:    &General{},
 					Verbosity:  &Verbosity{},
@@ -335,7 +335,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				CS: connstring.ConnString{
 					Connect: connstring.SingleConnect,
 				},
-				OptsIn: New("", "", "", "", enabledURIOnly),
+				OptsIn: New("", "", "", "", true, enabledURIOnly),
 				OptsExpected: &ToolOptions{
 					General:        &General{},
 					Verbosity:      &Verbosity{},
@@ -355,7 +355,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				CS: connstring.ConnString{
 					ReplicaSet: "replset",
 				},
-				OptsIn: New("", "", "", "", enabledURIOnly),
+				OptsIn: New("", "", "", "", true, enabledURIOnly),
 				OptsExpected: &ToolOptions{
 					General:        &General{},
 					Verbosity:      &Verbosity{},
@@ -470,7 +470,7 @@ func runOptionsTestCases(t *testing.T, testCases []optionsTester) {
 	}
 
 	for _, c := range testCases {
-		toolOptions := New("test", "", "", "", enabled)
+		toolOptions := New("test", "", "", "", true, enabled)
 		argString := fmt.Sprintf("%s --uri %s", c.options, c.uri)
 		t.Logf("Test Case: %s\n", argString)
 		args := strings.Split(argString, " ")
@@ -604,20 +604,21 @@ func TestOptionsParsingForSRV(t *testing.T) {
 	if !ok {
 		t.Errorf("test requires ATLAS_URI to be set")
 	}
-	cs, err := connstring.ParseWithoutValidating(atlasURI)
+	cs, err := connstring.Parse(atlasURI)
 	if err != nil {
 		t.Errorf("Error parsing ATLAS_URI: %s", err)
 	}
 
 	Convey("With a list of CLI options and URIs parsing should succeed or fail as expected", t, func() {
 		testCases := []optionsTester{
-			{"", atlasURI, ShouldSucceed},
-			{"--authenticationDatabase admin", atlasURI, ShouldSucceed},
-			{"--authenticationDatabase db1", atlasURI, ShouldFail},
-			{"--ssl", atlasURI, ShouldSucceed},
-			{"--db db1", atlasURI, ShouldSucceed},
-			{fmt.Sprintf("--host %s/%s", cs.ReplicaSet, strings.Join(cs.Hosts, ",")), atlasURI, ShouldSucceed},
-			{fmt.Sprintf("--host %s/%s", "wrongReplSet", strings.Join(cs.Hosts, ",")), atlasURI, ShouldFail},
+			{"", atlasURI, ShouldFail},
+			{"--username foo", atlasURI, ShouldSucceed},
+			{"--username foo --authenticationDatabase admin", atlasURI, ShouldSucceed},
+			{"--username foo --authenticationDatabase db1", atlasURI, ShouldFail},
+			{"--username foo --ssl", atlasURI, ShouldSucceed},
+			{"--username foo --db db1", atlasURI, ShouldSucceed},
+			{fmt.Sprintf("--username foo --host %s/%s", cs.ReplicaSet, strings.Join(cs.Hosts, ",")), atlasURI, ShouldSucceed},
+			{fmt.Sprintf("--username foo --host %s/%s", "wrongReplSet", strings.Join(cs.Hosts, ",")), atlasURI, ShouldFail},
 		}
 
 		runOptionsTestCases(t, testCases)
@@ -630,7 +631,7 @@ func TestHiddenOptionsDefaults(t *testing.T) {
 
 	Convey("With a ToolOptions parsed", t, func() {
 		enabled := EnabledOptions{Connection: true}
-		opts := New("", "", "", "", enabled)
+		opts := New("", "", "", "", true, enabled)
 		_, err := opts.parser.ParseArgs([]string{})
 		So(err, ShouldBeNil)
 		Convey("hidden options should have expected values", func() {
