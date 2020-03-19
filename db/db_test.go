@@ -93,6 +93,29 @@ func TestNewSessionProvider(t *testing.T) {
 
 }
 
+func TestConfigureClientForSRV(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+
+	Convey("Configuring options with a URI with invalid auth should succeed", t, func() {
+		enabled := options.EnabledOptions{
+			Auth:       true,
+			Connection: true,
+			Namespace:  true,
+			URI:        true,
+		}
+
+		toolOptions := options.New("test", "", "", "", true, enabled)
+		// AuthSource without a username is invalid, we want to check the URI does not get
+		// validated as part of client configuration
+		_, err := toolOptions.ParseArgs([]string{"--uri", "mongodb://foo/?authSource=admin", "--username", "bar"})
+		So(err, ShouldBeNil)
+
+		_, err = configureClient(*toolOptions)
+		So(err, ShouldBeNil)
+	})
+
+}
+
 func TestDatabaseNames(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 

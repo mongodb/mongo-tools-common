@@ -613,6 +613,7 @@ func TestOptionsParsingForSRV(t *testing.T) {
 		testCases := []optionsTester{
 			{"", atlasURI, ShouldFail},
 			{"--username foo", atlasURI, ShouldSucceed},
+			{"--username foo --password bar", atlasURI, ShouldSucceed},
 			{"--username foo --authenticationDatabase admin", atlasURI, ShouldSucceed},
 			{"--username foo --authenticationDatabase db1", atlasURI, ShouldFail},
 			{"--username foo --ssl", atlasURI, ShouldSucceed},
