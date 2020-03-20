@@ -32,6 +32,7 @@ func TestBufferedBulkInserterInserts(t *testing.T) {
 			SSL:  &ssl,
 			Auth: &auth,
 		}
+		err := opts.NormalizeOptionsAndURI()
 		provider, err := NewSessionProvider(opts)
 		So(provider, ShouldNotBeNil)
 		So(err, ShouldBeNil)
