@@ -63,6 +63,7 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
+				URI:  &options.URI{},
 				SSL:  &ssl,
 				Auth: &auth,
 			}
@@ -81,6 +82,7 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
+				URI:  &options.URI{},
 				SSL:  &ssl,
 				Auth: &auth,
 			}
@@ -127,6 +129,7 @@ func TestDatabaseNames(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -167,6 +170,7 @@ func TestFindOne(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -200,6 +204,7 @@ func TestGetIndexes(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -278,6 +283,7 @@ func TestServerVersionArray(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
