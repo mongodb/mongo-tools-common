@@ -419,7 +419,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					BuiltWithGSSAPI = true
 				}()
 
-				testCase.OptsIn.URI.connString = testCase.CS
+				testCase.OptsIn.URI.ConnString = testCase.CS
 
 				err := testCase.OptsIn.setOptionsFromURI(testCase.CS)
 
