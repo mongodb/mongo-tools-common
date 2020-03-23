@@ -264,6 +264,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					AuthSourceSet: true,
 					Username:      "user",
 					Password:      "password",
+					PasswordSet:   true,
 				},
 				OptsIn: &ToolOptions{
 					General:        &General{},
