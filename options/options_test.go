@@ -264,6 +264,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					AuthSourceSet: true,
 					Username:      "user",
 					Password:      "password",
+					PasswordSet:   true,
 				},
 				OptsIn: &ToolOptions{
 					General:        &General{},
@@ -419,7 +420,7 @@ func TestParseAndSetOptions(t *testing.T) {
 					BuiltWithGSSAPI = true
 				}()
 
-				testCase.OptsIn.URI.connString = testCase.CS
+				testCase.OptsIn.URI.ConnString = testCase.CS
 
 				err := testCase.OptsIn.setOptionsFromURI(testCase.CS)
 
@@ -613,6 +614,7 @@ func TestOptionsParsingForSRV(t *testing.T) {
 		testCases := []optionsTester{
 			{"", atlasURI, ShouldFail},
 			{"--username foo", atlasURI, ShouldSucceed},
+			{"--username foo --password bar", atlasURI, ShouldSucceed},
 			{"--username foo --authenticationDatabase admin", atlasURI, ShouldSucceed},
 			{"--username foo --authenticationDatabase db1", atlasURI, ShouldFail},
 			{"--username foo --ssl", atlasURI, ShouldSucceed},

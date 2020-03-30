@@ -63,6 +63,7 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
+				URI:  &options.URI{},
 				SSL:  &ssl,
 				Auth: &auth,
 			}
@@ -81,6 +82,7 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
+				URI:  &options.URI{},
 				SSL:  &ssl,
 				Auth: &auth,
 			}
@@ -89,6 +91,29 @@ func TestNewSessionProvider(t *testing.T) {
 			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
 		})
 
+	})
+
+}
+
+func TestConfigureClientForSRV(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+
+	Convey("Configuring options with a URI with invalid auth should succeed", t, func() {
+		enabled := options.EnabledOptions{
+			Auth:       true,
+			Connection: true,
+			Namespace:  true,
+			URI:        true,
+		}
+
+		toolOptions := options.New("test", "", "", "", true, enabled)
+		// AuthSource without a username is invalid, we want to check the URI does not get
+		// validated as part of client configuration
+		_, err := toolOptions.ParseArgs([]string{"--uri", "mongodb://foo/?authSource=admin", "--username", "bar"})
+		So(err, ShouldBeNil)
+
+		_, err = configureClient(*toolOptions)
+		So(err, ShouldBeNil)
 	})
 
 }
@@ -104,6 +129,7 @@ func TestDatabaseNames(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -144,6 +170,7 @@ func TestFindOne(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -177,6 +204,7 @@ func TestGetIndexes(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -255,6 +283,7 @@ func TestServerVersionArray(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
+			URI:  &options.URI{},
 			SSL:  &ssl,
 			Auth: &auth,
 		}
