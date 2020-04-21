@@ -87,6 +87,7 @@ func ConvertLegacyIndexKeys(indexKey bson.D, ns string) {
 // It is preferable to use the ignoreUnknownIndexOptions on the createIndex command to
 // force the server to do this task. But that option was only added in 4.1.9. So for
 // pre 3.4 indexes being added to servers 3.4 - 4.2, we must strip the options in the client.
+// This function processes the indexes Options inside collection dump.
 func ConvertLegacyIndexOptions(indexOptions bson.M) {
 	var converted bool
 	originalJSONString := CreateExtJSONString(indexOptions)
@@ -103,10 +104,11 @@ func ConvertLegacyIndexOptions(indexOptions bson.M) {
 	}
 }
 
-// ConvertLegacyIndexOptions removes options that don't match a known list of index options.
+// ConvertLegacyIndexOptionsFromOp removes options that don't match a known list of index options.
 // It is preferable to use the ignoreUnknownIndexOptions on the createIndex command to
 // force the server to do this task. But that option was only added in 4.1.9. So for
 // pre 3.4 indexes being added to servers 3.4 - 4.2, we must strip the options in the client.
+// This function processes the index options inside createIndexes command.
 func ConvertLegacyIndexOptionsFromOp(indexOptions *bson.D) {
 	var converted bool
 	doc := *indexOptions
