@@ -296,6 +296,42 @@ func TestParseAndSetOptions(t *testing.T) {
 				ShouldError: false,
 			},
 			{
+				Name: "aws auth fields set",
+				CS: connstring.ConnString{
+					AuthMechanism: "MONGODB-AWS",
+					AuthSource:    "",
+					AuthSourceSet: true,
+					PasswordSet:   true,
+				},
+				OptsIn: &ToolOptions{
+					General:        &General{},
+					Verbosity:      &Verbosity{},
+					Connection:     &Connection{},
+					URI:            &URI{},
+					SSL:            &SSL{},
+					Auth:           &Auth{},
+					Namespace:      &Namespace{},
+					Kerberos:       &Kerberos{},
+					enabledOptions: EnabledOptions{Auth: true, URI: true},
+				},
+				OptsExpected: &ToolOptions{
+					General:    &General{},
+					Verbosity:  &Verbosity{},
+					Connection: &Connection{},
+					URI:        &URI{},
+					SSL:        &SSL{},
+					Auth: &Auth{
+						Source:    "",
+						Mechanism: "MONGODB-AWS",
+						AWSSessionToken: "token",
+					},
+					Namespace:      &Namespace{},
+					Kerberos:       &Kerberos{},
+					enabledOptions: EnabledOptions{Connection: true, URI: true},
+				},
+				ShouldError: false,
+			},
+			{
 				Name: "should ask for password",
 				CS: connstring.ConnString{
 					AuthMechanism: "MONGODB-X509",
@@ -560,6 +596,10 @@ func TestOptionsParsing(t *testing.T) {
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db2", ShouldSucceed},
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db2?authSource=db1", ShouldSucceed},
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db1?authSource=db2", ShouldFail},
+
+			{"--awsSessionToken token", "mongodb://user:pass@foo/?authMechanism=MONGODB-AWS&authMechanismProperties=AWS_SESSION_TOKEN:token", ShouldSucceed},
+			{"", "mongodb://user:pass@foo/?authMechanism=MONGODB-AWS&authMechanismProperties=AWS_SESSION_TOKEN:token", ShouldSucceed},
+			{"--awsSessionToken token", "mongodb://user:pass@foo/?authMechanism=MONGODB-AWS&authMechanismProperties=AWS_SESSION_TOKEN:bar", ShouldFail},
 
 			// Namespace
 			{"--db db1", "mongodb://foo", ShouldSucceed},
