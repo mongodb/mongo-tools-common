@@ -63,7 +63,7 @@ func TestNewReadPreference(t *testing.T) {
 
 			maxStaleness, set := pref.MaxStaleness()
 			So(set, ShouldBeTrue)
-			So(maxStaleness, ShouldEqual, 123 * time.Second)
+			So(maxStaleness, ShouldEqual, 123*time.Second)
 		})
 
 		Convey("Specifying a read preference only in the URI should set it correctly", func() {
@@ -77,7 +77,7 @@ func TestNewReadPreference(t *testing.T) {
 
 			maxStaleness, set := pref.MaxStaleness()
 			So(set, ShouldBeTrue)
-			So(maxStaleness, ShouldEqual, time.Duration(5) * time.Second)
+			So(maxStaleness, ShouldEqual, time.Duration(5)*time.Second)
 		})
 
 		Convey("Specifying a read preference in the command line and URI should set it to the command line", func() {
@@ -92,7 +92,7 @@ func TestNewReadPreference(t *testing.T) {
 
 			maxStaleness, set := pref.MaxStaleness()
 			So(set, ShouldBeTrue)
-			So(maxStaleness, ShouldEqual, 123 * time.Second)
+			So(maxStaleness, ShouldEqual, 123*time.Second)
 		})
 	})
 }
