@@ -56,7 +56,7 @@ func DBGetSSLOptions() options.SSL {
 func DBGetConnString() *options.URI {
 	if testtype.HasTestType(testtype.SSLTestType) {
 		return &options.URI{
-			ConnectionString: "mongodb://localhost/",
+			ConnectionString: "mongodb://localhost" + DefaultTestPort + "/",
 			ConnString: connstring.ConnString{
 				SSLCaFileSet:                   true,
 				SSLCaFile:                      "../db/testdata/ca-ia.pem",
@@ -69,7 +69,7 @@ func DBGetConnString() *options.URI {
 	return &options.URI{}
 }
 
-func TestNewSessionProvider(t *testing.T) {
+func r(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
 	auth := DBGetAuthOptions()
