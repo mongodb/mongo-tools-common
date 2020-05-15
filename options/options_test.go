@@ -352,6 +352,26 @@ func TestParseAndSetOptions(t *testing.T) {
 				ShouldError: false,
 			},
 			{
+				Name: "direct connection sets 'Direct'",
+				CS: connstring.ConnString{
+					DirectConnection: true,
+				},
+				OptsIn: New("", "", "", "", true, enabledURIOnly),
+				OptsExpected: &ToolOptions{
+					General:        &General{},
+					Verbosity:      &Verbosity{},
+					Connection:     &Connection{},
+					URI:            &URI{},
+					SSL:            &SSL{},
+					Auth:           &Auth{},
+					Direct:         true,
+					Namespace:      &Namespace{},
+					Kerberos:       &Kerberos{},
+					enabledOptions: EnabledOptions{URI: true},
+				},
+				ShouldError: false,
+			},
+			{
 				Name: "ReplSetName is set when CS contains it",
 				CS: connstring.ConnString{
 					ReplicaSet: "replset",
