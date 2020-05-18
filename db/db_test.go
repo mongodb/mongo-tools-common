@@ -10,7 +10,6 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/mongodb/mongo-tools-common/options"
@@ -321,25 +320,7 @@ func TestServerCertificateVerification(t *testing.T) {
 	auth := DBGetAuthOptions()
 	sslOrigin := DBGetSSLOptions()
 	Convey("When initializing a session provider", t, func() {
-
-		Convey("connection shall fail if provided with root certificate only", func() {
-			ssl := sslOrigin
-			ssl.SSLCAFile = "../db/testdata/ca.pem"
-			opts := options.ToolOptions{
-				Connection: &options.Connection{
-					Port:    DefaultTestPort,
-					Timeout: 10,
-				},
-				URI:  DBGetConnString(),
-				SSL:  &ssl,
-				Auth: &auth,
-			}
-			_, err := NewSessionProvider(opts)
-			So(err, ShouldNotBeNil)
-			So(strings.Contains(err.Error(), " x509: certificate signed by unknown authority"), ShouldBeTrue)
-		})
-
-		Convey("connection shall success if provided with intermediate certificate only", func() {
+		Convey("connection shall success if provided with intermediate certificate only as well", func() {
 			ssl := sslOrigin
 			ssl.SSLCAFile = "../db/testdata/ia.pem"
 			opts := options.ToolOptions{
@@ -351,6 +332,7 @@ func TestServerCertificateVerification(t *testing.T) {
 				SSL:  &ssl,
 				Auth: &auth,
 			}
+			opts.URI.ConnString.SSLCaFile = "../db/testdata/ia.pem"
 			provider, err := NewSessionProvider(opts)
 			So(err, ShouldBeNil)
 			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
