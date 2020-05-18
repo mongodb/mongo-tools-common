@@ -137,11 +137,7 @@
   version = "v1.0.0"
 
 [[projects]]
-<<<<<<< HEAD
   digest = "1:6e98c447b898e0ef5abec0e397ee62027f488e5f311b50b324f4aa67bff7b1a8"
-=======
-  digest = "1:92851580060bf93e686028f82ad4be7d86c0ff3f260c0e94b58cae3390c44c36"
->>>>>>> functionality + unit test
   name = "go.mongodb.org/mongo-driver"
   packages = [
     "bson",
