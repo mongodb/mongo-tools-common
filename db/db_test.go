@@ -56,7 +56,7 @@ func DBGetSSLOptions() options.SSL {
 func DBGetConnString() *options.URI {
 	if testtype.HasTestType(testtype.SSLTestType) {
 		return &options.URI{
-			ConnectionString: "mongodb://localhost" + DefaultTestPort + "/",
+			//ConnectionString: "mongodb://localhost" + DefaultTestPort + "/",
 			ConnString: connstring.ConnString{
 				SSLCaFileSet:                   true,
 				SSLCaFile:                      "../db/testdata/ca-ia.pem",
@@ -299,6 +299,7 @@ func TestServerVersionArray(t *testing.T) {
 		opts := options.ToolOptions{
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
+				Host: "localhost",
 			},
 			URI:  DBGetConnString(),
 			SSL:  &ssl,
