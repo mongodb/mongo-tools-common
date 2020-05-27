@@ -174,13 +174,11 @@ func addClientCertFromSeparateFiles(cfg *tls.Config, keyFile, certFile, keyPassw
 // containing file and returns the certificate's subject name.
 func addClientCertFromBytes(cfg *tls.Config, data []byte, keyPasswd string) (string, error) {
 	var currentBlock *pem.Block
-	var certDecodedBlock, keyBlock []byte
-	var certBlocks [][]byte
+	var certBlock, certDecodedBlock, keyBlock []byte
 
 	remaining := data
 	start := 0
 	for {
-		var certBlock []byte
 		currentBlock, remaining = pem.Decode(remaining)
 		if currentBlock == nil {
 			break
@@ -190,7 +188,6 @@ func addClientCertFromBytes(cfg *tls.Config, data []byte, keyPasswd string) (str
 			certBlock = data[start : len(data)-len(remaining)]
 			certDecodedBlock = currentBlock.Bytes
 			start += len(certBlock)
-			certBlocks = append(certBlocks, certBlock)
 		} else if strings.HasSuffix(currentBlock.Type, "PRIVATE KEY") {
 			if keyPasswd != "" && x509.IsEncryptedPEMBlock(currentBlock) {
 				var encoded bytes.Buffer
@@ -208,27 +205,19 @@ func addClientCertFromBytes(cfg *tls.Config, data []byte, keyPasswd string) (str
 			}
 		}
 	}
-	if len(certBlocks) == 0 {
+	if len(certBlock) == 0 {
 		return "", fmt.Errorf("failed to find CERTIFICATE")
 	}
 	if len(keyBlock) == 0 {
 		return "", fmt.Errorf("failed to find PRIVATE KEY")
 	}
 
-	var matchingCert *tls.Certificate
-	var err error
-	for _, certBlock := range certBlocks {
-		cert, err := tls.X509KeyPair(certBlock, keyBlock)
-		if err == nil {
-			matchingCert = &cert
-		}
-	}
-
-	if matchingCert == nil {
+	cert, err := tls.X509KeyPair(certBlock, keyBlock)
+	if err != nil {
 		return "", err
 	}
 
-	cfg.Certificates = append(cfg.Certificates, *matchingCert)
+	cfg.Certificates = append(cfg.Certificates, cert)
 
 	// The documentation for the tls.X509KeyPair indicates that the Leaf certificate is not
 	// retained.

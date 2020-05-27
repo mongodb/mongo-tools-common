@@ -343,34 +343,3 @@ func TestServerCertificateVerification(t *testing.T) {
 	})
 }
 
-func TestClientCertificationLoading(t *testing.T) {
-	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
-	testtype.SkipUnlessTestType(t, testtype.SSLTestType)
-
-	auth := DBGetAuthOptions()
-	sslOrigin := DBGetSSLOptions()
-	Convey("When initializing a session provider", t, func() {
-
-		Convey("We should check all the certificates inside file with the private key", func() {
-			ssl := sslOrigin
-			ssl.SSLPEMKeyFile = "../db/testdata/client-cert-with-root-ca.pem"
-			cs := DBGetConnString()
-			cs.ConnString.SSLClientCertificateKeyFile = "../db/testdata/client-cert-with-root-ca.pem"
-			opts := options.ToolOptions{
-				Connection: &options.Connection{
-					Port:    DefaultTestPort,
-					Timeout: 10,
-				},
-				URI:  cs,
-				SSL:  &ssl,
-				Auth: &auth,
-			}
-			provider, err := NewSessionProvider(opts)
-			So(err, ShouldBeNil)
-			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
-			Convey("and should be closeable", func() {
-				provider.Close()
-			})
-		})
-	})
-}
