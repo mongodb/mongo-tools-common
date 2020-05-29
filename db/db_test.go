@@ -68,7 +68,7 @@ func DBGetConnString() *options.URI {
 	return &options.URI{}
 }
 
-func r(t *testing.T) {
+func TestNewSessionProvider(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
 	auth := DBGetAuthOptions()
@@ -320,7 +320,7 @@ func TestServerCertificateVerification(t *testing.T) {
 	auth := DBGetAuthOptions()
 	sslOrigin := DBGetSSLOptions()
 	Convey("When initializing a session provider", t, func() {
-		Convey("connection shall success if provided with intermediate certificate only as well", func() {
+		Convey("connection shall succeed if provided with intermediate certificate only as well", func() {
 			ssl := sslOrigin
 			ssl.SSLCAFile = "../db/testdata/ia.pem"
 			opts := options.ToolOptions{
