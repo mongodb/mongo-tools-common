@@ -17,7 +17,7 @@ func TestTimestampComparisons(t *testing.T) {
 		reference := primitive.Timestamp{T: 5, I: 5}
 
 		cases := []struct {
-			name string
+			name     string
 			lhs, rhs primitive.Timestamp
 			expected bool
 		}{
@@ -39,7 +39,7 @@ func TestTimestampComparisons(t *testing.T) {
 		reference := primitive.Timestamp{T: 1000, I: 5}
 
 		cases := []struct {
-			name string
+			name     string
 			lhs, rhs primitive.Timestamp
 			expected bool
 		}{

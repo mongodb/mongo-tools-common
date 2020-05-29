@@ -8,6 +8,7 @@ package db
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 	"os"
 	"testing"
 
@@ -36,18 +37,35 @@ func DBGetAuthOptions() options.Auth {
 
 	return options.Auth{}
 }
+
 func DBGetSSLOptions() options.SSL {
 	if testtype.HasTestType(testtype.SSLTestType) {
 		return options.SSL{
 			UseSSL:        true,
-			SSLCAFile:     "../db/testdata/ca.pem",
-			SSLPEMKeyFile: "../db/testdata/server.pem",
+			SSLCAFile:     "../db/testdata/ca-ia.pem",
+			SSLPEMKeyFile: "../db/testdata/test-client.pem",
 		}
 	}
 
 	return options.SSL{
 		UseSSL: false,
 	}
+}
+
+func DBGetConnString() *options.URI {
+	if testtype.HasTestType(testtype.SSLTestType) {
+		return &options.URI{
+			//ConnectionString: "mongodb://localhost" + DefaultTestPort + "/",
+			ConnString: connstring.ConnString{
+				SSLCaFileSet:                   true,
+				SSLCaFile:                      "../db/testdata/ca-ia.pem",
+				SSLClientCertificateKeyFileSet: true,
+				SSLClientCertificateKeyFile:    "../db/testdata/test-client.pem",
+			},
+		}
+	}
+
+	return &options.URI{}
 }
 
 func TestNewSessionProvider(t *testing.T) {
@@ -63,7 +81,7 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
-				URI:  &options.URI{},
+				URI:  DBGetConnString(),
 				SSL:  &ssl,
 				Auth: &auth,
 			}
@@ -73,7 +91,6 @@ func TestNewSessionProvider(t *testing.T) {
 			Convey("and should be closeable", func() {
 				provider.Close()
 			})
-
 		})
 
 		Convey("the master session should be successfully "+
@@ -82,7 +99,7 @@ func TestNewSessionProvider(t *testing.T) {
 				Connection: &options.Connection{
 					Port: DefaultTestPort,
 				},
-				URI:  &options.URI{},
+				URI:  DBGetConnString(),
 				SSL:  &ssl,
 				Auth: &auth,
 			}
@@ -92,7 +109,6 @@ func TestNewSessionProvider(t *testing.T) {
 		})
 
 	})
-
 }
 
 func TestConfigureClientForSRV(t *testing.T) {
@@ -129,7 +145,7 @@ func TestDatabaseNames(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
-			URI:  &options.URI{},
+			URI:  DBGetConnString(),
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -170,7 +186,7 @@ func TestFindOne(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
-			URI:  &options.URI{},
+			URI:  DBGetConnString(),
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -204,7 +220,7 @@ func TestGetIndexes(t *testing.T) {
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
 			},
-			URI:  &options.URI{},
+			URI:  DBGetConnString(),
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -282,8 +298,9 @@ func TestServerVersionArray(t *testing.T) {
 		opts := options.ToolOptions{
 			Connection: &options.Connection{
 				Port: DefaultTestPort,
+				Host: "localhost",
 			},
-			URI:  &options.URI{},
+			URI:  DBGetConnString(),
 			SSL:  &ssl,
 			Auth: &auth,
 		}
@@ -295,3 +312,34 @@ func TestServerVersionArray(t *testing.T) {
 		So(version.GT(Version{}), ShouldBeTrue)
 	})
 }
+
+func TestServerCertificateVerification(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+	testtype.SkipUnlessTestType(t, testtype.SSLTestType)
+
+	auth := DBGetAuthOptions()
+	sslOrigin := DBGetSSLOptions()
+	Convey("When initializing a session provider", t, func() {
+		Convey("connection shall succeed if provided with intermediate certificate only as well", func() {
+			ssl := sslOrigin
+			ssl.SSLCAFile = "../db/testdata/ia.pem"
+			opts := options.ToolOptions{
+				Connection: &options.Connection{
+					Port:    DefaultTestPort,
+					Timeout: 10,
+				},
+				URI:  DBGetConnString(),
+				SSL:  &ssl,
+				Auth: &auth,
+			}
+			opts.URI.ConnString.SSLCaFile = "../db/testdata/ia.pem"
+			provider, err := NewSessionProvider(opts)
+			So(err, ShouldBeNil)
+			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
+			Convey("and should be closeable", func() {
+				provider.Close()
+			})
+		})
+	})
+}
+
