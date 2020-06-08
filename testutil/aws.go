@@ -13,15 +13,15 @@ import (
 )
 
 
-func GetAWSOptions() (*options.ToolOptions, error) {
+func GetAWSOptions() *options.ToolOptions {
 	var toolOptions *options.ToolOptions
-	if uri := os.Getenv("MONGODB_URI"); uri != "" {
+	if uri := os.Getenv("MONGOD"); uri != "" {
 		fakeArgs := []string{"--uri=" + uri}
 		toolOptions = options.New("mongodump", "", "", "", true, options.EnabledOptions{URI: true})
 		toolOptions.URI.AddKnownURIParameters(options.KnownURIOptionsReadPreference)
 		_, err := toolOptions.ParseArgs(fakeArgs)
 		if err != nil {
-			panic("Could not parse MONGODB_URI environment variable")
+			panic("Could not parse MONGOD environment variable")
 		}
 	}
 	// Limit ToolOptions to test database
@@ -30,5 +30,5 @@ func GetAWSOptions() (*options.ToolOptions, error) {
 	log.SetVerbosity(toolOptions.Verbosity)
 
 
-	return toolOptions, nil
+	return toolOptions
 }
