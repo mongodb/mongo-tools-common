@@ -488,6 +488,9 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 	var parsedURI connstring.ConnString
 
 	for _, arg := range args {
+		if arg == "" {
+			continue
+		}
 		cs, err := connstring.Parse(arg)
 		if err == nil {
 			if foundURI {
@@ -495,8 +498,10 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 			}
 			foundURI = true
 			parsedURI = cs
-		} else {
+		} else if err.Error() == "error parsing uri: scheme must be 'mongodb'' or 'mongodb+srv'" {
 			newArgs = append(newArgs, arg)
+		} else {
+			return []string{}, err
 		}
 	}
 
