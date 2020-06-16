@@ -325,8 +325,8 @@ func TestParseAndSetOptions(t *testing.T) {
 					URI:        &URI{},
 					SSL:        &SSL{},
 					Auth: &Auth{
-						Source:    "",
-						Mechanism: "MONGODB-AWS",
+						Source:          "",
+						Mechanism:       "MONGODB-AWS",
 						AWSSessionToken: "token",
 					},
 					Namespace:      &Namespace{},
