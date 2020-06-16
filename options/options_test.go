@@ -302,6 +302,10 @@ func TestParseAndSetOptions(t *testing.T) {
 					AuthSource:    "",
 					AuthSourceSet: true,
 					PasswordSet:   true,
+					AuthMechanismProperties: map[string]string{
+						"AWS_SESSION_TOKEN": "token",
+					},
+					AuthMechanismPropertiesSet: true,
 				},
 				OptsIn: &ToolOptions{
 					General:        &General{},
@@ -492,6 +496,7 @@ func TestParseAndSetOptions(t *testing.T) {
 				So(testCase.OptsIn.Password, ShouldResemble, testCase.OptsExpected.Password)
 				So(testCase.OptsIn.Source, ShouldResemble, testCase.OptsExpected.Source)
 				So(testCase.OptsIn.Auth.Mechanism, ShouldResemble, testCase.OptsExpected.Auth.Mechanism)
+				So(testCase.OptsIn.Auth.AWSSessionToken, ShouldResemble, testCase.OptsExpected.Auth.AWSSessionToken)
 				So(testCase.OptsIn.Direct, ShouldResemble, testCase.OptsExpected.Direct)
 				So(testCase.OptsIn.ReplicaSetName, ShouldResemble, testCase.OptsExpected.ReplicaSetName)
 				So(testCase.OptsIn.SSL.UseSSL, ShouldResemble, testCase.OptsExpected.SSL.UseSSL)
