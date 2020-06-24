@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	KnownURIOptionsAuth           = []string{"authsource", "authmechanism"}
+	KnownURIOptionsAuth           = []string{"authsource", "authmechanism", "authmechanismproperties"}
 	KnownURIOptionsConnection     = []string{"connecttimeoutms"}
 	KnownURIOptionsSSL            = []string{"ssl"}
 	KnownURIOptionsReadPreference = []string{"readpreference"}

@@ -729,3 +729,17 @@ func TestNamespace_String(t *testing.T) {
 	}
 
 }
+
+func TestAWSAuth(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.AWSAuthTestType)
+
+	enabled := EnabledOptions{URI: true}
+	uri := os.Getenv("MONGOD");
+	fakeArgs := []string{"--uri=" + uri}
+	toolOptions := New("test", "", "", "", true, enabled)
+	toolOptions.URI.AddKnownURIParameters(KnownURIOptionsReadPreference)
+	_, err := toolOptions.ParseArgs(fakeArgs)
+	if err != nil {
+		panic("Could not parse MONGOD environment variable")
+	}
+}
