@@ -238,7 +238,7 @@ functions:
       type: test
       params:
         working_dir: src/github.com/mongodb/mongo-tools-common
-#        silent: true
+        silent: true
         script: |
           set -x
           set -v
@@ -265,7 +265,7 @@ functions:
       type: test
       params:
         working_dir: src/github.com/mongodb/mongo-tools-common
-#        silent: true
+        silent: true
         script: |
           set -x
           set -v
