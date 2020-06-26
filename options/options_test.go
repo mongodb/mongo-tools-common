@@ -25,10 +25,6 @@ const (
 	ShouldFail
 )
 
-var (
-	kerberosUsername = "drivers%40LDAPTEST.10GEN.CC"
-	kerberosConnection = "ldaptest.10gen.cc:27017"
-)
 
 func TestVerbosityFlag(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
@@ -733,25 +729,4 @@ func TestNamespace_String(t *testing.T) {
 		}
 	}
 
-}
-
-func TestAuthConnection(t *testing.T) {
-	if !testtype.HasTestType(testtype.AWSAuthTestType) && !testtype.HasTestType(testtype.KerberosTestType) {
-		t.SkipNow()
-	}
-
-	enabled := EnabledOptions{URI: true}
-	var uri string;
-	if testtype.HasTestType(testtype.AWSAuthTestType) {
-		uri = os.Getenv("MONGODB_URI");
-	} else {
-		uri = "mongodb://"+kerberosUsername+"@"+kerberosConnection+"/kerberos?authSource=$external&authMechanism=GSSAPI"
-	}
-	fakeArgs := []string{"--uri=" + uri}
-	toolOptions := New("test", "", "", "", true, enabled)
-	toolOptions.URI.AddKnownURIParameters(KnownURIOptionsReadPreference)
-	_, err := toolOptions.ParseArgs(fakeArgs)
-	if err != nil {
-		panic("Could not parse MONGOD environment variable")
-	}
 }
