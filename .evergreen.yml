@@ -248,15 +248,10 @@ functions:
           if [ -f "$venv"/bin/activate ]; then
             echo 'using existing virtualenv'
             . "$venv"/bin/activate
-          elif [ -f "$venv"/Scripts/activate ]; then
-            echo 'using existing virtualenv'
-            . "$venv"/Scripts/activate
           elif virtualenv "$venv" || python3 -m virtualenv "$venv"; then
             echo 'creating new virtualenv'
             if [ -f "$venv"/bin/activate ]; then
               . "$venv"/bin/activate
-            elif [ -f "$venv"/Scripts/activate ]; then
-              . "$venv"/Scripts/activate
             fi
             if [ "Windows_NT" = "$OS" ]; then
               pip install boto3
