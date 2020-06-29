@@ -25,7 +25,6 @@ const (
 	ShouldFail
 )
 
-
 func TestVerbosityFlag(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
