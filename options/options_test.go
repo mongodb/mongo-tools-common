@@ -677,7 +677,7 @@ func TestOptionsParsingForSRV(t *testing.T) {
 
 	Convey("With a list of CLI options and URIs parsing should succeed or fail as expected", t, func() {
 		testCases := []optionsTester{
-			{"", atlasURI, ShouldFail},
+			{"", atlasURI, ShouldSucceed},
 			{"--username foo", atlasURI, ShouldSucceed},
 			{"--username foo --password bar", atlasURI, ShouldSucceed},
 			{"--username foo --authenticationDatabase admin", atlasURI, ShouldSucceed},
