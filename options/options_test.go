@@ -7,10 +7,12 @@
 package options
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/mongodb/mongo-tools-common/log"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
@@ -24,6 +26,55 @@ const (
 	ShouldSucceed = iota
 	ShouldFail
 )
+
+// TOOLS-2287 specifies the desired behavior in the case that
+// the user specifies unsupported URI options.
+// This test case ensures the proper logging behavior.
+func TestLogUnsupportedOptions(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	
+	type TestCase struct {
+		description              string
+		args, unsupportedOptions []string
+	}
+
+        // Test matrix for logging behavior
+        cases := []TestCase{
+		{
+			description: "No unsupported options",
+			args:        strings.Split("--uri mongodb://mongodb.test.com:27017", " "),
+		},
+		{
+			description:        "Detect unsupported options",
+			args:               strings.Split("--uri mongodb://mongodb.test.com:27017/?foo=bar", " "),
+			unsupportedOptions: []string{"foo"},
+		},
+	}
+
+	enabled := EnabledOptions{true, true, true, true}
+
+        for _, testCase := range cases {
+		Convey(testCase.description, t, func() {
+			// Hack to test log output
+                        var buffer bytes.Buffer
+
+                        log.SetWriter(&buffer)
+                        defer log.SetWriter(os.Stderr)
+
+			opts := New("", "", "", "", true, enabled)
+
+                        _, err := opts.ParseArgs(testCase.args)
+                        So(err, ShouldBeNil)
+
+                        opts.LogUnsupportedOptions()
+                        result := buffer.String()
+
+                        for _, unsupportedOption := range testCase.unsupportedOptions {
+				So(result, ShouldContainSubstring, unsupportedOption)
+                        }
+                })
+        }
+}
 
 func TestVerbosityFlag(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
