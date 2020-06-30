@@ -38,8 +38,8 @@ func TestLogUnsupportedOptions(t *testing.T) {
 		args, unsupportedOptions []string
 	}
 
-        // Test matrix for logging behavior
-        cases := []TestCase{
+	// Test matrix for logging behavior
+	cases := []TestCase{
 		{
 			description: "No unsupported options",
 			args:        strings.Split("--uri mongodb://mongodb.test.com:27017", " "),
@@ -53,27 +53,27 @@ func TestLogUnsupportedOptions(t *testing.T) {
 
 	enabled := EnabledOptions{true, true, true, true}
 
-        for _, testCase := range cases {
+	for _, testCase := range cases {
 		Convey(testCase.description, t, func() {
 			// Hack to test log output
-                        var buffer bytes.Buffer
+			var buffer bytes.Buffer
 
-                        log.SetWriter(&buffer)
-                        defer log.SetWriter(os.Stderr)
+			log.SetWriter(&buffer)
+			defer log.SetWriter(os.Stderr)
 
 			opts := New("", "", "", "", true, enabled)
 
-                        _, err := opts.ParseArgs(testCase.args)
-                        So(err, ShouldBeNil)
+			_, err := opts.ParseArgs(testCase.args)
+			So(err, ShouldBeNil)
 
-                        opts.LogUnsupportedOptions()
-                        result := buffer.String()
+			opts.LogUnsupportedOptions()
+			result := buffer.String()
 
-                        for _, unsupportedOption := range testCase.unsupportedOptions {
+			for _, unsupportedOption := range testCase.unsupportedOptions {
 				So(result, ShouldContainSubstring, unsupportedOption)
-                        }
-                })
-        }
+			}
+		})
+	}
 }
 
 func TestVerbosityFlag(t *testing.T) {

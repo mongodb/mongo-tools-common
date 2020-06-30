@@ -12,13 +12,11 @@ import (
 	"os"
 )
 
-
 func GetAWSOptions() *options.ToolOptions {
 	var toolOptions *options.ToolOptions
 	if uri := os.Getenv("MONGOD"); uri != "" {
 		fakeArgs := []string{"--uri=" + uri}
 		toolOptions = options.New("mongodump", "", "", "", true, options.EnabledOptions{URI: true})
-		toolOptions.URI.AddKnownURIParameters(options.KnownURIOptionsReadPreference)
 		_, err := toolOptions.ParseArgs(fakeArgs)
 		if err != nil {
 			panic("Could not parse MONGOD environment variable")
@@ -28,7 +26,6 @@ func GetAWSOptions() *options.ToolOptions {
 	toolOptions.Namespace = &options.Namespace{DB: "aws_test_db"}
 
 	log.SetVerbosity(toolOptions.Verbosity)
-
 
 	return toolOptions
 }

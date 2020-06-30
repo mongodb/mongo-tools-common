@@ -342,4 +342,3 @@ func TestServerCertificateVerification(t *testing.T) {
 		})
 	})
 }
-

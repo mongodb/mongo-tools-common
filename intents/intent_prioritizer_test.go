@@ -20,9 +20,9 @@ func TestLegacyPrioritizer(t *testing.T) {
 
 	Convey("With a legacyPrioritizer initialized with an ordered intent list", t, func() {
 		testList := []*Intent{
-			&Intent{DB: "1"},
-			&Intent{DB: "2"},
-			&Intent{DB: "3"},
+			{DB: "1"},
+			{DB: "2"},
+			{DB: "3"},
 		}
 		legacy := newLegacyPrioritizer(testList)
 		So(legacy, ShouldNotBeNil)
@@ -72,11 +72,11 @@ func TestBasicDBHeapBehavior(t *testing.T) {
 		})
 
 		Convey("when inserting unordered dbCounters with different bson sizes", func() {
-			heap.Push(dbheap, &dbCounter{0, []*Intent{&Intent{Size: 70}}})
-			heap.Push(dbheap, &dbCounter{0, []*Intent{&Intent{Size: 1024}}})
-			heap.Push(dbheap, &dbCounter{0, []*Intent{&Intent{Size: 97}}})
-			heap.Push(dbheap, &dbCounter{0, []*Intent{&Intent{Size: 3}}})
-			heap.Push(dbheap, &dbCounter{0, []*Intent{&Intent{Size: 1024 * 1024}}})
+			heap.Push(dbheap, &dbCounter{0, []*Intent{{Size: 70}}})
+			heap.Push(dbheap, &dbCounter{0, []*Intent{{Size: 1024}}})
+			heap.Push(dbheap, &dbCounter{0, []*Intent{{Size: 97}}})
+			heap.Push(dbheap, &dbCounter{0, []*Intent{{Size: 3}}})
+			heap.Push(dbheap, &dbCounter{0, []*Intent{{Size: 1024 * 1024}}})
 
 			Convey("they should pop in bson size order, greatest to least", func() {
 				prev := int64(1024*1024 + 1) // Maximum
@@ -96,10 +96,10 @@ func TestDBCounterCollectionSorting(t *testing.T) {
 	Convey("With a dbCounter and an unordered collection of intents", t, func() {
 		dbc := &dbCounter{
 			collections: []*Intent{
-				&Intent{Size: 100},
-				&Intent{Size: 1000},
-				&Intent{Size: 1},
-				&Intent{Size: 10},
+				{Size: 100},
+				{Size: 1000},
+				{Size: 1},
+				{Size: 10},
 			},
 		}
 
@@ -122,13 +122,13 @@ func TestBySizeAndView(t *testing.T) {
 
 	Convey("With a prioritizer initialized with on a set of intents", t, func() {
 		intents := []*Intent{
-			&Intent{C: "non-view2", Size: 32},
-			&Intent{C: "view", Size: 0,
+			{C: "non-view2", Size: 32},
+			{C: "view", Size: 0,
 				Options: bson.M{"viewOn": true},
 			},
-			&Intent{C: "non-view1", Size: 1024},
-			&Intent{C: "non-view3", Size: 2},
-			&Intent{C: "view", Size: 0,
+			{C: "non-view1", Size: 1024},
+			{C: "non-view3", Size: 2},
+			{C: "view", Size: 0,
 				Options: bson.M{"viewOn": true},
 			},
 		}
@@ -153,10 +153,10 @@ func TestSimulatedMultiDBJob(t *testing.T) {
 
 	Convey("With a prioritizer initialized with a set of intents", t, func() {
 		intents := []*Intent{
-			&Intent{C: "small", DB: "db2", Size: 32},
-			&Intent{C: "medium", DB: "db2", Size: 128},
-			&Intent{C: "giant", DB: "db1", Size: 1024},
-			&Intent{C: "tiny", DB: "db1", Size: 2},
+			{C: "small", DB: "db2", Size: 32},
+			{C: "medium", DB: "db2", Size: 128},
+			{C: "giant", DB: "db1", Size: 1024},
+			{C: "tiny", DB: "db1", Size: 2},
 		}
 		prioritizer = newMultiDatabaseLTFPrioritizer(intents)
 		So(prioritizer, ShouldNotBeNil)

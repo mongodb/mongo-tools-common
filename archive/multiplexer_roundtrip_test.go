@@ -25,22 +25,22 @@ import (
 const testDocCount = 10000
 
 var testIntents = []*intents.Intent{
-	&intents.Intent{
+	{
 		DB:       "foo",
 		C:        "bar",
 		Location: "foo.bar",
 	},
-	&intents.Intent{
+	{
 		DB:       "ding",
 		C:        "bats",
 		Location: "ding.bats",
 	},
-	&intents.Intent{
+	{
 		DB:       "flim",
 		C:        "flam.fooey",
 		Location: "flim.flam.fooey",
 	},
-	&intents.Intent{
+	{
 		DB:       "crow",
 		C:        "bar",
 		Location: "crow.bar",
