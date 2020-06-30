@@ -12,7 +12,6 @@ import (
 	"os"
 )
 
-
 func GetAWSOptions() *options.ToolOptions {
 	var toolOptions *options.ToolOptions
 	if uri := os.Getenv("MONGOD"); uri != "" {
@@ -27,7 +26,6 @@ func GetAWSOptions() *options.ToolOptions {
 	toolOptions.Namespace = &options.Namespace{DB: "aws_test_db"}
 
 	log.SetVerbosity(toolOptions.Verbosity)
-
 
 	return toolOptions
 }
