@@ -27,9 +27,6 @@ const (
 	ShouldFail
 )
 
-// TOOLS-2287 specifies the desired behavior in the case that
-// the user specifies unsupported URI options.
-// This test case ensures the proper logging behavior.
 func TestLogUnsupportedOptions(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 	
