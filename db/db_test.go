@@ -24,6 +24,8 @@ var (
 	UserAdminPassword      = "password"
 	CreatedUserNameEnv     = "TOOLS_TESTING_AUTH_USERNAME"
 	CreatedUserPasswordEnv = "TOOLS_TESTING_AUTH_PASSWORD"
+	kerberosUsername       = "drivers%40LDAPTEST.10GEN.CC"
+	kerberosConnection     = "ldaptest.10gen.cc:27017"
 )
 
 func DBGetAuthOptions() options.Auth {
@@ -339,6 +341,32 @@ func TestServerCertificateVerification(t *testing.T) {
 			Convey("and should be closeable", func() {
 				provider.Close()
 			})
+		})
+	})
+}
+
+func TestAuthConnection(t *testing.T) {
+	if !testtype.HasTestType(testtype.AWSAuthTestType) && !testtype.HasTestType(testtype.KerberosTestType) {
+		t.SkipNow()
+	}
+	Convey("With an AWS or Keberos auth URI", t, func() {
+		enabled := options.EnabledOptions{URI: true}
+		var uri string;
+		if testtype.HasTestType(testtype.AWSAuthTestType) {
+			uri = os.Getenv("MONGOD");
+		} else {
+			uri = "mongodb://" + kerberosUsername + "@" + kerberosConnection + "/kerberos?authSource=$external&authMechanism=GSSAPI"
+		}
+		fakeArgs := []string{"--uri=" + uri}
+		toolOptions := options.New("test", "", "", "", true, enabled)
+		toolOptions.URI.AddKnownURIParameters(options.KnownURIOptionsReadPreference)
+		_, err := toolOptions.ParseArgs(fakeArgs)
+		if err != nil {
+			panic("Could not parse MONGOD environment variable")
+		}
+		Convey("a connection should succeed", func() {
+			_, err = NewSessionProvider(*toolOptions)
+			So(err, ShouldBeNil)
 		})
 	})
 }
