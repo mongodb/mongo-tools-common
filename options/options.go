@@ -386,8 +386,8 @@ func (opts *ToolOptions) EnabledToolOptions() EnabledOptions {
 	return opts.enabledOptions
 }
 
-// Uses UnknownOptions, which is populated by the driver, to
-// log warnings regarding unknown/unsupported URI parameters.
+// LogUnsupportedOptions logs warnings regarding unknown/unsupported URI parameters.
+// The unknown options are determined by the driver.
 func (uri *URI) LogUnsupportedOptions() {
 	for key, value := range uri.ConnString.UnknownOptions {
 		log.Logvf(log.Always, "WARNING: ignoring unsupported URI parameter '%v=%v'", key, value)
