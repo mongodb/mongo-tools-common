@@ -30,48 +30,49 @@ const (
 func TestLogUnsupportedOptions(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
-	type TestCase struct {
-		description              string
-		args, unsupportedOptions []string
-	}
-
-	// Test matrix for logging behavior
-	cases := []TestCase{
-		{
-			description: "No unsupported options",
-			args:        []string{"mongodb://mongodb.test.com:27017", " "},
-		},
-		{
-			description:        "Detect unsupported options",
-			args:               []string{"mongodb://mongodb.test.com:27017/?foo=bar", " "},
-			unsupportedOptions: []string{"foo"},
-		},
-	}
-
-	enabled := EnabledOptions{true, true, true, true}
-
-	for _, testCase := range cases {
-		Convey(testCase.description, t, func() {
-			// Hack to test log output
+        Convey("With all command-line options enabled", t, func() {
+		// Setup code is duplicated for both Convey-blocks to
+                // ensure isolation between tests
+		Convey("no warning should be logged if there are no unsupported options", func() {
 			var buffer bytes.Buffer
-
+			
 			log.SetWriter(&buffer)
 			defer log.SetWriter(os.Stderr)
 
+			args := []string{"mongodb://mongodb.test.com:27017"}
+			enabled := EnabledOptions{true, true, true, true}
 			opts := New("", "", "", "", true, enabled)
 
-			_, err := opts.ParseArgs(testCase.args)
+			_, err := opts.ParseArgs(args)
 			So(err, ShouldBeNil)
-
+			
 			opts.LogUnsupportedOptions()
-			result := buffer.String()
 
-			for _, unsupportedOption := range testCase.unsupportedOptions {
-				expectedResult := fmt.Sprintf(unknownOptionsWarningFormatString, unsupportedOption)
-				So(result, ShouldContainSubstring, expectedResult)
-			}
-		})
-	}
+			result := buffer.String()
+                        So(result, ShouldBeEmpty)
+                })
+
+                Convey("a warning should be logged if there is an unsupported option", func() {
+			var buffer bytes.Buffer
+			
+			log.SetWriter(&buffer)
+			defer log.SetWriter(os.Stderr)
+
+			args := []string{"mongodb://mongodb.test.com:27017/?foo=bar"}
+			enabled := EnabledOptions{true, true, true, true}
+			opts := New("", "", "", "", true, enabled)
+
+			_, err := opts.ParseArgs(args)
+			So(err, ShouldBeNil)
+			
+			opts.LogUnsupportedOptions()
+
+			result := buffer.String()
+                        expectedResult := fmt.Sprintf(unknownOptionsWarningFormatString, "foo")
+                        
+                        So(result, ShouldContainSubstring, expectedResult)
+                })
+        })
 }
 
 func TestVerbosityFlag(t *testing.T) {
