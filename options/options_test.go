@@ -32,7 +32,7 @@ const (
 // This test case ensures the proper logging behavior.
 func TestLogUnsupportedOptions(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
-	
+
 	type TestCase struct {
 		description              string
 		args, unsupportedOptions []string
@@ -42,11 +42,11 @@ func TestLogUnsupportedOptions(t *testing.T) {
 	cases := []TestCase{
 		{
 			description: "No unsupported options",
-			args:        strings.Split("--uri mongodb://mongodb.test.com:27017", " "),
+			args:        []string{"mongodb://mongodb.test.com:27017", " "},
 		},
 		{
 			description:        "Detect unsupported options",
-			args:               strings.Split("--uri mongodb://mongodb.test.com:27017/?foo=bar", " "),
+			args:               []string{"mongodb://mongodb.test.com:27017/?foo=bar", " "},
 			unsupportedOptions: []string{"foo"},
 		},
 	}
@@ -70,7 +70,8 @@ func TestLogUnsupportedOptions(t *testing.T) {
 			result := buffer.String()
 
 			for _, unsupportedOption := range testCase.unsupportedOptions {
-				So(result, ShouldContainSubstring, unsupportedOption)
+				expectedResult := fmt.Sprintf(unknownOptionsWarningFormatString, unsupportedOption)
+				So(result, ShouldContainSubstring, expectedResult)
 			}
 		})
 	}

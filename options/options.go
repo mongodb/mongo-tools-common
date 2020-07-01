@@ -35,6 +35,8 @@ var (
 
 const IncompatibleArgsErrorFormat = "illegal argument combination: cannot specify %s and --uri"
 
+const unknownOptionsWarningFormatString = "WARNING: ignoring unsupported URI parameter '%v'"
+
 func ConflictingArgsErrorFormat(optionName, uriValue, cliValue, cliOptionName string) error {
 	return fmt.Errorf("Invalid Options: Cannot specify different %s in connection URI and command-line option (\"%s\" was specified in the URI and \"%s\" was specified in the %s option)", optionName, uriValue, cliValue, cliOptionName)
 }
@@ -378,9 +380,6 @@ func (uri *URI) ParsedConnString() *connstring.ConnString {
 	}
 	return &uri.ConnString
 }
-func (uri *URI) AddKnownURIParameters(uriFieldNames []string) {
-	uri.knownURIParameters = append(uri.knownURIParameters, uriFieldNames...)
-}
 
 func (opts *ToolOptions) EnabledToolOptions() EnabledOptions {
 	return opts.enabledOptions
@@ -389,8 +388,8 @@ func (opts *ToolOptions) EnabledToolOptions() EnabledOptions {
 // Uses UnknownOptions, which is populated by the driver, to
 // log warnings regarding unknown/unsupported URI parameters.
 func (uri *URI) LogUnsupportedOptions() {
-	for key, value := range uri.ConnString.UnknownOptions {
-		log.Logvf(log.Always, "WARNING: ignoring unsupported URI parameter '%v=%v'", key, value)
+	for key := range uri.ConnString.UnknownOptions {
+		log.Logvf(log.Always, unknownOptionsWarningFormatString, key)
 	}
 }
 
