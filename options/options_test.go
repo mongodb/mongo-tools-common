@@ -31,17 +31,16 @@ func TestLogUnsupportedOptions(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
         Convey("With all command-line options enabled", t, func() {
-		// Setup code is duplicated for both Convey-blocks to
-                // ensure isolation between tests
-		Convey("no warning should be logged if there are no unsupported options", func() {
-			var buffer bytes.Buffer
-			
-			log.SetWriter(&buffer)
-			defer log.SetWriter(os.Stderr)
+		var buffer bytes.Buffer
+		
+		log.SetWriter(&buffer)
+		defer log.SetWriter(os.Stderr)
 
+		enabled := EnabledOptions{true, true, true, true}
+		opts := New("", "", "", "", true, enabled)
+		
+		Convey("no warning should be logged if there are no unsupported options", func() {
 			args := []string{"mongodb://mongodb.test.com:27017"}
-			enabled := EnabledOptions{true, true, true, true}
-			opts := New("", "", "", "", true, enabled)
 
 			_, err := opts.ParseArgs(args)
 			So(err, ShouldBeNil)
@@ -53,14 +52,7 @@ func TestLogUnsupportedOptions(t *testing.T) {
                 })
 
                 Convey("a warning should be logged if there is an unsupported option", func() {
-			var buffer bytes.Buffer
-			
-			log.SetWriter(&buffer)
-			defer log.SetWriter(os.Stderr)
-
 			args := []string{"mongodb://mongodb.test.com:27017/?foo=bar"}
-			enabled := EnabledOptions{true, true, true, true}
-			opts := New("", "", "", "", true, enabled)
 
 			_, err := opts.ParseArgs(args)
 			So(err, ShouldBeNil)
