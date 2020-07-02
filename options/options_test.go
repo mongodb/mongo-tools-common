@@ -28,7 +28,7 @@ const (
 )
 
 func TestLogUnsupportedOptions(t *testing.T) {
-	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
         Convey("With all command-line options enabled", t, func() {
 		// Setup code is duplicated for both Convey-blocks to
