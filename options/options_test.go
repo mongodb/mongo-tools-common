@@ -30,41 +30,41 @@ const (
 func TestLogUnsupportedOptions(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
 
-        Convey("With all command-line options enabled", t, func() {
+	Convey("With all command-line options enabled", t, func() {
 		var buffer bytes.Buffer
-		
+
 		log.SetWriter(&buffer)
 		defer log.SetWriter(os.Stderr)
 
 		enabled := EnabledOptions{true, true, true, true}
 		opts := New("", "", "", "", true, enabled)
-		
+
 		Convey("no warning should be logged if there are no unsupported options", func() {
 			args := []string{"mongodb://mongodb.test.com:27017"}
 
 			_, err := opts.ParseArgs(args)
 			So(err, ShouldBeNil)
-			
+
 			opts.LogUnsupportedOptions()
 
 			result := buffer.String()
-                        So(result, ShouldBeEmpty)
-                })
+			So(result, ShouldBeEmpty)
+		})
 
-                Convey("a warning should be logged if there is an unsupported option", func() {
+		Convey("a warning should be logged if there is an unsupported option", func() {
 			args := []string{"mongodb://mongodb.test.com:27017/?foo=bar"}
 
 			_, err := opts.ParseArgs(args)
 			So(err, ShouldBeNil)
-			
+
 			opts.LogUnsupportedOptions()
 
 			result := buffer.String()
-                        expectedResult := fmt.Sprintf(unknownOptionsWarningFormatString, "foo")
-                        
-                        So(result, ShouldContainSubstring, expectedResult)
-                })
-        })
+			expectedResult := fmt.Sprintf(unknownOptionsWarningFormatString, "foo")
+
+			So(result, ShouldContainSubstring, expectedResult)
+		})
+	})
 }
 
 func TestVerbosityFlag(t *testing.T) {
