@@ -515,12 +515,18 @@ type optionsTester struct {
 }
 
 func createOptionsTestCases(s []string) []optionsTester {
-	return []optionsTester{
+	ret := []optionsTester{
 		{fmt.Sprintf("%s %s", s[0], s[2]), "mongodb://user:pass@foo", ShouldSucceed},
 		{fmt.Sprintf("%s %s", s[0], s[2]), fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[2]), ShouldSucceed},
 		{fmt.Sprintf("%s %s", s[0], s[2]), fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[3]), ShouldFail},
 		{"", fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[2]), ShouldSucceed},
 	}
+	if s[0] == "--ssl" || s[0] == "--sslAllowInvalidCertificates" || s[0] == "--sslAllowInvalidHostnames" {
+		ret[0].options = s[0]
+		ret[1].options = s[0]
+		ret[2].options = s[0]
+	}
+	return ret
 }
 
 func runOptionsTestCases(t *testing.T, testCases []optionsTester) {
@@ -598,6 +604,8 @@ func TestOptionsParsing(t *testing.T) {
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/?authSource=db1", ShouldSucceed},
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/?authSource=db2", ShouldFail},
 			{"", "mongodb://user:pass@foo/?authSource=db1", ShouldSucceed},
+			{"", "mongodb://a/b:@foo/authSource=db1", ShouldFail},
+			{"", "mongodb://user:pass:a@foo/authSource=db1", ShouldFail},
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db2", ShouldSucceed},
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db2?authSource=db1", ShouldSucceed},
 			{"--authenticationDatabase db1", "mongodb://user:pass@foo/db1?authSource=db2", ShouldFail},
