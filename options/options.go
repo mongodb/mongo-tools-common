@@ -451,6 +451,9 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 	var parsedURI connstring.ConnString
 
 	for _, arg := range args {
+		if arg == "" {
+			continue
+		}
 		cs, err := connstring.Parse(arg)
 		if err == nil {
 			if foundURI {
@@ -458,8 +461,10 @@ func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error
 			}
 			foundURI = true
 			parsedURI = cs
-		} else {
+		} else if err.Error() == "error parsing uri: scheme must be 'mongodb'' or 'mongodb+srv'" {
 			newArgs = append(newArgs, arg)
+		} else {
+			return []string{}, err
 		}
 	}
 
@@ -646,9 +651,6 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 		}
 		if opts.Username == "" && cs.Username != "" {
 			opts.Username = cs.Username
-		}
-		if opts.Username == "" && cs.Username == "" && cs.Scheme == connstring.SchemeMongoDBSRV {
-			return fmt.Errorf("must set a username when using an SRV scheme")
 		}
 
 		if opts.Password != "" && cs.PasswordSet {
