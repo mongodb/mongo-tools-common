@@ -713,6 +713,29 @@ func TestOptionsParsing(t *testing.T) {
 	})
 }
 
+func TestParsePositionalArgsAsURI(t *testing.T) {
+	enabled := EnabledOptions{
+		Auth:       true,
+		Connection: true,
+		Namespace:  true,
+		URI:        true,
+	}
+	toolOptions := New("test", "", "", "", true, enabled)
+
+	Convey("Uri as positional argument", t, func() {
+		Convey("schema error is not reported", func() {
+			args := []string{"localhost:27017"}
+			_, err := toolOptions.ParseArgs(args)
+			So(err, ShouldBeNil)
+		})
+		Convey("non-schema errors should be reported", func() {
+			args := []string{"mongodb://a/b@localhost:27017"}
+			_, err := toolOptions.ParseArgs(args)
+			So(err.Error(), ShouldEqual, "error parsing uri: unescaped slash in username")
+		})
+	})
+}
+
 func TestOptionsParsingForSRV(t *testing.T) {
 
 	testtype.SkipUnlessTestType(t, testtype.SRVConnectionStringTestType)
