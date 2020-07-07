@@ -60,7 +60,7 @@ func TestLogUnsupportedOptions(t *testing.T) {
 			opts.LogUnsupportedOptions()
 
 			result := buffer.String()
-			expectedResult := fmt.Sprintf(unknownOptionsWarningFormatString, "foo")
+			expectedResult := fmt.Sprintf(unknownOptionsWarningFormat, "foo")
 
 			So(result, ShouldContainSubstring, expectedResult)
 		})
