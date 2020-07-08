@@ -7,10 +7,12 @@
 package options
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/mongodb/mongo-tools-common/log"
 	"github.com/mongodb/mongo-tools-common/testtype"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
@@ -24,6 +26,46 @@ const (
 	ShouldSucceed = iota
 	ShouldFail
 )
+
+func TestLogUnsupportedOptions(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+
+	Convey("With all command-line options enabled", t, func() {
+		var buffer bytes.Buffer
+
+		log.SetWriter(&buffer)
+		defer log.SetWriter(os.Stderr)
+
+		enabled := EnabledOptions{true, true, true, true}
+		opts := New("", "", "", "", true, enabled)
+
+		Convey("no warning should be logged if there are no unsupported options", func() {
+			args := []string{"mongodb://mongodb.test.com:27017"}
+
+			_, err := opts.ParseArgs(args)
+			So(err, ShouldBeNil)
+
+			opts.LogUnsupportedOptions()
+
+			result := buffer.String()
+			So(result, ShouldBeEmpty)
+		})
+
+		Convey("a warning should be logged if there is an unsupported option", func() {
+			args := []string{"mongodb://mongodb.test.com:27017/?foo=bar"}
+
+			_, err := opts.ParseArgs(args)
+			So(err, ShouldBeNil)
+
+			opts.LogUnsupportedOptions()
+
+			result := buffer.String()
+			expectedResult := fmt.Sprintf(unknownOptionsWarningFormat, "foo")
+
+			So(result, ShouldContainSubstring, expectedResult)
+		})
+	})
+}
 
 func TestVerbosityFlag(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)

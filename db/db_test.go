@@ -359,7 +359,6 @@ func TestAuthConnection(t *testing.T) {
 		}
 		fakeArgs := []string{"--uri=" + uri}
 		toolOptions := options.New("test", "", "", "", true, enabled)
-		toolOptions.URI.AddKnownURIParameters(options.KnownURIOptionsReadPreference)
 		_, err := toolOptions.ParseArgs(fakeArgs)
 		if err != nil {
 			panic("Could not parse MONGOD environment variable")
@@ -370,4 +369,3 @@ func TestAuthConnection(t *testing.T) {
 		})
 	})
 }
-
