@@ -51,10 +51,8 @@ func handleSignals(finalizer func()) {
 			log.Logvf(log.Always, "signal '%s' received; forcefully terminating", sig)
 			os.Exit(util.ExitFailure)
 		}
-	}
-
-	select {
-	case sig := <-sigChan:
+	} else {
+		sig := <-sigChan
 		// exit immediately
 		log.Logvf(log.Always, "signal '%s' received; forcefully terminating", sig)
 		os.Exit(util.ExitFailure)
