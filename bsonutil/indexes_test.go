@@ -7,6 +7,7 @@
 package bsonutil
 
 import (
+	"github.com/mongodb/mongo-tools-common/testtype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 
@@ -15,7 +16,7 @@ import (
 )
 
 func TestConvertLegacyIndexKeys(t *testing.T) {
-	//testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("Converting legacy Indexes", t, func() {
 		index1Key := bson.D{{"foo", 0}, {"int32field", int32(1)},
