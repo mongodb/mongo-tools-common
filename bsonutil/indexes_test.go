@@ -7,7 +7,6 @@
 package bsonutil
 
 import (
-	"github.com/mongodb/mongo-tools-common/testtype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 
@@ -16,7 +15,7 @@ import (
 )
 
 func TestConvertLegacyIndexKeys(t *testing.T) {
-	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	//testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("Converting legacy Indexes", t, func() {
 		index1Key := bson.D{{"foo", 0}, {"int32field", int32(1)},
@@ -31,9 +30,9 @@ func TestConvertLegacyIndexKeys(t *testing.T) {
 		ConvertLegacyIndexKeys(index2Key, "test")
 		So(index2Key, ShouldResemble, bson.D{{"key1", -1},{"key2", 1}, {"key3", 1}})
 
-		index3Key := bson.D{{"key1", ""}, {"key2", "1"}, {"key3", "1"}, {"key4", "-1"}}
+		index3Key := bson.D{{"key1", ""}, {"key2", "1"}, {"key3", "-1"}, {"key4", "2dsphere"}}
 		ConvertLegacyIndexKeys(index3Key, "test")
-		So(index3Key, ShouldResemble, bson.D{{"key1", 1},{"key2", 1}, {"key3", 1}, {"key4", -1}})
+		So(index3Key, ShouldResemble, bson.D{{"key1", 1},{"key2", "1"}, {"key3", "-1"}, {"key4", "2dsphere"}})
 
 		index4Key := bson.D{{"key1", bson.E{"invalid", 1}}, {"key2", primitive.Binary{}}}
 		ConvertLegacyIndexKeys(index4Key, "test")
