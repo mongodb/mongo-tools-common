@@ -116,6 +116,17 @@ func (sp *SessionProvider) DB(name string) *mongo.Database {
 	return sp.client.Database(name)
 }
 
+// NewSessionProviderWithClient constructs a session provider, including a connected client.
+func NewSessionProviderWithClient(client *mongo.Client) (*SessionProvider, error) {
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to server: %v", err)
+	}
+
+	// create the provider
+	return &SessionProvider{client: client}, nil
+}
+
 // NewSessionProvider constructs a session provider, including a connected client.
 func NewSessionProvider(opts options.ToolOptions) (*SessionProvider, error) {
 	// finalize auth options, filling in missing passwords
