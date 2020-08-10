@@ -813,7 +813,7 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 			return ConflictingArgsErrorFormat("sslInsecure or tlsInsecure", "false", "true", "--sslAllowInvalidCert or --sslAllowInvalidHost")
 		}
 	}
-	if (opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost || opts.TLSInsecure ) && !cs.SSLInsecureSet {
+	if (opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost || opts.TLSInsecure) && !cs.SSLInsecureSet {
 		cs.SSLInsecure = true
 		cs.SSLInsecureSet = true
 	}
