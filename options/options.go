@@ -808,7 +808,7 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 
 	// ignore (opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost) being false due to zero-value problem (TOOLS-2459 PR for details)
 	// Have cs take precedence in cases where it is unclear
-	if (opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost || opts.TLSInsecure ) && cs.SSLInsecureSet {
+	if (opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost || opts.TLSInsecure) && cs.SSLInsecureSet {
 		if !cs.SSLInsecure {
 			return ConflictingArgsErrorFormat("sslInsecure or tlsInsecure", "false", "true", "--sslAllowInvalidCert or --sslAllowInvalidHost")
 		}
