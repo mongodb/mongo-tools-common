@@ -563,7 +563,7 @@ func createOptionsTestCases(s []string) []optionsTester {
 		{fmt.Sprintf("%s %s", s[0], s[2]), fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[3]), ShouldFail},
 		{"", fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[2]), ShouldSucceed},
 	}
-	if s[0] == "--ssl" || s[0] == "--sslAllowInvalidCertificates" || s[0] == "--sslAllowInvalidHostnames" {
+	if s[0] == "--ssl" || s[0] == "--sslAllowInvalidCertificates" || s[0] == "--sslAllowInvalidHostnames" ||  s[0] == "--tlsInsecure" {
 		ret[0].options = s[0]
 		ret[1].options = s[0]
 		ret[2].options = s[0]
@@ -697,6 +697,9 @@ func TestOptionsParsing(t *testing.T) {
 
 			{"--sslAllowInvalidHostnames", "sslInsecure", "true", "false"},
 			{"--sslAllowInvalidHostnames", "tlsInsecure", "true", "false"},
+
+			{"--tlsInsecure", "sslInsecure", "true", "false"},
+			{"--tlsInsecure", "tlsInsecure", "true", "false"},
 		}
 
 		testCases := []optionsTester{}
@@ -802,3 +805,34 @@ func TestNamespace_String(t *testing.T) {
 	}
 
 }
+
+func TestDeprecationWarning(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	Convey("deprecate message", t, func() {
+		var buffer bytes.Buffer
+
+		log.SetWriter(&buffer)
+		defer log.SetWriter(os.Stderr)
+
+		Convey("Warning for sslAllowInvalidHostnames", func() {
+			enabled := EnabledOptions{Connection: true}
+			opts := New("test", "", "", "", true, enabled)
+			args := []string{"--ssl", "--sslAllowInvalidHostnames", "mongodb://user:pass@foo/"}
+			_, err := opts.ParseArgs(args)
+			So(err, ShouldBeNil)
+			result := buffer.String()
+			So(result, ShouldContainSubstring, deprecationWarningSSLAllow)
+		})
+
+		Convey("Warning for sslAllowInvalidCertificates", func() {
+			enabled := EnabledOptions{Connection: true}
+			opts := New("test", "", "", "", true, enabled)
+			args := []string{"--ssl", "--sslAllowInvalidCertificates", "mongodb://user:pass@foo/"}
+			_, err := opts.ParseArgs(args)
+			So(err, ShouldBeNil)
+			result := buffer.String()
+			So(result, ShouldContainSubstring, deprecationWarningSSLAllow)
+		})
+	})
+}
+
