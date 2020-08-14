@@ -45,39 +45,39 @@ func ConvertLegacyIndexKeys(indexKey bson.D, ns string) {
 	var converted bool
 	originalJSONString := CreateExtJSONString(indexKey)
 	for j, elem := range indexKey {
-		indexVal := 1
+		indexVal := int32(1)
 		needsConversion := false
 		switch v := elem.Value.(type) {
 		case int32:
-			indexVal = int(v)
+			indexVal = int32(v)
 			needsConversion = true
 		case int64:
-			indexVal = int(v)
+			indexVal = int32(v)
 			needsConversion = true
 		case float64:
-			indexVal = int(v)
+			indexVal = int32(v)
 			needsConversion = true
 		case primitive.Decimal128:
 			if intVal, _, err := v.BigInt(); err == nil {
-				indexVal = int(intVal.Int64())
+				indexVal = int32(intVal.Int64())
 
 				needsConversion = true
 			}
 		case string:
 			if v == "" {
-				indexKey[j].Value = 1
+				indexKey[j].Value = int32(1)
 				converted = true
 			}
 		default:
 			// Convert all types that aren't strings or numbers
-			indexKey[j].Value = 1
+			indexKey[j].Value = int32(1)
 			converted = true
 		}
 		if needsConversion {
 			if indexVal < 0 {
-				indexKey[j].Value = -1
+				indexKey[j].Value = int32(-1)
 			} else {
-				indexKey[j].Value = 1
+				indexKey[j].Value = int32(1)
 			}
 			converted = true
 		}
