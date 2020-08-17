@@ -4,6 +4,7 @@ import (
 	"github.com/mongodb/mongo-tools-common/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"math/big"
 )
 
 // validIndexOptions are taken from https://github.com/mongodb/mongo/blob/master/src/mongo/db/index/index_descriptor.h
@@ -37,6 +38,7 @@ var validIndexOptions = map[string]bool{
 // the stricter index definitions of 3.4+. Prior to 3.4, any value in an index key
 // that isn't a negative number or that isn't a string is treated as 1.
 // The one exception is an empty string is treated as 1.
+// Here we convert only the value of index key which equals to Numeric 0 to 1 and preserve other numeric values.
 // All other strings that aren't one of ["2d", "geoHaystack", "2dsphere", "hashed", "text", ""]
 // will cause the index build to fail. See TOOLS-2412 for more information.
 //
@@ -45,23 +47,33 @@ func ConvertLegacyIndexKeys(indexKey bson.D, ns string) {
 	var converted bool
 	originalJSONString := CreateExtJSONString(indexKey)
 	for j, elem := range indexKey {
-		indexVal := int32(1)
-		needsConversion := false
 		switch v := elem.Value.(type) {
+		case int:
+			if v == 0 {
+				indexKey[j].Value = 1
+				converted = true
+			}
 		case int32:
-			indexVal = int32(v)
-			needsConversion = true
+			if v == int32(0) {
+				indexKey[j].Value = int32(1)
+				converted = true
+			}
 		case int64:
-			indexVal = int32(v)
-			needsConversion = true
+			if v == int64(0) {
+				indexKey[j].Value = int64(1)
+				converted = true
+			}
 		case float64:
-			indexVal = int32(v)
-			needsConversion = true
+			if v == float64(0) {
+				indexKey[j].Value = float64(1)
+				converted = true
+			}
 		case primitive.Decimal128:
-			if intVal, _, err := v.BigInt(); err == nil {
-				indexVal = int32(intVal.Int64())
-
-				needsConversion = true
+			if bi, _, err := v.BigInt(); err == nil {
+				if bi.Cmp(big.NewInt(0)) == 0 {
+					indexKey[j].Value, _ = primitive.ParseDecimal128("1")
+					converted = true
+				}
 			}
 		case string:
 			if v == "" {
@@ -71,14 +83,6 @@ func ConvertLegacyIndexKeys(indexKey bson.D, ns string) {
 		default:
 			// Convert all types that aren't strings or numbers
 			indexKey[j].Value = int32(1)
-			converted = true
-		}
-		if needsConversion {
-			if indexVal < 0 {
-				indexKey[j].Value = int32(-1)
-			} else {
-				indexKey[j].Value = int32(1)
-			}
 			converted = true
 		}
 	}

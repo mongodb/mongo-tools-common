@@ -7,7 +7,6 @@
 package bsonutil
 
 import (
-	"github.com/mongodb/mongo-tools-common/testtype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 
@@ -16,20 +15,20 @@ import (
 )
 
 func TestConvertLegacyIndexKeys(t *testing.T) {
-	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	//testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("Converting legacy Indexes", t, func() {
-		index1Key := bson.D{{"foo", 0}, {"int32field", int32(1)},
-			{"int64field", int64(-1)}, {"float64field", float64(-1)}}
+		index1Key := bson.D{{"foo", 0}, {"int32field", int32(2)},
+			{"int64field", int64(-3)}, {"float64field", float64(-1)}}
 		ConvertLegacyIndexKeys(index1Key, "test")
-		So(index1Key, ShouldResemble, bson.D{{"foo", int32(1)}, {"int32field", int32(1)}, {"int64field", int32(-1)}, {"float64field", int32(-1)}})
+		So(index1Key, ShouldResemble, bson.D{{"foo", 1}, {"int32field", int32(2)}, {"int64field", int64(-3)}, {"float64field", float64(-1)}})
 
-		decimal1, _ := primitive.ParseDecimal128("-1")
-		decimal2, _ := primitive.ParseDecimal128("0.00")
-		decimal3, _ := primitive.ParseDecimal128("1")
-		index2Key := bson.D{{"key1", decimal1}, {"key2", decimal2}, {"key3", decimal3}}
+		decimalNOne, _ := primitive.ParseDecimal128("-1")
+		decimalZero, _ := primitive.ParseDecimal128("0.00")
+		decimalOne, _ := primitive.ParseDecimal128("1")
+		index2Key := bson.D{{"key1", decimalNOne}, {"key2", decimalZero}, {"key3", decimalOne}}
 		ConvertLegacyIndexKeys(index2Key, "test")
-		So(index2Key, ShouldResemble, bson.D{{"key1", int32(-1)},{"key2", int32(1)}, {"key3", int32(1)}})
+		So(index2Key, ShouldResemble, bson.D{{"key1", decimalNOne},{"key2", decimalOne}, {"key3", decimalOne}})
 
 		index3Key := bson.D{{"key1", ""}, {"key2", "1"}, {"key3", "-1"}, {"key4", "2dsphere"}}
 		ConvertLegacyIndexKeys(index3Key, "test")
