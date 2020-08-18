@@ -15,6 +15,43 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+func TestIsIndexKeysEqual(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	tests := []struct {
+		IndexKeys1 bson.D
+		IndexKeys2 bson.D
+		Expected   bool
+	}{
+		{bson.D{{"a", 1}, {"b", int32(1)}},
+			bson.D{{"a", float64(1)}, {"b", int64(1)}},
+			true,},
+		{bson.D{{"a", "1"}, {"b", "1"}},
+		bson.D{{"a", 1}, {"b", int32(1)}},
+		true,},
+		{bson.D{{"a", -1.0}, {"b", "1.0"}},
+			bson.D{{"a", -1}, {"b", int32(1)}},
+			true,},
+		{bson.D{{"a", -2.0}},
+			bson.D{{"a", -1}},
+			false,},
+		{bson.D{{"a", "1.1"}},
+			bson.D{{"a", 1}},
+			false,},
+		{bson.D{{"b", int32(1)}},
+			bson.D{{"a", int32(1)}},
+			false,},
+		{bson.D{{"a", int32(1)}, {"b", int32(1)}},
+			bson.D{{"b", int32(1)}, {"a", int32(1)}},
+			false,},
+	}
+
+	for _, test := range tests {
+		 if result := IsIndexKeysEqual(test.IndexKeys1, test.IndexKeys2); result != test.Expected {
+		 	t.Fatalf("Wrong output from IsIndexKeysEqual as expected, test: %v, actual: %v", test, result)
+		 }
+	}
+}
+
 func TestConvertLegacyIndexKeys(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
