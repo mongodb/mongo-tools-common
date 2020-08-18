@@ -64,7 +64,7 @@ func readPassFromStdin() (string, error) {
 	for {
 		var chBuf [1]byte
 		n, err := os.Stdin.Read(chBuf[:])
-		if err != nil {
+		if err != nil && err.Error() != "EOF" {
 			return "", err
 		}
 		if n == 0 {
