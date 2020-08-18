@@ -24,31 +24,31 @@ func TestIsIndexKeysEqual(t *testing.T) {
 	}{
 		{bson.D{{"a", 1}, {"b", int32(1)}},
 			bson.D{{"a", float64(1)}, {"b", int64(1)}},
-			true,},
+			true},
 		{bson.D{{"a", "1"}, {"b", "1"}},
-		bson.D{{"a", 1}, {"b", int32(1)}},
-		true,},
+			bson.D{{"a", 1}, {"b", int32(1)}},
+			true},
 		{bson.D{{"a", -1.0}, {"b", "1.0"}},
 			bson.D{{"a", -1}, {"b", int32(1)}},
-			true,},
+			true},
 		{bson.D{{"a", -2.0}},
 			bson.D{{"a", -1}},
-			false,},
+			false},
 		{bson.D{{"a", "1.1"}},
 			bson.D{{"a", 1}},
-			false,},
+			false},
 		{bson.D{{"b", int32(1)}},
 			bson.D{{"a", int32(1)}},
-			false,},
+			false},
 		{bson.D{{"a", int32(1)}, {"b", int32(1)}},
 			bson.D{{"b", int32(1)}, {"a", int32(1)}},
-			false,},
+			false},
 	}
 
 	for _, test := range tests {
-		 if result := IsIndexKeysEqual(test.IndexKeys1, test.IndexKeys2); result != test.Expected {
-		 	t.Fatalf("Wrong output from IsIndexKeysEqual as expected, test: %v, actual: %v", test, result)
-		 }
+		if result := IsIndexKeysEqual(test.IndexKeys1, test.IndexKeys2); result != test.Expected {
+			t.Fatalf("Wrong output from IsIndexKeysEqual as expected, test: %v, actual: %v", test, result)
+		}
 	}
 }
 
@@ -66,17 +66,16 @@ func TestConvertLegacyIndexKeys(t *testing.T) {
 		decimalZero, _ := primitive.ParseDecimal128("0")
 		decimalOne, _ := primitive.ParseDecimal128("1")
 		decimalZero1, _ := primitive.ParseDecimal128("0.00")
-		index2Key := bson.D{{"key1", decimalNOne}, {"key2", decimalZero}, {"key3", decimalOne},  {"key4", decimalZero1}}
+		index2Key := bson.D{{"key1", decimalNOne}, {"key2", decimalZero}, {"key3", decimalOne}, {"key4", decimalZero1}}
 		ConvertLegacyIndexKeys(index2Key, "test")
-		So(index2Key, ShouldResemble, bson.D{{"key1", decimalNOne},{"key2", int32(1)}, {"key3", decimalOne},  {"key4", decimalZero1}})
+		So(index2Key, ShouldResemble, bson.D{{"key1", decimalNOne}, {"key2", int32(1)}, {"key3", decimalOne}, {"key4", decimalZero1}})
 
 		index3Key := bson.D{{"key1", ""}, {"key2", "1"}, {"key3", "-1"}, {"key4", "2dsphere"}}
 		ConvertLegacyIndexKeys(index3Key, "test")
-		So(index3Key, ShouldResemble, bson.D{{"key1", int32(1)},{"key2", "1"}, {"key3", "-1"}, {"key4", "2dsphere"}})
+		So(index3Key, ShouldResemble, bson.D{{"key1", int32(1)}, {"key2", "1"}, {"key3", "-1"}, {"key4", "2dsphere"}})
 
 		index4Key := bson.D{{"key1", bson.E{"invalid", 1}}, {"key2", primitive.Binary{}}}
 		ConvertLegacyIndexKeys(index4Key, "test")
-		So(index4Key, ShouldResemble, bson.D{{"key1", int32(1)},{"key2", int32(1)}})
+		So(index4Key, ShouldResemble, bson.D{{"key1", int32(1)}, {"key2", int32(1)}})
 	})
 }
-

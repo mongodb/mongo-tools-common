@@ -36,7 +36,6 @@ var validIndexOptions = map[string]bool{
 
 const epsilon = 1e-9
 
-
 func IsIndexKeysEqual(indexKey1 bson.D, indexKey2 bson.D) bool {
 	if len(indexKey1) != len(indexKey2) {
 		// two indexes have different number of keys
@@ -54,8 +53,8 @@ func IsIndexKeysEqual(indexKey1 bson.D, indexKey2 bson.D) bool {
 			if key2Value, ok := indexKey2[j].Value.(string); !ok {
 				// key2Value is numerical type
 				if key2Value, ok := Bson2Float64(indexKey2[j].Value); ok {
-					if key1Value, ok:= Bson2Float64(key1Value); ok {
-						if math.Abs(key1Value - key2Value) < epsilon {
+					if key1Value, ok := Bson2Float64(key1Value); ok {
+						if math.Abs(key1Value-key2Value) < epsilon {
 							continue
 						}
 					}
@@ -68,7 +67,7 @@ func IsIndexKeysEqual(indexKey1 bson.D, indexKey2 bson.D) bool {
 		default:
 			if key1Value, ok := Bson2Float64(key1Value); ok {
 				if key2Value, ok := Bson2Float64(indexKey2[j].Value); ok {
-					if math.Abs(key1Value - key2Value) < epsilon {
+					if math.Abs(key1Value-key2Value) < epsilon {
 						continue
 					}
 				}
@@ -81,10 +80,12 @@ func IsIndexKeysEqual(indexKey1 bson.D, indexKey2 bson.D) bool {
 
 // ConvertLegacyIndexKeys transforms the values of index definitions pre 3.4 into
 // the stricter index definitions of 3.4+. Prior to 3.4, any value in an index key
-// that isn't a negative number or that isn't a string is treated as 1.
-// The one exception is an empty string is treated as 1.
+// that isn't a negative number or that isn't a string is treated as int32(1).
+// The one exception is an empty string is treated as int32(1).
 // All other strings that aren't one of ["2d", "geoHaystack", "2dsphere", "hashed", "text", ""]
 // will cause the index build to fail. See TOOLS-2412 for more information.
+//
+// Note, this function doesn't convert Decimal values which are equivalent to "0" (e.g. 0.00 or -0).
 //
 // This function logs the keys that are converted.
 func ConvertLegacyIndexKeys(indexKey bson.D, ns string) {

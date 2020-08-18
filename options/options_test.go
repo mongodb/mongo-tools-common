@@ -563,7 +563,7 @@ func createOptionsTestCases(s []string) []optionsTester {
 		{fmt.Sprintf("%s %s", s[0], s[2]), fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[3]), ShouldFail},
 		{"", fmt.Sprintf("mongodb://user:pass@foo/?%s=%s", s[1], s[2]), ShouldSucceed},
 	}
-	if s[0] == "--ssl" || s[0] == "--sslAllowInvalidCertificates" || s[0] == "--sslAllowInvalidHostnames" ||  s[0] == "--tlsInsecure" {
+	if s[0] == "--ssl" || s[0] == "--sslAllowInvalidCertificates" || s[0] == "--sslAllowInvalidHostnames" || s[0] == "--tlsInsecure" {
 		ret[0].options = s[0]
 		ret[1].options = s[0]
 		ret[2].options = s[0]
@@ -835,4 +835,3 @@ func TestDeprecationWarning(t *testing.T) {
 		})
 	})
 }
-

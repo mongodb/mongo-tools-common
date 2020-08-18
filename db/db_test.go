@@ -351,9 +351,9 @@ func TestAuthConnection(t *testing.T) {
 	}
 	Convey("With an AWS or Keberos auth URI", t, func() {
 		enabled := options.EnabledOptions{URI: true}
-		var uri string;
+		var uri string
 		if testtype.HasTestType(testtype.AWSAuthTestType) {
-			uri = os.Getenv("MONGOD");
+			uri = os.Getenv("MONGOD")
 		} else {
 			uri = "mongodb://" + kerberosUsername + "@" + kerberosConnection + "/kerberos?authSource=$external&authMechanism=GSSAPI"
 		}
