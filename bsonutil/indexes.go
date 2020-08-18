@@ -4,6 +4,7 @@ import (
 	"github.com/mongodb/mongo-tools-common/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"math"
 	"math/big"
 )
 
@@ -37,8 +38,6 @@ var validIndexOptions = map[string]bool{
 // ConvertLegacyIndexKeys transforms the values of index definitions pre 3.4 into
 // the stricter index definitions of 3.4+. Prior to 3.4, any value in an index key
 // that isn't a negative number or that isn't a string is treated as 1.
-// The one exception is an empty string is treated as 1.
-// Here we convert only the value of index key which equals to Numeric 0 to 1 and preserve other numeric values.
 // All other strings that aren't one of ["2d", "geoHaystack", "2dsphere", "hashed", "text", ""]
 // will cause the index build to fail. See TOOLS-2412 for more information.
 //
@@ -64,9 +63,13 @@ func ConvertLegacyIndexKeys(indexKey bson.D, ns string) {
 				converted = true
 			}
 		case float64:
-			if v == float64(0) {
+			const epsilon = 1e-9
+			if math.Abs(v - float64(0)) < epsilon{
 				indexKey[j].Value = float64(1)
 				converted = true
+			} else if v == float64(int(v)) {
+				// Integer value will be converted to int32
+				indexKey[j].Value = int32(v)
 			}
 		case primitive.Decimal128:
 			if bi, _, err := v.BigInt(); err == nil {

@@ -7,6 +7,7 @@
 package bsonutil
 
 import (
+	"github.com/mongodb/mongo-tools-common/testtype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 
@@ -15,13 +16,14 @@ import (
 )
 
 func TestConvertLegacyIndexKeys(t *testing.T) {
-	//testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("Converting legacy Indexes", t, func() {
 		index1Key := bson.D{{"foo", 0}, {"int32field", int32(2)},
-			{"int64field", int64(-3)}, {"float64field", float64(-1)}}
+			{"int64field", int64(-3)}, {"float64field", float64(-1)}, {"float64field", float64(-1.1)}}
 		ConvertLegacyIndexKeys(index1Key, "test")
-		So(index1Key, ShouldResemble, bson.D{{"foo", 1}, {"int32field", int32(2)}, {"int64field", int64(-3)}, {"float64field", float64(-1)}})
+		So(index1Key, ShouldResemble, bson.D{{"foo", 1}, {"int32field", int32(2)}, {"int64field", int64(-3)},
+			{"float64field", int32(-1)}, {"float64field", float64(-1.1)}})
 
 		decimalNOne, _ := primitive.ParseDecimal128("-1")
 		decimalZero, _ := primitive.ParseDecimal128("0.00")
