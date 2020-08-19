@@ -430,8 +430,6 @@ func parseNumberLongField(jsonValue interface{}) (int64, error) {
 
 func Bson2Float64(data interface{}) (float64, bool) {
 	switch v := data.(type) {
-	case int16:
-		return float64(v), true
 	case int32:
 		return float64(v), true
 	case int64:
