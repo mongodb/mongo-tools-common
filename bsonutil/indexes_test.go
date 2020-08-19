@@ -59,7 +59,7 @@ func TestConvertLegacyIndexKeys(t *testing.T) {
 		index1Key := bson.D{{"foo", 0}, {"int32field", int32(2)},
 			{"int64field", int64(-3)}, {"float64field", float64(-1)}, {"float64field", float64(-1.1)}}
 		ConvertLegacyIndexKeys(index1Key, "test")
-		So(index1Key, ShouldResemble, bson.D{{"foo", int32(1)}, {"int32field", int32(2)}, {"int64field", int64(-3)},
+		So(index1Key, ShouldResemble, bson.D{{"foo", 1}, {"int32field", int32(2)}, {"int64field", int64(-3)},
 			{"float64field", float64(-1)}, {"float64field", float64(-1.1)}})
 
 		decimalNOne, _ := primitive.ParseDecimal128("-1")
