@@ -21,6 +21,7 @@ func TestBson2Float64(t *testing.T) {
 		{int64(1), 1.0, true},
 		{1.0, 1.0, true},
 		{decimalVal, float64(-1), true},
+		{"invalid value", 0, false},
 	}
 
 	Convey("Test numerical value conversion", t, func() {
