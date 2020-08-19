@@ -17,19 +17,9 @@ func TestBson2Float64(t *testing.T) {
 		Expected  float64
 		isSuccess bool
 	}{
-		{int8(1), 1.0, true},
-		{int16(2), 2.0, true},
 		{int32(1), 1.0, true},
 		{int64(1), 1.0, true},
-		{uint8(1), 1.0, true},
-		{uint16(1), 1.0, true},
-		{uint32(1), 1.0, true},
-		{uint64(1), 1.0, true},
 		{1.0, 1.0, true},
-		{float32(1.0), 1.0, true},
-		{"1", 1.0, true},
-		{"1.5", 1.5, true},
-		{"invalid", float64(0), false},
 		{decimalVal, float64(-1), true},
 	}
 

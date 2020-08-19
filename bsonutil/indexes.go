@@ -50,18 +50,10 @@ func IsIndexKeysEqual(indexKey1 bson.D, indexKey2 bson.D) bool {
 		// After ConvertLegacyIndexKeys, index key value should only be numerical or string value
 		switch key1Value := elem.Value.(type) {
 		case string:
-			if key2Value, ok := indexKey2[j].Value.(string); !ok {
-				// key2Value is numerical type
-				if key2Value, ok := Bson2Float64(indexKey2[j].Value); ok {
-					if key1Value, ok := Bson2Float64(key1Value); ok {
-						if math.Abs(key1Value-key2Value) < epsilon {
-							continue
-						}
-					}
+			if key2Value, ok := indexKey2[j].Value.(string); ok {
+				if key1Value == key2Value {
+					continue
 				}
-			} else if key1Value == key2Value {
-				// Both are string
-				continue
 			}
 			return false
 		default:
