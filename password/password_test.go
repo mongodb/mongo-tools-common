@@ -10,6 +10,7 @@ import (
 const (
 	testPwd = "test_pwd"
 )
+
 func TestPasswordFromNonTerminal(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 	Convey("stdin is not a terminal", t, func() {
