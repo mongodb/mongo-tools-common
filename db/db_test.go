@@ -40,8 +40,8 @@ func DBGetSSLOptions() options.SSL {
 	if testtype.HasTestType(testtype.SSLTestType) {
 		return options.SSL{
 			UseSSL:        true,
-			SSLCAFile:     "../db/testdata/ca.pem",
-			SSLPEMKeyFile: "../db/testdata/server.pem",
+			SSLCAFile:     "../db/testdata/ca-ia.pem",
+			SSLPEMKeyFile: "../db/testdata/test-client.pem",
 		}
 	}
 
