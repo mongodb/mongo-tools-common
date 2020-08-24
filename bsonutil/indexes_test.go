@@ -66,7 +66,7 @@ func TestConvertLegacyIndexKeys(t *testing.T) {
 		decimalZero1, _ := primitive.ParseDecimal128("0.00")
 		index2Key := bson.D{{"key1", decimalNOne}, {"key2", decimalZero}, {"key3", decimalOne}, {"key4", decimalZero1}}
 		ConvertLegacyIndexKeys(index2Key, "test")
-		So(index2Key, ShouldResemble, bson.D{{"key1", decimalNOne}, {"key2", int32(1)}, {"key3", decimalOne}, {"key4", decimalZero1}})
+		So(index2Key, ShouldResemble, bson.D{{"key1", decimalNOne}, {"key2", int32(1)}, {"key3", decimalOne}, {"key4", int32(1)}})
 
 		index3Key := bson.D{{"key1", ""}, {"key2", "2dsphere"}}
 		ConvertLegacyIndexKeys(index3Key, "test")
