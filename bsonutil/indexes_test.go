@@ -41,6 +41,9 @@ func TestIsIndexKeysEqual(t *testing.T) {
 		{bson.D{{"a", int32(1)}, {"b", int32(1)}},
 			bson.D{{"b", int32(1)}, {"a", int32(1)}},
 			false},
+		{bson.D{{"a", int32(1)}, {"b", int32(1)}},
+			bson.D{{"a", int32(1)}},
+			false},
 	}
 
 	for _, test := range tests {
