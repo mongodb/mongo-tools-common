@@ -14,10 +14,10 @@ const (
 func TestPasswordFromNonTerminal(t *testing.T) {
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 	Convey("stdin is not a terminal", t, func() {
-		var b bytes.Buffer
+		var buffer bytes.Buffer
 
-		b.WriteString(testPwd)
-		reader := bytes.NewReader(b.Bytes())
+		buffer.WriteString(testPwd)
+		reader := bytes.NewReader(buffer.Bytes())
 
 		pass, err := readPassNonInteractively(reader)
 		So(err, ShouldBeNil)
