@@ -41,5 +41,5 @@ func readPassInteractively() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return pass, nil
+	return string(pass), nil
 }
