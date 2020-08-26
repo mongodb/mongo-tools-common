@@ -21,7 +21,7 @@ import (
 // operating systems that aren't solaris
 
 func IsTerminal() bool {
-	return terminal.IsTerminal(syscall.Stdin)
+	return terminal.IsTerminal(int(syscall.Stdin))
 }
 
 func readPassInteractively() (string, error) {
