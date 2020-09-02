@@ -92,6 +92,8 @@ func TestProgressBarWithNoMax(t *testing.T) {
 }
 
 func TestBarConcurrency(t *testing.T) {
+	// TOOLS-2715: Disable flaky test
+	t.SkipNow()
 	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	writeBuffer := &bytes.Buffer{}
