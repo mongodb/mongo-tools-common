@@ -41,7 +41,7 @@ func TestBasicToolLoggerFunctionality(t *testing.T) {
 		So(tl.verbosity, ShouldEqual, 3)
 
 		Convey("writing a negative verbosity should panic", func() {
-			So(func() { tl.Logvf(-1, "nope") }, ShouldPanic)
+			So(func() { tl.Logvf(-1, false, "nope") }, ShouldPanic)
 		})
 
 		Convey("writing the output to a buffer", func() {
@@ -49,9 +49,9 @@ func TestBasicToolLoggerFunctionality(t *testing.T) {
 			tl.SetWriter(buf)
 
 			Convey("with Logfs of various verbosity levels", func() {
-				tl.Logvf(0, "test this string")
-				tl.Logvf(5, "this log level is too high and will not log")
-				tl.Logvf(1, "====!%v!====", 12.5)
+				tl.Logvf(0, false, "test this string")
+				tl.Logvf(5, false, "this log level is too high and will not log")
+				tl.Logvf(1, false, "====!%v!====", 12.5)
 
 				Convey("only messages of low enough verbosity should be written", func() {
 					l1, _ := buf.ReadString('\n')
@@ -86,7 +86,7 @@ func TestGlobalToolLoggerFunctionality(t *testing.T) {
 
 		Convey("actions shouldn't panic", func() {
 			So(func() { SetVerbosity(&verbosity{Q: true}) }, ShouldNotPanic)
-			So(func() { Logvf(0, "woooo") }, ShouldNotPanic)
+			So(func() { Logvf(0, false, "woooo") }, ShouldNotPanic)
 			So(func() { SetDateFormat("ahaha") }, ShouldNotPanic)
 			So(func() { SetWriter(os.Stdout) }, ShouldNotPanic)
 		})

@@ -240,7 +240,7 @@ func New(appName, versionStr, gitCommit, usageStr string, parsePositionalArgsAsU
 		} else if val == "" {
 			opts.VLevel = opts.VLevel + 1 // Increment for every occurrence of flag
 		} else {
-			log.Logvf(log.Error, "Invalid verbosity value given")
+			log.Logvf(log.Error, false, "Invalid verbosity value given")
 			os.Exit(-1)
 		}
 	}
@@ -392,7 +392,7 @@ func (opts *ToolOptions) EnabledToolOptions() EnabledOptions {
 // The unknown options are determined by the driver.
 func (uri *URI) LogUnsupportedOptions() {
 	for key := range uri.ConnString.UnknownOptions {
-		log.Logvf(log.Warn, unknownOptionsWarningFormat, key)
+		log.Logvf(log.Warn, false, unknownOptionsWarningFormat, key)
 	}
 }
 
@@ -432,7 +432,7 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	}
 
 	if opts.SSLAllowInvalidCert || opts.SSLAllowInvalidHost {
-		log.Logvf(log.Warn, deprecationWarningSSLAllow)
+		log.Logvf(log.Warn, false, deprecationWarningSSLAllow)
 	}
 
 	if opts.parsePositionalArgsAsURI {

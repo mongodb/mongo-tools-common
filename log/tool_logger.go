@@ -65,7 +65,7 @@ func (tl *ToolLogger) SetDateFormat(dateFormat string) {
 	tl.format = dateFormat
 }
 
-func (tl *ToolLogger) Logvf(minVerb int, format string, a ...interface{}) {
+func (tl *ToolLogger) Logvf(minVerb int, printLogType bool, format string, a ...interface{}) {
 	if minVerb < 0 {
 		panic("cannot set a minimum log verbosity that is less than 0")
 	}
@@ -73,11 +73,15 @@ func (tl *ToolLogger) Logvf(minVerb int, format string, a ...interface{}) {
 	if minVerb <= tl.verbosity {
 		tl.mutex.Lock()
 		defer tl.mutex.Unlock()
-		tl.log(fmt.Sprintf(errAbbreviations[minVerb] + " " + format, a...))
+		if printLogType {
+			tl.log(fmt.Sprintf(errAbbreviations[minVerb] + " " + format, a...))
+		} else {
+			tl.log(fmt.Sprintf(format, a...))
+		}
 	}
 }
 
-func (tl *ToolLogger) Logv(minVerb int, msg string) {
+func (tl *ToolLogger) Logv(minVerb int, printLogType bool, msg string) {
 	if minVerb < 0 {
 		panic("cannot set a minimum log verbosity that is less than 0")
 	}
@@ -85,7 +89,12 @@ func (tl *ToolLogger) Logv(minVerb int, msg string) {
 	if minVerb <= tl.verbosity {
 		tl.mutex.Lock()
 		defer tl.mutex.Unlock()
-		tl.log(errAbbreviations[minVerb] + " " + msg)
+		if printLogType {
+			tl.log(errAbbreviations[minVerb] + " " + msg)
+		} else {
+			tl.log(msg)
+		}
+
 	}
 }
 
@@ -113,7 +122,7 @@ type toolLogWriter struct {
 }
 
 func (tlw *toolLogWriter) Write(message []byte) (int, error) {
-	tlw.logger.Logv(tlw.minVerbosity, string(message))
+	tlw.logger.Logv(tlw.minVerbosity, false, string(message))
 	return len(message), nil
 }
 
@@ -140,12 +149,12 @@ func IsInVerbosity(minVerb int) bool {
 	return minVerb <= globalToolLogger.verbosity
 }
 
-func Logvf(minVerb int, format string, a ...interface{}) {
-	globalToolLogger.Logvf(minVerb, format, a...)
+func Logvf(minVerb int, printLogType bool, format string, a ...interface{}) {
+	globalToolLogger.Logvf(minVerb, printLogType, format, a...)
 }
 
-func Logv(minVerb int, msg string) {
-	globalToolLogger.Logv(minVerb, msg)
+func Logv(minVerb int, printLogType bool, msg string) {
+	globalToolLogger.Logv(minVerb, printLogType, msg)
 }
 
 func SetVerbosity(verbosity VerbosityLevel) {
