@@ -287,7 +287,7 @@ func New(appName, versionStr, gitCommit, usageStr string, parsePositionalArgsAsU
 	if opts.MaxProcs <= 0 {
 		opts.MaxProcs = runtime.NumCPU()
 	}
-	log.Logvf(log.Debug, "Setting num cpus to %v", opts.MaxProcs)
+	log.Logvf(log.Debug, false, "Setting num cpus to %v", opts.MaxProcs)
 	runtime.GOMAXPROCS(opts.MaxProcs)
 	return opts
 }
