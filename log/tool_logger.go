@@ -73,7 +73,7 @@ func (tl *ToolLogger) Logvf(minVerb int, format string, a ...interface{}) {
 	if minVerb <= tl.verbosity {
 		tl.mutex.Lock()
 		defer tl.mutex.Unlock()
-		tl.log(fmt.Sprintf(errAbbreviations[minVerb] + format, a...))
+		tl.log(fmt.Sprintf(errAbbreviations[minVerb] + " " + format, a...))
 	}
 }
 
@@ -85,7 +85,7 @@ func (tl *ToolLogger) Logv(minVerb int, msg string) {
 	if minVerb <= tl.verbosity {
 		tl.mutex.Lock()
 		defer tl.mutex.Unlock()
-		tl.log(errAbbreviations[minVerb] + msg)
+		tl.log(errAbbreviations[minVerb] + " " + msg)
 	}
 }
 
