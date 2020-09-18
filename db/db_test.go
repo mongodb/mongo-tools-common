@@ -369,3 +369,23 @@ func TestAuthConnection(t *testing.T) {
 		})
 	})
 }
+
+func TestConfigureClientMultipleHosts(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+
+	Convey("Configuring options with a URI with multiple hosts should succeed", t, func() {
+		enabled := options.EnabledOptions{
+			Auth:       false,
+			Connection: true,
+			Namespace:  true,
+			URI:        true,
+		}
+
+		toolOptions := options.New("test", "", "", "", true, enabled)
+		_, err := toolOptions.ParseArgs([]string{"--uri", "mongodb://localhost:27017,localhost:27018/test"})
+		So(err, ShouldBeNil)
+
+		_, err = configureClient(*toolOptions)
+		So(err, ShouldBeNil)
+	})
+}
