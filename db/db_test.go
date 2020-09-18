@@ -371,7 +371,7 @@ func TestAuthConnection(t *testing.T) {
 }
 
 func TestConfigureClientMultipleHosts(t *testing.T) {
-	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("Configuring options with a URI with multiple hosts should succeed", t, func() {
 		enabled := options.EnabledOptions{
