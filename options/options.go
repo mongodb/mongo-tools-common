@@ -600,7 +600,9 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 			if cs.ReplicaSet != "" {
 				opts.Host = cs.ReplicaSet + "/"
 			}
-			matchingPort := false
+
+			// check if there is a <host:port> pair with a port that matches --port <port>
+			conflictingPorts := true
 			for _, host := range cs.Hosts {
 				hostPort := strings.Split(host, ":")
 				opts.Host += hostPort[0] + ","
@@ -609,15 +611,17 @@ func (opts *ToolOptions) setOptionsFromURI(cs connstring.ConnString) error {
 				if len(hostPort) == 2 {
 					if opts.Port != "" {
 						if hostPort[1] == opts.Port {
-							matchingPort = true
+							conflictingPorts = false
 						}
 					} else {
 						opts.Port = hostPort[1]
-						matchingPort = true
+						conflictingPorts = false
 					}
+				} else {
+					conflictingPorts = false
 				}
 			}
-			if !matchingPort {
+			if conflictingPorts {
 				return ConflictingArgsErrorFormat("port", strings.Join(cs.Hosts, ","), opts.Port, "--port")
 			}
 			// remove trailing comma
