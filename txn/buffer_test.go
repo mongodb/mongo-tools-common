@@ -120,9 +120,10 @@ func TestOldestTimestamp(t *testing.T) {
 	buffer := NewBuffer()
 
 	// With no transactions, oldest active is zero value
-	oldest := buffer.OldestTimestamp()
-	if oldest != zeroTimestamp {
-		t.Errorf("expected zero timestamp, but got %v", oldest)
+	oldest := buffer.OldestOpTime()
+	zeroTimestamp := primitive.Timestamp{}
+	if oldest.Timestamp != zeroTimestamp {
+		t.Errorf("expected zero timestamp, but got %v", oldest.Timestamp)
 	}
 
 	// Constructing manually requires pointers to int64, so they can't be constants.
@@ -176,10 +177,9 @@ func TestOldestTimestamp(t *testing.T) {
 	}
 
 	// With uncommitted transactions, we should see the oldest among them.
-	oldest = buffer.OldestTimestamp()
+	oldest = buffer.OldestOpTime()
 	expect := primitive.Timestamp{T: 1234, I: 1}
-	if oldest != expect {
+	if oldest.Timestamp != expect {
 		t.Fatalf("expected timestamp %v, but got %v", expect, oldest)
 	}
-
 }
