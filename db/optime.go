@@ -82,5 +82,13 @@ func OpTimeGreaterThan(lhs OpTime, rhs OpTime) bool {
 }
 
 func (ot OpTime) String() string {
-	return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, *ot.Term, *ot.Hash)
+	if ot.Term != nil && ot.Hash != nil {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, *ot.Term, *ot.Hash)
+	} else if ot.Term == nil && ot.Hash != nil {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, nil, *ot.Hash)
+	} else if ot.Term != nil && ot.Hash == nil {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, *ot.Term, nil)
+	} else {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, nil, nil)
+	}
 }
