@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"github.com/mongodb/mongo-tools-common/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -78,4 +79,16 @@ func OpTimeGreaterThan(lhs OpTime, rhs OpTime) bool {
 	}
 
 	return util.TimestampGreaterThan(lhs.Timestamp, rhs.Timestamp)
+}
+
+func (ot OpTime) String() string {
+	if ot.Term != nil && ot.Hash != nil {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, *ot.Term, *ot.Hash)
+	} else if ot.Term == nil && ot.Hash != nil {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, nil, *ot.Hash)
+	} else if ot.Term != nil && ot.Hash == nil {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, *ot.Term, nil)
+	} else {
+		return fmt.Sprintf("{Timestamp: %v, Term: %v, Hash: %v}", ot.Timestamp, nil, nil)
+	}
 }
