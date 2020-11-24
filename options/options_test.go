@@ -599,7 +599,7 @@ func createExpectedOpts(pw string, uri string, ssl string) *ToolOptions {
 }
 
 func TestParseConfigFile(t *testing.T) {
-	// testtype.SkipUnlessTestType(t, testtype.UnitTestType)
+	testtype.SkipUnlessTestType(t, testtype.UnitTestType)
 
 	Convey("should error with no config file specified", t, func() {
 		opts := New("test", "", "", "", false, EnabledOptions{})
