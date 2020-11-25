@@ -434,6 +434,7 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	if err := opts.ParseConfigFile(args); err != nil {
 		return []string{}, err
 	}
+	LogSensitiveOptionWarnings(args)
 
 	args, err := opts.parser.ParseArgs(args)
 	if err != nil {
@@ -500,6 +501,61 @@ func (opts *ToolOptions) ParseConfigFile(args []string) error {
 	opts.SSL.SSLPEMKeyPassword = config.SSLPEMKeyPassword
 
 	return nil
+}
+
+// LogSensitiveOptionWarnings logs a warning for any sensitive information (i.e. passwords)
+// that appear on the command line for the --password, --uri and --sslPEMKeyPassword options.
+// This also applies to a connection string that appears as a positional argument.
+func LogSensitiveOptionWarnings(args []string) {
+	passwordMsg := "WARNING: On some systems, a password provided directly using " +
+		"--password may be visible to system status programs such as `ps` that may be " +
+		"invoked by other users. Consider omitting the password to provide it via stdin, " +
+		"or using the --config option to specify a configuration file with the password."
+
+	uriMsg := "WARNING: On some systems, a password provided directly using " +
+		"--uri may be visible to system status programs such as `ps` that may be " +
+		"invoked by other users. Consider omitting the password to provide it via stdin, " +
+		"or using the --config option to specify a configuration file with the password."
+
+	sslMsg := "WARNING: On some systems, a password provided directly using --sslPEMKeyPassword " +
+		"may be visible to system status programs such as `ps` that may be invoked by other users. " +
+		"Consider using the --config option to specify a configuration file with the password."
+
+	for i, arg := range args {
+		// Option has the form --password= but is not followed by the empty string.
+		if strings.HasPrefix(arg, "--password=") && len(arg) > 11 && arg[11:] != "" {
+			log.Logvf(log.Always, passwordMsg)
+			continue
+		}
+
+		// Option has the form --password and the next argument is not the empty string.
+		if strings.HasPrefix(arg, "--password") && i+1 < len(args) && args[i+1] != "" {
+			log.Logvf(log.Always, passwordMsg)
+			continue
+		}
+		// Option has the form --uri= with at least one character after it.
+		if strings.HasPrefix(arg, "--uri=") && len(arg) > 6 {
+			if cs, err := connstring.Parse(arg[6:]); err == nil && cs.Password != "" {
+				log.Logvf(log.Always, uriMsg)
+				continue
+			}
+		}
+		// Any connection string by itself (could be a string after a --uri option or a positional URI).
+		if cs, err := connstring.Parse(arg); err == nil && cs.Password != "" {
+			log.Logvf(log.Always, uriMsg)
+			continue
+		}
+		// Option has the form --sslPEMKeyPassword= with at least one character after it.
+		if strings.HasPrefix(arg, "--sslPEMKeyPassword=") && len(arg) > 20 {
+			log.Logvf(log.Always, sslMsg)
+			continue
+		}
+		// Option has the form --sslPEMKeyPassword with at least one argument after it.
+		if strings.HasPrefix(arg, "--sslPEMKeyPassword") && i+1 < len(args) {
+			log.Logvf(log.Always, sslMsg)
+			continue
+		}
+	}
 }
 
 func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error) {
