@@ -476,9 +476,9 @@ func (opts *ToolOptions) ParseConfigFile(args []string) error {
 			}
 			configPath = arg[9:]
 			break
-		} else if strings.HasPrefix(arg, "--config") {
-			// No next argument or the next argument is an option.
-			if i+1 == len(args) || strings.HasPrefix(args[i+1], "-") {
+		} else if arg == "--config" {
+			// No next argument.
+			if i+1 == len(args) {
 				return fmt.Errorf("--config option specified but no file given")
 			}
 			configPath = args[i+1]
@@ -493,7 +493,7 @@ func (opts *ToolOptions) ParseConfigFile(args []string) error {
 
 	configBytes, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "error opening file with --config")
 	}
 
 	// Unmarshal the config file as a top-level YAML file.

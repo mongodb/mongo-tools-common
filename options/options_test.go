@@ -584,9 +584,7 @@ func runConfigFileTestCases(testCases []configTester) {
 			}
 		}
 
-		Convey(testCase.description, func() {
-			assertion()
-		})
+		Convey(testCase.description, assertion)
 	}
 }
 
@@ -624,20 +622,12 @@ func TestParseConfigFile(t *testing.T) {
 	Convey("should error with non-existent config file specified", t, func() {
 		opts := New("test", "", "", "", false, EnabledOptions{})
 
-		// --config at beginning of args list
+		// --config with non-existent file
 		args := []string{"--config", "DoesNotExist.yaml", "--database", "myDB"}
 		So(opts.ParseConfigFile(args), ShouldNotBeNil)
 
-		// --config at end of args list
-		args = []string{"--database", "myDB", "--config", "DoesNotExist.yaml"}
-		So(opts.ParseConfigFile(args), ShouldNotBeNil)
-
-		// --config= at beginning of args list
+		// --config= with non-existent file
 		args = []string{"--config=DoesNotExist.yaml", "--database", "myDB"}
-		So(opts.ParseConfigFile(args), ShouldNotBeNil)
-
-		// --config= at end of args list
-		args = []string{"--database", "myDB", "--config=DoesNotExist.yaml"}
 		So(opts.ParseConfigFile(args), ShouldNotBeNil)
 	})
 
