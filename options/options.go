@@ -529,7 +529,7 @@ func LogSensitiveOptionWarnings(args []string) {
 		}
 
 		// Option has the form --password and the next argument is not the empty string.
-		if strings.HasPrefix(arg, "--password") && i+1 < len(args) && args[i+1] != "" {
+		if arg == "--password" && i+1 < len(args) && args[i+1] != "" {
 			log.Logvf(log.Always, passwordMsg)
 			continue
 		}
@@ -551,7 +551,7 @@ func LogSensitiveOptionWarnings(args []string) {
 			continue
 		}
 		// Option has the form --sslPEMKeyPassword with at least one argument after it.
-		if strings.HasPrefix(arg, "--sslPEMKeyPassword") && i+1 < len(args) {
+		if arg == "--sslPEMKeyPassword" && i+1 < len(args) {
 			log.Logvf(log.Always, sslMsg)
 			continue
 		}
