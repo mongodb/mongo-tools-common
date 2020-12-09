@@ -434,7 +434,8 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	if err := opts.ParseConfigFile(args); err != nil {
 		return []string{}, err
 	}
-	LogSensitiveOptionWarnings(args)
+
+	opts.LogSensitiveOptionWarnings(args)
 
 	args, err := opts.parser.ParseArgs(args)
 	if err != nil {
@@ -506,14 +507,14 @@ func (opts *ToolOptions) ParseConfigFile(args []string) error {
 // LogSensitiveOptionWarnings logs a warning for any sensitive information (i.e. passwords)
 // that appear on the command line for the --password, --uri and --sslPEMKeyPassword options.
 // This also applies to a connection string that appears as a positional argument.
-func LogSensitiveOptionWarnings(args []string) {
+func (opts *ToolOptions) LogSensitiveOptionWarnings(args []string) {
 	passwordMsg := "WARNING: On some systems, a password provided directly using " +
 		"--password may be visible to system status programs such as `ps` that may be " +
 		"invoked by other users. Consider omitting the password to provide it via stdin, " +
 		"or using the --config option to specify a configuration file with the password."
 
-	uriMsg := "WARNING: On some systems, a password provided directly using " +
-		"--uri may be visible to system status programs such as `ps` that may be " +
+	uriMsg := "WARNING: On some systems, a password provided directly in a connection string " +
+		"or using --uri may be visible to system status programs such as `ps` that may be " +
 		"invoked by other users. Consider omitting the password to provide it via stdin, " +
 		"or using the --config option to specify a configuration file with the password."
 
@@ -521,40 +522,39 @@ func LogSensitiveOptionWarnings(args []string) {
 		"may be visible to system status programs such as `ps` that may be invoked by other users. " +
 		"Consider using the --config option to specify a configuration file with the password."
 
-	for i, arg := range args {
-		// Option has the form --password= but is not followed by the empty string.
-		if strings.HasPrefix(arg, "--password=") && len(arg) > 11 && arg[11:] != "" {
-			log.Logvf(log.Always, passwordMsg)
-			continue
-		}
+	// Parse the args to see what is set on the command line.
+	extraArgs, err := opts.parser.ParseArgs(args)
+	if err != nil {
+		return
+	}
 
-		// Option has the form --password and the next argument is not the empty string.
-		if arg == "--password" && i+1 < len(args) && args[i+1] != "" {
-			log.Logvf(log.Always, passwordMsg)
-			continue
+	// Parse the extraArgs for a positional connection string.
+	if opts.parsePositionalArgsAsURI {
+		_, err = opts.setURIFromPositionalArg(extraArgs)
+		if err != nil {
+			return
 		}
-		// Option has the form --uri= with at least one character after it.
-		if strings.HasPrefix(arg, "--uri=") && len(arg) > 6 {
-			if cs, err := connstring.Parse(arg[6:]); err == nil && cs.Password != "" {
-				log.Logvf(log.Always, uriMsg)
-				continue
-			}
-		}
-		// Any connection string by itself (could be a string after a --uri option or a positional URI).
-		if cs, err := connstring.Parse(arg); err == nil && cs.Password != "" {
+	}
+
+	// Log a message for --password, if specified.
+	if opts.Auth.Password != "" {
+		log.Logvf(log.Always, passwordMsg)
+		opts.Auth.Password = ""
+	}
+
+	// Log a message for --uri or a positional connection string, if either is specified.
+	uri := opts.URI.ConnectionString
+	if uri != "" {
+		if cs, err := connstring.Parse(uri); err == nil && cs.Password != "" {
 			log.Logvf(log.Always, uriMsg)
-			continue
 		}
-		// Option has the form --sslPEMKeyPassword= with at least one character after it.
-		if strings.HasPrefix(arg, "--sslPEMKeyPassword=") && len(arg) > 20 {
-			log.Logvf(log.Always, sslMsg)
-			continue
-		}
-		// Option has the form --sslPEMKeyPassword with at least one argument after it.
-		if arg == "--sslPEMKeyPassword" && i+1 < len(args) {
-			log.Logvf(log.Always, sslMsg)
-			continue
-		}
+		opts.URI.ConnectionString = ""
+	}
+
+	// Log a message for --sslPEMKeyPassword, if specified.
+	if opts.SSL.SSLPEMKeyPassword != "" {
+		log.Logvf(log.Always, sslMsg)
+		opts.SSL.SSLPEMKeyPassword = ""
 	}
 }
 
