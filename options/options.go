@@ -112,7 +112,7 @@ func (ns Namespace) String() string {
 type General struct {
 	Help       bool   `long:"help" description:"print usage"`
 	Version    bool   `long:"version" description:"print the tool version and exit"`
-	ConfigPath string `long:"config" description:"path to a configuration file with password secrets"`
+	ConfigPath string `long:"config" description:"path to a configuration file"`
 
 	MaxProcs   int    `long:"numThreads" hidden:"true"`
 	Failpoints string `long:"failpoints" hidden:"true"`
@@ -467,31 +467,18 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 // in the opts.
 func (opts *ToolOptions) ParseConfigFile(args []string) error {
 	// Get config file path from the arguments, if specified.
-	configPath := ""
-	for i, arg := range args {
-		if strings.HasPrefix(arg, "--config=") {
-			// No value after equal sign.
-			if len(arg) < 10 {
-				return fmt.Errorf("--config option specified but no file given")
-			}
-			configPath = arg[9:]
-			break
-		} else if arg == "--config" {
-			// No next argument.
-			if i+1 == len(args) {
-				return fmt.Errorf("--config option specified but no file given")
-			}
-			configPath = args[i+1]
-			break
-		}
+	_, err := opts.parser.ParseArgs(args)
+	if err != nil {
+		return err
 	}
 
-	// No --config option was found.
-	if configPath == "" {
+	// No --config option was specified.
+	if opts.General.ConfigPath == "" {
 		return nil
 	}
 
-	configBytes, err := ioutil.ReadFile(configPath)
+	// --config option specifies a file path.
+	configBytes, err := ioutil.ReadFile(opts.General.ConfigPath)
 	if err != nil {
 		return errors.Wrapf(err, "error opening file with --config")
 	}
@@ -504,7 +491,7 @@ func (opts *ToolOptions) ParseConfigFile(args []string) error {
 	}
 	err = yaml.UnmarshalStrict(configBytes, &config)
 	if err != nil {
-		return errors.Wrapf(err, "error parsing config file %s", configPath)
+		return errors.Wrapf(err, "error parsing config file %s", opts.General.ConfigPath)
 	}
 
 	// Assign each parsed value to its respective ToolOptions field.
