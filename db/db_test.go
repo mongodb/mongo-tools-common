@@ -8,9 +8,10 @@ package db
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 	"os"
 	"testing"
+
+	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 
 	"github.com/mongodb/mongo-tools-common/options"
 	"github.com/mongodb/mongo-tools-common/testtype"
@@ -24,6 +25,7 @@ var (
 	UserAdminPassword      = "password"
 	CreatedUserNameEnv     = "TOOLS_TESTING_AUTH_USERNAME"
 	CreatedUserPasswordEnv = "TOOLS_TESTING_AUTH_PASSWORD"
+	PKCS8Password          = "TOOLS_TESTING_PKCS8_PASSWORD"
 	kerberosUsername       = "drivers%40LDAPTEST.10GEN.CC"
 	kerberosConnection     = "ldaptest.10gen.cc:27017"
 )
@@ -335,6 +337,60 @@ func TestServerCertificateVerification(t *testing.T) {
 				Auth: &auth,
 			}
 			opts.URI.ConnString.SSLCaFile = "../db/testdata/ia.pem"
+			provider, err := NewSessionProvider(opts)
+			So(err, ShouldBeNil)
+			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
+			Convey("and should be closeable", func() {
+				provider.Close()
+			})
+		})
+	})
+}
+
+func TestServerPKCS8Verification(t *testing.T) {
+	testtype.SkipUnlessTestType(t, testtype.IntegrationTestType)
+	testtype.SkipUnlessTestType(t, testtype.SSLTestType)
+
+	Convey("when initializing a session provider, connection succeeds", t, func() {
+		auth := DBGetAuthOptions()
+		ssl := options.SSL{
+			UseSSL:    true,
+			SSLCAFile: "../db/testdata/ca-ia.pem",
+		}
+
+		Convey("if provided with PEM file in PKCS#8 format with unencrypted password", func() {
+			ssl.SSLPEMKeyFile = "../db/testdata/test-client-pkcs8-unencrypted.pem"
+			opts := options.ToolOptions{
+				Connection: &options.Connection{
+					Port:    DefaultTestPort,
+					Timeout: 10,
+				},
+				URI:  DBGetConnString(),
+				SSL:  &ssl,
+				Auth: &auth,
+			}
+			opts.URI.ConnString.SSLCaFile = "../db/testdata/ca-ia.pem"
+			provider, err := NewSessionProvider(opts)
+			So(err, ShouldBeNil)
+			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
+			Convey("and should be closeable", func() {
+				provider.Close()
+			})
+		})
+
+		Convey("if provided with PEM file in PKCS#8 format with encrypted password", func() {
+			ssl.SSLPEMKeyFile = "../db/testdata/test-client-pkcs8-encrypted.pem"
+			ssl.SSLPEMKeyPassword = os.Getenv(PKCS8Password)
+			opts := options.ToolOptions{
+				Connection: &options.Connection{
+					Port:    DefaultTestPort,
+					Timeout: 10,
+				},
+				URI:  DBGetConnString(),
+				SSL:  &ssl,
+				Auth: &auth,
+			}
+			opts.URI.ConnString.SSLCaFile = "../db/testdata/ca-ia.pem"
 			provider, err := NewSessionProvider(opts)
 			So(err, ShouldBeNil)
 			So(provider.client.Ping(context.Background(), nil), ShouldBeNil)
