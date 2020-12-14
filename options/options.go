@@ -431,11 +431,11 @@ func (opts *ToolOptions) AddOptions(extraOpts ExtraOptions) {
 // any values in the config file. Returns any extra args not accounted for by parsing,
 // as well as an error if the parsing returns an error.
 func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
+	LogSensitiveOptionWarnings(args)
+
 	if err := opts.ParseConfigFile(args); err != nil {
 		return []string{}, err
 	}
-
-	opts.LogSensitiveOptionWarnings(args)
 
 	args, err := opts.parser.ParseArgs(args)
 	if err != nil {
@@ -461,6 +461,56 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	}
 
 	return args, err
+}
+
+// LogSensitiveOptionWarnings logs a warning for any sensitive information (i.e. passwords)
+// that appear on the command line for the --password, --uri and --sslPEMKeyPassword options.
+// This also applies to a connection string that appears as a positional argument.
+func LogSensitiveOptionWarnings(args []string) {
+	passwordMsg := "WARNING: On some systems, a password provided directly using " +
+		"--password may be visible to system status programs such as `ps` that may be " +
+		"invoked by other users. Consider omitting the password to provide it via stdin, " +
+		"or using the --config option to specify a configuration file with the password."
+
+	uriMsg := "WARNING: On some systems, a password provided directly in a connection string " +
+		"or using --uri may be visible to system status programs such as `ps` that may be " +
+		"invoked by other users. Consider omitting the password to provide it via stdin, " +
+		"or using the --config option to specify a configuration file with the password."
+
+	sslMsg := "WARNING: On some systems, a password provided directly using --sslPEMKeyPassword " +
+		"may be visible to system status programs such as `ps` that may be invoked by other users. " +
+		"Consider using the --config option to specify a configuration file with the password."
+
+	// Create temporary options for parsing command line args.
+	tempOpts := New("", "", "", "", true, EnabledOptions{Auth: true, Connection: true, URI: true})
+	extraArgs, err := tempOpts.parser.ParseArgs(args)
+	if err != nil {
+		return
+	}
+
+	// Parse the extraArgs for a positional connection string.
+	_, err = tempOpts.setURIFromPositionalArg(extraArgs)
+	if err != nil {
+		return
+	}
+
+	// Log a message for --password, if specified.
+	if tempOpts.Auth.Password != "" {
+		log.Logvf(log.Always, passwordMsg)
+	}
+
+	// Log a message for --uri or a positional connection string, if either is specified.
+	uri := tempOpts.URI.ConnectionString
+	if uri != "" {
+		if cs, err := connstring.Parse(uri); err == nil && cs.Password != "" {
+			log.Logvf(log.Always, uriMsg)
+		}
+	}
+
+	// Log a message for --sslPEMKeyPassword, if specified.
+	if tempOpts.SSL.SSLPEMKeyPassword != "" {
+		log.Logvf(log.Always, sslMsg)
+	}
 }
 
 // ParseConfigFile iterates over args to find a --config option. If not found, we return.
@@ -502,60 +552,6 @@ func (opts *ToolOptions) ParseConfigFile(args []string) error {
 	opts.SSL.SSLPEMKeyPassword = config.SSLPEMKeyPassword
 
 	return nil
-}
-
-// LogSensitiveOptionWarnings logs a warning for any sensitive information (i.e. passwords)
-// that appear on the command line for the --password, --uri and --sslPEMKeyPassword options.
-// This also applies to a connection string that appears as a positional argument.
-func (opts *ToolOptions) LogSensitiveOptionWarnings(args []string) {
-	passwordMsg := "WARNING: On some systems, a password provided directly using " +
-		"--password may be visible to system status programs such as `ps` that may be " +
-		"invoked by other users. Consider omitting the password to provide it via stdin, " +
-		"or using the --config option to specify a configuration file with the password."
-
-	uriMsg := "WARNING: On some systems, a password provided directly in a connection string " +
-		"or using --uri may be visible to system status programs such as `ps` that may be " +
-		"invoked by other users. Consider omitting the password to provide it via stdin, " +
-		"or using the --config option to specify a configuration file with the password."
-
-	sslMsg := "WARNING: On some systems, a password provided directly using --sslPEMKeyPassword " +
-		"may be visible to system status programs such as `ps` that may be invoked by other users. " +
-		"Consider using the --config option to specify a configuration file with the password."
-
-	// Parse the args to see what is set on the command line.
-	extraArgs, err := opts.parser.ParseArgs(args)
-	if err != nil {
-		return
-	}
-
-	// Parse the extraArgs for a positional connection string.
-	if opts.parsePositionalArgsAsURI {
-		_, err = opts.setURIFromPositionalArg(extraArgs)
-		if err != nil {
-			return
-		}
-	}
-
-	// Log a message for --password, if specified.
-	if opts.Auth.Password != "" {
-		log.Logvf(log.Always, passwordMsg)
-		opts.Auth.Password = ""
-	}
-
-	// Log a message for --uri or a positional connection string, if either is specified.
-	uri := opts.URI.ConnectionString
-	if uri != "" {
-		if cs, err := connstring.Parse(uri); err == nil && cs.Password != "" {
-			log.Logvf(log.Always, uriMsg)
-		}
-		opts.URI.ConnectionString = ""
-	}
-
-	// Log a message for --sslPEMKeyPassword, if specified.
-	if opts.SSL.SSLPEMKeyPassword != "" {
-		log.Logvf(log.Always, sslMsg)
-		opts.SSL.SSLPEMKeyPassword = ""
-	}
 }
 
 func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error) {
