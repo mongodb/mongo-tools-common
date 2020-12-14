@@ -10,6 +10,7 @@ package options
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"runtime"
@@ -21,9 +22,11 @@ import (
 	"github.com/mongodb/mongo-tools-common/failpoint"
 	"github.com/mongodb/mongo-tools-common/log"
 	"github.com/mongodb/mongo-tools-common/util"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
+	"gopkg.in/yaml.v2"
 )
 
 // XXX Force these true as the Go driver supports them always.  Once the
@@ -107,8 +110,9 @@ func (ns Namespace) String() string {
 
 // Struct holding generic options
 type General struct {
-	Help    bool `long:"help" description:"print usage"`
-	Version bool `long:"version" description:"print the tool version and exit"`
+	Help       bool   `long:"help" description:"print usage"`
+	Version    bool   `long:"version" description:"print the tool version and exit"`
+	ConfigPath string `long:"config" description:"path to a configuration file"`
 
 	MaxProcs   int    `long:"numThreads" hidden:"true"`
 	Failpoints string `long:"failpoints" hidden:"true"`
@@ -423,9 +427,14 @@ func (opts *ToolOptions) AddOptions(extraOpts ExtraOptions) {
 	}
 }
 
-// Parse the command line args.  Returns any extra args not accounted for by
-// parsing, as well as an error if the parsing returns an error.
+// ParseArgs parses a potential config file followed by the command line args, overriding
+// any values in the config file. Returns any extra args not accounted for by parsing,
+// as well as an error if the parsing returns an error.
 func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
+	if err := opts.ParseConfigFile(args); err != nil {
+		return []string{}, err
+	}
+
 	args, err := opts.parser.ParseArgs(args)
 	if err != nil {
 		return []string{}, err
@@ -450,6 +459,47 @@ func (opts *ToolOptions) ParseArgs(args []string) ([]string, error) {
 	}
 
 	return args, err
+}
+
+// ParseConfigFile iterates over args to find a --config option. If not found, we return.
+// If found, we read the contents of the specified config file in YAML format. We parse
+// any values corresponding to --password, --uri and --sslPEMKeyPassword, and store them
+// in the opts.
+func (opts *ToolOptions) ParseConfigFile(args []string) error {
+	// Get config file path from the arguments, if specified.
+	_, err := opts.parser.ParseArgs(args)
+	if err != nil {
+		return err
+	}
+
+	// No --config option was specified.
+	if opts.General.ConfigPath == "" {
+		return nil
+	}
+
+	// --config option specifies a file path.
+	configBytes, err := ioutil.ReadFile(opts.General.ConfigPath)
+	if err != nil {
+		return errors.Wrapf(err, "error opening file with --config")
+	}
+
+	// Unmarshal the config file as a top-level YAML file.
+	var config struct {
+		Password          string `yaml:"password"`
+		ConnectionString  string `yaml:"uri"`
+		SSLPEMKeyPassword string `yaml:"sslPEMKeyPassword"`
+	}
+	err = yaml.UnmarshalStrict(configBytes, &config)
+	if err != nil {
+		return errors.Wrapf(err, "error parsing config file %s", opts.General.ConfigPath)
+	}
+
+	// Assign each parsed value to its respective ToolOptions field.
+	opts.Auth.Password = config.Password
+	opts.URI.ConnectionString = config.ConnectionString
+	opts.SSL.SSLPEMKeyPassword = config.SSLPEMKeyPassword
+
+	return nil
 }
 
 func (opts *ToolOptions) setURIFromPositionalArg(args []string) ([]string, error) {
