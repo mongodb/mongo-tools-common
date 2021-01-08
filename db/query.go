@@ -14,7 +14,7 @@ type DeferredQuery struct {
 	LogReplay bool
 }
 
-// Count issues a count command.
+// Count issues a EstimatedDocumentCount command when there is no Filter in the query and a CountDocuments command otherwise.
 func (q *DeferredQuery) Count() (int, error) {
 	emptyFilter := false
 
