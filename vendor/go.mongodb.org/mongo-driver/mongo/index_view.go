@@ -18,7 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy"
+	"go.mongodb.org/mongo-driver/x/mongo/driver"
 	"go.mongodb.org/mongo-driver/x/network/command"
 	"go.mongodb.org/mongo-driver/x/network/description"
 )
@@ -62,7 +62,7 @@ func (iv IndexView) List(ctx context.Context, opts ...*options.ListIndexesOption
 		description.ReadPrefSelector(readpref.Primary()),
 		description.LatencySelector(iv.coll.client.localThreshold),
 	})
-	batchCursor, err := driverlegacy.ListIndexes(
+	batchCursor, err := driver.ListIndexes(
 		ctx, listCmd,
 		iv.coll.client.topology,
 		readSelector,
@@ -141,7 +141,7 @@ func (iv IndexView) CreateMany(ctx context.Context, models []IndexModel, opts ..
 		Clock:   iv.coll.client.clock,
 	}
 
-	_, err = driverlegacy.CreateIndexes(
+	_, err = driver.CreateIndexes(
 		ctx, cmd,
 		iv.coll.client.topology,
 		iv.coll.writeSelector,
@@ -255,7 +255,7 @@ func (iv IndexView) DropOne(ctx context.Context, name string, opts ...*options.D
 		Clock:   iv.coll.client.clock,
 	}
 
-	return driverlegacy.DropIndexes(
+	return driver.DropIndexes(
 		ctx, cmd,
 		iv.coll.client.topology,
 		iv.coll.writeSelector,
@@ -281,7 +281,7 @@ func (iv IndexView) DropAll(ctx context.Context, opts ...*options.DropIndexesOpt
 		Clock:   iv.coll.client.clock,
 	}
 
-	return driverlegacy.DropIndexes(
+	return driver.DropIndexes(
 		ctx, cmd,
 		iv.coll.client.topology,
 		iv.coll.writeSelector,

@@ -8,12 +8,12 @@ package mongo
 
 import (
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/mongo/driverlegacy"
+	"go.mongodb.org/mongo-driver/x/mongo/driver"
 )
 
 // WriteModel is the interface satisfied by all models for bulk writes.
 type WriteModel interface {
-	convertModel() driverlegacy.WriteModel
+	convertModel() driver.WriteModel
 }
 
 // InsertOneModel is the write model for insert operations.
@@ -32,8 +32,8 @@ func (iom *InsertOneModel) SetDocument(doc interface{}) *InsertOneModel {
 	return iom
 }
 
-func (iom *InsertOneModel) convertModel() driverlegacy.WriteModel {
-	return driverlegacy.InsertOneModel{
+func (iom *InsertOneModel) convertModel() driver.WriteModel {
+	return driver.InsertOneModel{
 		Document: iom.Document,
 	}
 }
@@ -61,8 +61,8 @@ func (dom *DeleteOneModel) SetCollation(collation *options.Collation) *DeleteOne
 	return dom
 }
 
-func (dom *DeleteOneModel) convertModel() driverlegacy.WriteModel {
-	return driverlegacy.DeleteOneModel{
+func (dom *DeleteOneModel) convertModel() driver.WriteModel {
+	return driver.DeleteOneModel{
 		Collation: dom.Collation,
 		Filter:    dom.Filter,
 	}
@@ -91,8 +91,8 @@ func (dmm *DeleteManyModel) SetCollation(collation *options.Collation) *DeleteMa
 	return dmm
 }
 
-func (dmm *DeleteManyModel) convertModel() driverlegacy.WriteModel {
-	return driverlegacy.DeleteManyModel{
+func (dmm *DeleteManyModel) convertModel() driver.WriteModel {
+	return driver.DeleteManyModel{
 		Collation: dmm.Collation,
 		Filter:    dmm.Filter,
 	}
@@ -135,8 +135,8 @@ func (rom *ReplaceOneModel) SetUpsert(upsert bool) *ReplaceOneModel {
 	return rom
 }
 
-func (rom *ReplaceOneModel) convertModel() driverlegacy.WriteModel {
-	um := driverlegacy.UpdateModel{
+func (rom *ReplaceOneModel) convertModel() driver.WriteModel {
+	um := driver.UpdateModel{
 		Collation: rom.Collation,
 	}
 	if rom.Upsert != nil {
@@ -144,7 +144,7 @@ func (rom *ReplaceOneModel) convertModel() driverlegacy.WriteModel {
 		um.UpsertSet = true
 	}
 
-	return driverlegacy.ReplaceOneModel{
+	return driver.ReplaceOneModel{
 		UpdateModel: um,
 		Filter:      rom.Filter,
 		Replacement: rom.Replacement,
@@ -195,8 +195,8 @@ func (uom *UpdateOneModel) SetUpsert(upsert bool) *UpdateOneModel {
 	return uom
 }
 
-func (uom *UpdateOneModel) convertModel() driverlegacy.WriteModel {
-	um := driverlegacy.UpdateModel{
+func (uom *UpdateOneModel) convertModel() driver.WriteModel {
+	um := driver.UpdateModel{
 		Collation: uom.Collation,
 	}
 	if uom.Upsert != nil {
@@ -204,7 +204,7 @@ func (uom *UpdateOneModel) convertModel() driverlegacy.WriteModel {
 		um.UpsertSet = true
 	}
 
-	converted := driverlegacy.UpdateOneModel{
+	converted := driver.UpdateOneModel{
 		UpdateModel: um,
 		Filter:      uom.Filter,
 		Update:      uom.Update,
@@ -261,8 +261,8 @@ func (umm *UpdateManyModel) SetUpsert(upsert bool) *UpdateManyModel {
 	return umm
 }
 
-func (umm *UpdateManyModel) convertModel() driverlegacy.WriteModel {
-	um := driverlegacy.UpdateModel{
+func (umm *UpdateManyModel) convertModel() driver.WriteModel {
+	um := driver.UpdateModel{
 		Collation: umm.Collation,
 	}
 	if umm.Upsert != nil {
@@ -270,7 +270,7 @@ func (umm *UpdateManyModel) convertModel() driverlegacy.WriteModel {
 		um.UpsertSet = true
 	}
 
-	converted := driverlegacy.UpdateManyModel{
+	converted := driver.UpdateManyModel{
 		UpdateModel: um,
 		Filter:      umm.Filter,
 		Update:      umm.Update,
@@ -283,23 +283,23 @@ func (umm *UpdateManyModel) convertModel() driverlegacy.WriteModel {
 	return converted
 }
 
-func dispatchToMongoModel(model driverlegacy.WriteModel) WriteModel {
+func dispatchToMongoModel(model driver.WriteModel) WriteModel {
 	switch conv := model.(type) {
-	case driverlegacy.InsertOneModel:
+	case driver.InsertOneModel:
 		return &InsertOneModel{
 			Document: conv.Document,
 		}
-	case driverlegacy.DeleteOneModel:
+	case driver.DeleteOneModel:
 		return &DeleteOneModel{
 			Filter:    conv.Filter,
 			Collation: conv.Collation,
 		}
-	case driverlegacy.DeleteManyModel:
+	case driver.DeleteManyModel:
 		return &DeleteManyModel{
 			Filter:    conv.Filter,
 			Collation: conv.Collation,
 		}
-	case driverlegacy.ReplaceOneModel:
+	case driver.ReplaceOneModel:
 		rom := &ReplaceOneModel{
 			Filter:      conv.Filter,
 			Replacement: conv.Replacement,
@@ -309,7 +309,7 @@ func dispatchToMongoModel(model driverlegacy.WriteModel) WriteModel {
 			rom.Upsert = &conv.Upsert
 		}
 		return rom
-	case driverlegacy.UpdateOneModel:
+	case driver.UpdateOneModel:
 		uom := &UpdateOneModel{
 			Filter:    conv.Filter,
 			Update:    conv.Update,
@@ -322,7 +322,7 @@ func dispatchToMongoModel(model driverlegacy.WriteModel) WriteModel {
 			uom.ArrayFilters = &conv.ArrayFilters
 		}
 		return uom
-	case driverlegacy.UpdateManyModel:
+	case driver.UpdateManyModel:
 		umm := &UpdateManyModel{
 			Filter:    conv.Filter,
 			Update:    conv.Update,
